@@ -79,15 +79,21 @@ All core systems (scene, physics, collision, camera, debug) are functional and i
 
 ```bash
 pip install pygame
-Running the Engine
+```
+
+### 🏃 Running the Engine
+
 From the project root directory, run:
 
-Bash
-
+```bash
 python main.py
-📂 Project Structure
-Plaintext
+```
 
+---
+
+## 📂 Project Structure
+
+```text
 src/
 ├── scene/
 │   ├── node.py
@@ -107,33 +113,27 @@ src/
 │       └── input_manager.py
 ├── ecs/               # Optional / legacy ECS system
 └── main.py
-🎯 Design Goals
-Educational Clarity: Prioritizing readable code over complex abstractions.
+```
 
-Explicit Systems: No "magic" code; everything is traceable.
+## 🎯 Design Goals
 
-Godot-like Structure: Familiar node structure without hiding the underlying logic.
+*   **Educational Clarity:** Prioritizing readable code over complex abstractions.
+*   **Explicit Systems:** No "magic" code; everything is traceable.
+*   **Godot-like Structure:** Familiar node structure without hiding the underlying logic.
+*   **Debuggable:** Easy to inspect and extend.
 
-Debuggable: Easy to inspect and extend.
+## ⚠️ Current Limitations
 
-⚠️ Current Limitations
-Collision Shapes: Only AABB (Rectangular) collisions are supported.
+*   **Collision Shapes:** Only AABB (Rectangular) collisions are supported.
+*   **Physics:** No collision response forces (push logic is currently manual/kinematic).
+*   **Editor:** Code-only interface (no visual editor).
+*   **Data:** No serialization or scene loading/saving yet.
 
-Physics: No collision response forces (push logic is currently manual/kinematic).
+## 🚀 Planned Next Steps
 
-Editor: Code-only interface (no visual editor).
-
-Data: No serialization or scene loading/saving yet.
-
-🚀 Planned Next Steps
-[ ] Proper push mechanics for boxes.
-
-[ ] Collision callbacks (on_enter / on_exit).
-
-[ ] Circular collider support.
-
-[ ] Basic state machine for entities.
-
-[ ] Tilemap support.
-
-[ ] Save/Load scene functionality
+- [ ] Proper push mechanics for boxes.
+- [ ] Collision callbacks (on_enter / on_exit).
+- [ ] Circular collider support.
+- [ ] Basic state machine for entities.
+- [ ] Tilemap support.
+- [ ] Save/Load scene functionality.
