@@ -11,7 +11,12 @@ class Camera2D(Node2D):
     def update(self, delta: float):
         if self.target:
             tx, ty = self.target.get_global_position()
-            self.local_x = tx - 400  # نصف عرض الشاشة
-            self.local_y = ty - 300  # نصف ارتفاع الشاشة
+            target_x = tx - 400
+            target_y = ty - 300
+            
+            # Smoothly interpolate current position to target position
+            smooth_speed = 5.0
+            self.local_x += (target_x - self.local_x) * smooth_speed * delta
+            self.local_y += (target_y - self.local_y) * smooth_speed * delta
 
         super().update(delta)

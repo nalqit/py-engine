@@ -54,7 +54,20 @@ class Node:
     
 
     def print_tree(self, indent=0):
-        print(" " * indent + f"- {self.name} ({self.__class__.__name__})")
+        prefix = " " * indent + "- "
+
+        info = f"{self.name} ({self.__class__.__name__})"
+
+        # Debug Collision Info إن وجد
+        if hasattr(self, "layer"):
+            info += f" | layer={self.layer}"
+
+        if hasattr(self, "mask"):
+            info += f" | mask={self.mask}"
+
+        print(prefix + info)
+
         for child in self.children:
-            child.print_tree(indent + 4)  # تزود المسافة لكل level
+            child.print_tree(indent + 4)
+
 
