@@ -6,6 +6,7 @@ from src.scene.rectangle_node import RectangleNode
 from src.scene.player import Player
 from src.scene.entities.box import Box
 from src.scene.entities.npc import NPC
+from src.scene.ui.stats_hud import StatsHUD
 
 from src.scene.input.input_manager import InputManager
 from src.scene.collision.collider2d import Collider2D
@@ -113,7 +114,7 @@ def main():
 )
 
     box_col.layer = "box"
-    box_col.mask = {"wall", "player", "box"}
+    box_col.mask = {"wall", "player", "box","npc"}
 
     box = Box(
         "Box",
@@ -150,6 +151,9 @@ def main():
     root.add_child(camera)
     Node2D.camera = player
 
+    hud = StatsHUD("HUD",root,clock)
+    root.add_child(hud)
+
     # ======================
     # Loop
     # ======================
@@ -163,6 +167,7 @@ def main():
                 running = False
 
         root.update(dt)
+        collision_world.process_collisions()
 
         screen.fill((30, 30, 30))
         root.render(screen)

@@ -7,12 +7,22 @@ A lightweight, purely Python-based 2D game engine built incrementally using **Py
 ---
 
 ## 🟢 Status
-**Stable Experimental Prototype**
-All core systems (scene, physics, collision, camera, debug) are functional and integrated.
+**Fixed & Stable Prototype**
+Core systems (Physics, Collision, Gravity, Push) are now fully functional.
+-   Gravity works correctly.
+-   Collision events (enter/stay/exit) are reliable.
+-   Push mechanics are deterministic.
 
 ---
 
 ## ✨ Core Features
+
+### 📡 Collision Callbacks (New!)
+Entities can receive collision events by implementing these methods:
+*   `on_collision_enter(other)`: Called when collision starts.
+*   `on_collision_stay(other)`: Called every frame while colliding.
+*   `on_collision_exit(other)`: Called when collision ends.
+*   *Note:* These are events only and do not affect physics resolution.
 
 ### 🌳 Scene System
 * **Hierarchical Graph:** `Node` / `Node2D` based structure.
@@ -22,10 +32,11 @@ All core systems (scene, physics, collision, camera, debug) are functional and i
 
 ### 🍎 Physics & Collision
 * **PhysicsBody2D:** Base class for all dynamic entities.
-* **Mechanics:** Gravity, jumping, and basic movement implementation.
-* **Detection:** AABB (Axis-Aligned Bounding Box) collision detection.
-* **Resolution:** Axis-separated collision resolution (X axis first, then Y).
-* **Ground Detection:** Robust `on_ground` checking.
+*   **Mechanics:** Gravity, jumping, and basic movement implementation.
+*   **Detection:** AABB (Axis-Aligned Bounding Box) collision detection.
+*   **Resolution:** Axis-separated collision resolution (X axis first, then Y).
+*   **Dynamic vs Dynamic:** Priority-based resolution. Moving bodies push idle bodies; if blocked, movement stops (no overlap).
+*   **Ground Detection:** Robust `on_ground` checking.
 
 ### 🛡️ Collision System
 * **Components:** `Collider2D` nodes attached to entities.
@@ -33,10 +44,17 @@ All core systems (scene, physics, collision, camera, debug) are functional and i
 * **Filtering:** Uses **Layers** (what object is) and **Masks** (what it collides with).
 * **Debug:** Visual overlay for colliders (color-coded).
 
+### 🔔 Trigger Colliders (New!)
+*   **Trigger vs Solid:**
+    *   `is_trigger=False` (Default): Solid, blocks movement (Walls, Floors).
+    *   `is_trigger=True`: Pass-through, used for zones (Damage, Checkpoints).
+*   **Behavior:** Triggers do **not** stop physics bodies but **do** fire collision events (`on_collision_enter`).
+*   **Use Cases:** Pickups, damage zones, door sensors.
+
 #### Layers & Masks Examples:
-* **Player:** Collides with Walls, Boxes, NPCs.
-* **Ghost:** Collides with nothing.
-* **Boxes:** Collide with Walls and Entities.
+*   **Player:** Collides with Walls, Boxes, NPCs.
+*   **Ghost:** Collides with nothing.
+*   **Boxes:** Collide with Walls and Entities.
 
 ### 🎮 Entities
 | Entity | Behavior |
@@ -129,11 +147,26 @@ src/
 *   **Editor:** Code-only interface (no visual editor).
 *   **Data:** No serialization or scene loading/saving yet.
 
-## 🚀 Planned Next Steps
-
-- [ ] Proper push mechanics for boxes.
-- [ ] Collision callbacks (on_enter / on_exit).
+- [x] Proper push mechanics for boxes.
+- [x] Collision callbacks (on_enter / on_exit).
 - [ ] Circular collider support.
 - [ ] Basic state machine for entities.
 - [ ] Tilemap support.
 - [ ] Save/Load scene functionality.
+
+---
+
+## 🎮 Controller Architecture
+
+The engine uses a **Controller** system to separate decision-making from physics execution.
+
+*   **Controller (Base):** Abstract class for behavior logic.
+*   **InputController:** Translates keyboard input into movement intent for the `Player`.
+*   **AIController:** Handles autonomous patrol logic for `NPCs`.
+*   **PhysicsBody2D:** Executes the physical movement, gravity, and collision resolution based on the velocity set by the controller.
+
+### Separation of Concerns
+1.  **Choice:** Controllers set `velocity_x` and `velocity_y`.
+2.  **Physics:** `PhysicsBody2D` applies gravity and uses `move_and_collide` to update position while respecting walls and other entities.
+
+To add new behavior, create a class inheriting from `Controller` and assign it to `body.controller`.
