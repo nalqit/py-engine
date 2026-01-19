@@ -1,4 +1,6 @@
 # PyEngine 2D
+PyEngine 2D is an experimental 2D game engine built with Python and Pygame.
+The project is under active development and not production-ready.
 
 A lightweight, purely Python-based 2D game engine built incrementally using **Pygame**, inspired by Godot’s scene system.
 
@@ -7,7 +9,7 @@ A lightweight, purely Python-based 2D game engine built incrementally using **Py
 ---
 
 ## 🟢 Status
-**Fixed & Stable Prototype**
+**Stable Experimental Prototype**
 Core systems (Physics, Collision, Gravity, Push) are now fully functional.
 -   Gravity works correctly.
 -   Collision events (enter/stay/exit) are reliable.
@@ -170,3 +172,6 @@ The engine uses a **Controller** system to separate decision-making from physics
 2.  **Physics:** `PhysicsBody2D` applies gravity and uses `move_and_collide` to update position while respecting walls and other entities.
 
 To add new behavior, create a class inheriting from `Controller` and assign it to `body.controller`.
+
+## 📄 License
+This project is licensed under the MIT License.
