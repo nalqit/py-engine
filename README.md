@@ -63,7 +63,6 @@ src/
 │   ├── camera2d.py            # Viewport and camera follow
 │   ├── player.py              # Player entity implementation
 |   ├── rectangle_node.py      # Rectangle visual node
-|   ├── camera2d.py            # Camera follow node
 |   ├── circle_node.py         # Circle visual node
 │   ├── physics/
 │   │   ├── physics_body_2d.py # Core physics resolution
