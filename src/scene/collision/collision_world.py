@@ -1,6 +1,6 @@
 from src.scene.node2d import Node2D
 from src.scene.collision.collider2d import Collider2D
-import pygame
+
 
 
 class CollisionWorld(Node2D):

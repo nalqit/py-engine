@@ -2,8 +2,10 @@ from src.scene.physics.controller import Controller
 
 
 class InputController(Controller):
-    def __init__(self, input_manager):
+    def __init__(self, body, input_manager):
+        super().__init__(body)
         self.input = input_manager
+        
 
     def update(self, body, delta):
         dx = 0
@@ -13,7 +15,8 @@ class InputController(Controller):
             dx += 1
 
         # Set body horizontal velocity
-        body.velocity_x = dx * body.speed
+        body.intent_x = dx
+
 
         # Jump logic
         if self.input.is_pressed("move_up") and body.on_ground:
@@ -22,4 +25,5 @@ class InputController(Controller):
 
         # Super jump / fast fall? (keeping user's recent change)
         if self.input.is_pressed("move_down"):
-            body.velocity_y = (-body.jump_force + body.gravity) / 2
+            body.velocity_y += body.gravity * 2 * delta
+

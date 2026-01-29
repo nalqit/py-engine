@@ -172,6 +172,7 @@ def main():
         screen.fill((30, 30, 30))
         root.render(screen)
         pygame.display.flip()
+        print(player.state_machine.current_state.name,player.velocity_x,player.velocity_y)
 
     pygame.quit()
     sys.exit()
