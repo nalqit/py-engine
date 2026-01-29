@@ -1,5 +1,5 @@
 import pygame
-from src.scene.node import Node
+from src.engine.scene.node import Node
 
 class InputManager(Node):
     def __init__(self, name="Input"):

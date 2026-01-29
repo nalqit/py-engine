@@ -1,4 +1,4 @@
-from src.scene.physics.physics_body_2d import PhysicsBody2D
+from src.engine.physics.physics_body_2d import PhysicsBody2D
 
 
 class Box(PhysicsBody2D):

@@ -1,6 +1,6 @@
-from src.scene.fsm.state import State
-from src.scene.fsm.idle_state import IdleState
-from src.scene.fsm.walk_state import WalkState
+from src.engine.fsm.state import State
+from src.engine.fsm.idle_state import IdleState
+from src.engine.fsm.walk_state import WalkState
 
 
 class FallState(State):

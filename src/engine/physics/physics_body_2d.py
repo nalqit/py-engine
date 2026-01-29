@@ -1,6 +1,6 @@
-from src.scene.node2d import Node2D
-from src.scene.fsm.state_machine import StateMachine
-from src.scene.fsm.idle_state import IdleState
+from src.engine.scene.node2d import Node2D
+from src.engine.fsm.state_machine import StateMachine
+from src.engine.fsm.idle_state import IdleState
 
 
 class PhysicsBody2D(Node2D):

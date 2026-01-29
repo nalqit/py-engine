@@ -1,4 +1,4 @@
-from src.scene.node import Node
+from src.engine.scene.node import Node
 import pygame
 
 class StatsHUD(Node):

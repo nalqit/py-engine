@@ -1,5 +1,5 @@
-from src.scene.physics.physics_body_2d import PhysicsBody2D
-from src.scene.physics.input_controller import InputController
+from src.engine.physics.physics_body_2d import PhysicsBody2D
+from src.engine.physics.input_controller import InputController
 
 
 class Player(PhysicsBody2D):

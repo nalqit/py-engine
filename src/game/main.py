@@ -1,17 +1,17 @@
 import pygame
 import sys
 
-from src.scene.node2d import Node2D
-from src.scene.rectangle_node import RectangleNode
-from src.scene.player import Player
-from src.scene.entities.box import Box
-from src.scene.entities.npc import NPC
-from src.scene.ui.stats_hud import StatsHUD
+from src.engine.scene.node2d import Node2D
+from src.engine.scene.rectangle_node import RectangleNode
+from src.game.entities.player import Player
+from src.game.entities.box import Box
+from src.game.entities.npc import NPC
+from src.engine.ui.stats_hud import StatsHUD
 
-from src.scene.input.input_manager import InputManager
-from src.scene.collision.collider2d import Collider2D
-from src.scene.collision.collision_world import CollisionWorld
-from src.scene.camera2d import Camera2D
+from src.engine.input.input_manager import InputManager
+from src.engine.collision.collider2d import Collider2D
+from src.engine.collision.collision_world import CollisionWorld
+from src.engine.scene.camera2d import Camera2D
 
 
 def main():
@@ -82,6 +82,7 @@ def main():
     create_wall("Floor", -1000, 500, 2000, 100)
     create_wall("Wall1", -1000, 420, 80, 80)
     create_wall("Wall1", 1000, 420, 80, 80)
+    create_wall("platform",0,200,200,100)
 
     # ======================
     # NPC

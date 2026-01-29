@@ -1,5 +1,5 @@
-from src.scene.node2d import Node2D
-from src.scene.collision.collider2d import Collider2D
+from src.engine.scene.node2d import Node2D
+from src.engine.collision.collider2d import Collider2D
 
 
 

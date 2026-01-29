@@ -1,5 +1,5 @@
-from src.scene.physics.physics_body_2d import PhysicsBody2D
-from src.scene.physics.ai_controller import AIController
+from src.engine.physics.physics_body_2d import PhysicsBody2D
+from src.engine.physics.ai_controller import AIController
 
 
 class NPC(PhysicsBody2D):

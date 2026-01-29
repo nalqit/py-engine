@@ -1,5 +1,5 @@
 import pygame
-from src.scene.node2d import Node2D
+from src.engine.scene.node2d import Node2D
 
 
 class Collider2D(Node2D):
@@ -23,7 +23,7 @@ class Collider2D(Node2D):
 
     def render(self, surface: pygame.Surface) -> None:
         # Debug Draw
-        rect = self.get_rect()
+        # rect = self.get_rect()
 
         # Adjust for camera if exists
         sx, sy = self.get_screen_position()

@@ -1,4 +1,4 @@
-from src.scene.physics.controller import Controller
+from src.engine.physics.controller import Controller
 
 
 class InputController(Controller):

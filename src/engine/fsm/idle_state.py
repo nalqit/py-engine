@@ -1,4 +1,4 @@
-from src.scene.fsm.state import State
+from src.engine.fsm.state import State
 
 
 class IdleState(State):
@@ -10,13 +10,13 @@ class IdleState(State):
     def update(self, delta):
         # If not on ground -> Fall
         if not self.body.on_ground:
-            from src.scene.fsm.fall_state import FallState
+            from src.engine.fsm.fall_state import FallState
 
             self.body.state_machine.change_state(FallState(self.body))
             return
 
         # If moving -> Walk
         if abs(self.body.velocity_x) > 0:
-            from src.scene.fsm.walk_state import WalkState
+            from src.engine.fsm.walk_state import WalkState
 
             self.body.state_machine.change_state(WalkState(self.body))
