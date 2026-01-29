@@ -58,7 +58,7 @@ def main():
         collider=player_col,
         collision_world=collision_world
     )
-    root.add_child(player)
+    visual_world.add_child(player)
     player.add_child(player_col)
 
     player_vis = RectangleNode("PlayerVis", 0, 0, 50, 50, (255, 0, 0))
@@ -69,7 +69,7 @@ def main():
     # ======================
     def create_wall(name, x, y, w, h):
         wall = Node2D(name, x, y)
-        root.add_child(wall)
+        visual_world.add_child(wall)
 
         col = Collider2D(name+"Col", 0, 0, w, h, is_static=True)
         col.layer = "wall"
@@ -97,7 +97,7 @@ def main():
         collider=npc_col,
         collision_world=collision_world
     )
-    root.add_child(npc)
+    visual_world.add_child(npc)
     npc.add_child(npc_col)
 
     npc_vis = RectangleNode("NPCVis", 0, 0, 40, 40, (0, 200, 255))
@@ -123,7 +123,7 @@ def main():
         collider=box_col,
         collision_world=collision_world
     )
-    root.add_child(box)
+    visual_world.add_child(box)
     box.add_child(box_col)
 
     box_vis = RectangleNode("BoxVis", 0, 0, 50, 50, (200, 150, 50))

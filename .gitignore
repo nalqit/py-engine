@@ -1,14 +1,15 @@
-# Python
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Virtual environments
+# Virtual env
+.venv/
 venv/
-.env/
+env/
 
-# OS
+# OS junk
 .DS_Store
 Thumbs.db
 
@@ -16,9 +17,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Pygame cache / logs
-*.log
-
-# Build / dist
+# Build / temp
 build/
 dist/
