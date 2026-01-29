@@ -1,127 +1,55 @@
 # PyEngine 2D
 
-PyEngine 2D is an experimental 2D game engine built with Python and Pygame.
-The project is under active development and not production-ready.
+PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Pygame**, inspired by Godot’s scene and node system. It focuses on architectural clarity, explicit systems, and educational value.
 
-A lightweight, purely Python-based 2D game engine built incrementally using **Pygame**, inspired by Godot’s scene system.
-
-> **Note:** This project focuses on clarity, learning, and extensibility rather than raw performance or feature completeness.
+> [!NOTE]
+> This project is an experimental prototype focusing on learning and extensibility rather than raw performance.
 
 ---
 
-## 🟢 Status
+## 🟢 System Status
 
-**Stable Experimental Prototype**
-Core systems (Physics, Collision, Gravity, Push) are now fully functional.
+The engine features a stable core with fully integrated physics, collision, and state management systems.
 
-- Gravity works correctly.
-- Collision events (enter/stay/exit) are reliable.
-- Push mechanics are deterministic.
+- **Physics**: Deterministic AABB resolution with axis separation.
+- **Gravity**: Robust vertical movement and ground detection.
+- **Controllers**: Decoupled "Intent-based" movement system.
+- **FSM**: Descriptive state machine (Idle / Walk / Fall).
+- **Collisions**: Layer-based filtering and collision callbacks (Enter/Stay/Exit).
 
 ---
 
-## ✨ Core Features
-
-### 📡 Collision Callbacks (New!)
-
-Entities can receive collision events by implementing these methods:
-
-- `on_collision_enter(other)`: Called when collision starts.
-- `on_collision_stay(other)`: Called every frame while colliding.
-- `on_collision_exit(other)`: Called when collision ends.
-- _Note:_ These are events only and do not affect physics resolution.
+## ✨ Core Architecture
 
 ### 🌳 Scene System
 
-- **Hierarchical Graph:** `Node` / `Node2D` based structure.
-- **Transforms:** Handles Local, Global, and Screen transforms.
-- **Recursive Logic:** Parent–child relationships with recursive update & render loops.
-- **Debugging:** Built-in `print_tree()` to visualize the scene graph.
+- **Node-based Hierarchy**: All game objects inherit from `Node` or `Node2D`.
+- **Recursive Logic**: Parents automatically update and render children.
+- **Transform System**: Handles local vs global coordinate management.
 
-### 🍎 Physics & Collision
+### � Controller & Intent System
 
-- **PhysicsBody2D:** Base class for all dynamic entities.
-- **Mechanics:** Gravity, jumping, and basic movement implementation.
-- **Detection:** AABB (Axis-Aligned Bounding Box) collision detection.
-- **Resolution:** Axis-separated collision resolution (X axis first, then Y).
-- **Dynamic vs Dynamic:** Priority-based resolution. Moving bodies push idle bodies; if blocked, movement stops (no overlap).
-- **Ground Detection:** Robust `on_ground` checking.
+The engine strictly separates "Decision Making" from "Physics Execution":
 
-### 🛡️ Collision System
+1. **Controller**: Abstract behavior logic (e.g., `InputController`, `AIController`).
+2. **Intent**: Controllers set `intent_x` and `intent_y` (desired direction).
+3. **Execution**: `PhysicsBody2D` translates intents into velocity and resolves collisions.
 
-- **Components:** `Collider2D` nodes attached to entities.
-- **CollisionWorld:** Centralized collision checking using spatial logic.
-- **Filtering:** Uses **Layers** (what object is) and **Masks** (what it collides with).
-- **Debug:** Visual overlay for colliders (color-coded).
+### 🔄 Finite State Machine (FSM)
 
-### 🔔 Trigger Colliders (New!)
+A **Descriptive FSM** that observes the entity's physical reality rather than driving it:
 
-- **Trigger vs Solid:**
-  - `is_trigger=False` (Default): Solid, blocks movement (Walls, Floors).
-  - `is_trigger=True`: Pass-through, used for zones (Damage, Checkpoints).
-- **Behavior:** Triggers do **not** stop physics bodies but **do** fire collision events (`on_collision_enter`).
-- **Use Cases:** Pickups, damage zones, door sensors.
+- **Idle**: Grounded and stationary.
+- **Walk**: Grounded and moving horizontally.
+- **Fall**: In the air (jumping or falling).
+- **Execution Order**: `Controller (Intent)` → `Physics (Resolution)` → `FSM (Observation)`.
 
-#### Layers & Masks Examples:
+### �️ Collision & Physics
 
-- **Player:** Collides with Walls, Boxes, NPCs.
-- **Ghost:** Collides with nothing.
-- **Boxes:** Collide with Walls and Entities.
-
-### 🎮 Entities
-
-| Entity     | Behavior                                                                   |
-| :--------- | :------------------------------------------------------------------------- |
-| **Player** | Input-driven movement, Gravity, Jumping, Full collision response.          |
-| **NPC**    | Autonomous horizontal movement, Gravity, Direction switching on collision. |
-| **Box**    | Affected by gravity, Blocks Player & NPC, Physical obstacle.               |
-
-### 🎥 Camera
-
-- **Camera2D:** Smoothly follows a target node.
-- **Viewport:** Clean World-to-Screen transformation handling.
-
-### 🛠️ Debug & Tools
-
-- **Visuals:** Collider debug rendering.
-- **Stats HUD:** Displays FPS, Node count, and Scene tree info.
-- **Separation:** Strict visual separation between game logic and rendering.
-
----
-
-## 🎮 Controls
-
-| Key                    | Action           |
-| :--------------------- | :--------------- |
-| **Left / Right Arrow** | Move Character   |
-| **Up Arrow**           | Jump             |
-| **Close Window**       | Quit Application |
-
----
-
-## ⚙️ Setup & Installation
-
-### Requirements
-
-- **Python:** 3.10+
-- **Pygame:** 2.6+
-
-### Installation
-
-1.  Clone the repository or download the source code.
-2.  Install the dependencies via pip:
-
-```bash
-pip install pygame
-```
-
-### 🏃 Running the Engine
-
-From the project root directory, run:
-
-```bash
-python main.py
-```
+- **CollisionWorld**: Centralized manager for spatial queries.
+- **Layers & Masks**: Fine-grained control over which objects interact.
+- **Push Mechanics**: Moving bodies can push dynamic objects (like Boxes) if they aren't blocked.
+- **Callbacks**: `on_collision_enter`, `on_collision_stay`, and `on_collision_exit`.
 
 ---
 
@@ -130,85 +58,64 @@ python main.py
 ```text
 src/
 ├── scene/
-│   ├── node.py
-│   ├── node2d.py
-│   ├── camera2d.py
+│   ├── node.py                # Base Node class
+│   ├── node2d.py              # Node with 2D transform
+│   ├── camera2d.py            # Viewport and camera follow
+│   ├── player.py              # Player entity implementation
 │   ├── physics/
-│   │   └── physics_body_2d.py
+│   │   ├── physics_body_2d.py # Core physics resolution
+│   │   ├── controller.py      # Base Controller class
+│   │   ├── input_controller.py# User input handling
+│   │   └── ai_controller.py   # NPC patrol logic
+│   ├── fsm/
+│   │   ├── state_machine.py   # Manages state transitions
+│   │   ├── state.py           # Base State class
+│   │   ├── idle_state.py      # Stationary on ground
+│   │   ├── walk_state.py      # Moving on ground
+│   │   └── fall_state.py      # In-air state
 │   ├── collision/
-│   │   ├── collider2d.py
-│   │   └── collision_world.py
+│   │   ├── collider2d.py      # AABB Collision components
+│   │   └── collision_world.py # Spatial collision management
 │   ├── entities/
-│   │   ├── npc.py
-│   │   └── box.py
-│   ├── ui/
-│   │   └── stats_hud.py
-│   └── input/
-│       └── input_manager.py
-├── ecs/               # Optional / legacy ECS system
-└── main.py
+│   │   ├── npc.py             # Scripted characters
+│   │   └── box.py             # Pushable objects
+│   ├── input/
+│   │   └── input_manager.py   # Input abstraction
+│   └── ui/
+│       └── stats_hud.py       # Debug information
+└── main.py                    # Entry point
 ```
-
-## 🎯 Design Goals
-
-- **Educational Clarity:** Prioritizing readable code over complex abstractions.
-- **Explicit Systems:** No "magic" code; everything is traceable.
-- **Godot-like Structure:** Familiar node structure without hiding the underlying logic.
-- **Debuggable:** Easy to inspect and extend.
-
-## ⚠️ Current Limitations
-
-- **Collision Shapes:** Only AABB (Rectangular) collisions are supported.
-- **Physics:** No collision response forces (push logic is currently manual/kinematic).
-- **Editor:** Code-only interface (no visual editor).
-- **Data:** No serialization or scene loading/saving yet.
-
-* [x] Proper push mechanics for boxes.
-* [x] Collision callbacks (on_enter / on_exit).
-* [ ] Circular collider support.
-* [x] Basic state machine for entities.
-* [ ] Tilemap support.
-* [ ] Save/Load scene functionality.
 
 ---
 
-### 🎮 Controller Architecture
+## 🎮 Controls
 
-The engine uses a **Controller** system to separate decision-making from physics execution.
+| Key                    | Action                   |
+| :--------------------- | :----------------------- |
+| **Arrow Left / Right** | Move Character           |
+| **Arrow Up**           | Jump                     |
+| **Arrow Down**         | Fast Fall (Experimental) |
+| **Close Window**       | Exit Game                |
 
-- **Controller (Base):** Abstract class for behavior logic.
-- **InputController:** Translates keyboard input into movement **intent** for the `Player`.
-- **AIController:** Handles autonomous patrol logic for `NPCs` by setting movement **intent**.
-- **PhysicsBody2D:** Executes the physical movement, gravity, and collision resolution based on the **intents** set by the controller.
+---
 
-#### Intent-based Movement
+## ⚙️ Setup
 
-Instead of directly modifying velocity, controllers set `intent_x` and `intent_y`:
+1. **Python**: 3.10+
+2. **Dependencies**: `pip install pygame`
+3. **Run**: `python main.py`
 
-1.  **Choice:** Controllers analyze state/input and set `intent_x` (e.g., -1, 0, 1).
-2.  **Translation:** `PhysicsBody2D` translates `intent_x` into `velocity_x` using its internal `speed`.
-3.  **Physics:** `PhysicsBody2D` applies gravity and uses `move_and_collide` to update position while respecting walls and other entities.
+---
 
-To add new behavior, create a class inheriting from `Controller` and assign it to `body.controller`.
+## 🚀 Roadmap
 
-## 🔄 Finite State Machine (FSM)
-
-The engine includes a simple **Descriptive FSM** to manage entity states.
-
-### Core States
-
-- **Idle:** Entity is on the ground and not moving (`velocity_x == 0`).
-- **Walk:** Entity is on the ground and moving horizontally (`velocity_x != 0`).
-- **Fall:** Entity is in the air (jumping or falling).
-
-### Design Philosophy
-
-- **Descriptive, Not Driver:** The FSM observes the entity's physical state (velocity, on_ground) and updates the current state accordingly. It uses a `.name` property for easy debugging.
-- **Decoupled:** The FSM does **not** control physics or movement. Controllers drive intents; FSM reflects the result.
-- **Execution Order:**
-  1. **Controllers** run (set `intent_x`).
-  2. **Physics** resolves (applies gravity, calculates velocity from intent, resolves collisions).
-  3. **FSM** updates to reflect the new physical reality.
+- [x] Intent-based Physics Separation.
+- [x] Descriptive FSM (Idle / Walk / Fall).
+- [x] Axis-separated Collision Resolution.
+- [x] Dynamic pushing and blocking.
+- [ ] Circular Collider support.
+- [ ] Tilemap integration.
+- [ ] Visual Scene Editor.
 
 ## 📄 License
 
