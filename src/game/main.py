@@ -7,6 +7,7 @@ from src.game.entities.player import Player
 from src.game.entities.box import Box
 from src.game.entities.npc import NPC
 from src.engine.ui.stats_hud import StatsHUD
+# from src.engine.physics.ai_controller import AIController
 
 from src.engine.input.input_manager import InputManager
 from src.engine.collision.collider2d import Collider2D
@@ -63,6 +64,29 @@ def main():
 
     player_vis = RectangleNode("PlayerVis", 0, 0, 50, 50, (255, 0, 0))
     player.add_child(player_vis)
+
+
+    #======================
+    # Player 2
+    #======================
+    # player2_col = Collider2D("Player2Col", 0, 0, 50, 50)
+    # player2_col.layer = "player2"
+    # player2_col.mask = {"wall", "box", "npc","player"}
+
+    # player2 = Player(
+    #     "Player2",
+    #     x=0,
+    #     y=0,
+    #     input_manager=input_manager,
+    #     collider=player2_col,
+    #     collision_world=collision_world
+    # )
+    # visual_world.add_child(player2)
+    # player2.add_child(player2_col)
+
+    # player2_vis = RectangleNode("Player2Vis", 0, 0, 50, 50, (255, 0, 0))
+    # player2.controller = AIController(player2)
+    # player2.add_child(player2_vis)
 
     # ======================
     # Walls (Static)
