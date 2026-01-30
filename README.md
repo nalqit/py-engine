@@ -17,6 +17,7 @@ The engine features a stable core with fully integrated physics, collision, and 
 - **FSM**: Descriptive state machine (Idle / Walk / Fall).
 - **Collisions**: Layer-based filtering, triggers, and collision callbacks (Enter/Stay/Exit).
 - **HUD**: Integrated `StatsHUD` for real-time performance tracking (FPS, Node count).
+- **Debug Draw**: Real-time collider visualization (Static, Dynamic, and Triggers).
 
 ---
 
@@ -65,7 +66,7 @@ src/
 │   ├── collision/         # Colliders (Collider2D) and CollisionWorld
 │   ├── fsm/               # Finite State Machine (Idle, Walk, Fall)
 │   ├── input/             # InputManager for key mappings
-│   └── ui/                # StatsHUD and debug UI
+│   └── ui/                # StatsHUD, DebugDraw, and debug UI
 │
 ├── game/                  # Example game / sandbox
 │   ├── entities/          # Player, NPC, Box
@@ -101,7 +102,12 @@ src/
 - [x] Dynamic pushing and blocking.
 - [x] Trigger collider support.
 - [x] Integrated performance HUD.
+- [x] Debug Collider Visualization.
+- [x] FSM State Visualization (In-game text).
 - [ ] Circular Physics Collision support (Visual CircleNode exists).
+- [ ] Distinguish floor vs ceiling collisions
+- [ ] Support chained push
+- [ ] Collision normals
 - [ ] Tilemap integration.
 - [ ] Visual Scene Editor.
 

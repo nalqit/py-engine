@@ -8,6 +8,7 @@ from src.game.entities.box import Box
 from src.game.entities.npc import NPC
 from src.engine.ui.stats_hud import StatsHUD
 # from src.engine.physics.ai_controller import AIController
+from src.engine.ui.debug_draw import DebugDraw
 
 from src.engine.input.input_manager import InputManager
 from src.engine.collision.collider2d import Collider2D
@@ -106,7 +107,9 @@ def main():
     create_wall("Floor", -1000, 500, 2000, 100)
     create_wall("Wall1", -1000, 420, 80, 80)
     create_wall("Wall1", 1000, 420, 80, 80)
-    create_wall("platform",0,200,200,100)
+    create_wall("platform",0,150,200,50)
+
+
 
     # ======================
     # NPC
@@ -117,7 +120,7 @@ def main():
 
     npc = NPC(
         "NPC",
-        x=300,
+        x=500,
         y=0,
         collider=npc_col,
         collision_world=collision_world
@@ -139,7 +142,7 @@ def main():
 )
 
     box_col.layer = "box"
-    box_col.mask = {"wall", "player", "box","npc"}
+    box_col.mask = {"wall", "player", "box2","npc"}
 
     box = Box(
         "Box",
@@ -153,6 +156,21 @@ def main():
 
     box_vis = RectangleNode("BoxVis", 0, 0, 50, 50, (200, 150, 50))
     box.add_child(box_vis)
+
+    #======================
+    #box2
+    #======================
+#     box2_col = Collider2D(
+#     "Box2Col",
+#     0, 0,
+#     50, 50,
+#     is_static=False   # ❗ مهم
+# )
+
+    # box2_col.layer = "box2"
+    
+
+
 
     # ======================
     # Ghost (No Collision)
@@ -184,20 +202,36 @@ def main():
     # ======================
     root.print_tree()
     running = True
+    
     while running:
-        dt = clock.tick(60) / 1000.0
+        dt = clock.tick(60) / 1000
 
+        # UPDATE
+        root.update(dt)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-        root.update(dt)
-        collision_world.process_collisions()
-
+        # DRAW
         screen.fill((30, 30, 30))
-        root.render(screen)
+
+        root.render(screen)   # ← ترسم العالم
+
+        # ===== هنا ترسم الـ FSM TEXT =====
+        font = pygame.font.SysFont(None, 16)
+
+        text = font.render(player.state_machine.current_state.name, True, (255, 255, 255))
+        screen.blit(
+            text,
+            (
+                player.local_x - camera.local_x,
+                player.local_y - 20 - camera.local_y
+            )
+        )
+        # =================================
+        
+
         pygame.display.flip()
-        print(player.state_machine.current_state.name,player.velocity_x,player.velocity_y)
 
     pygame.quit()
     sys.exit()

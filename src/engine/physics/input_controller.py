@@ -14,16 +14,14 @@ class InputController(Controller):
         if self.input.is_pressed("move_right"):
             dx += 1
 
-        # Set body horizontal velocity
         body.intent_x = dx
 
-
-        # Jump logic
+    # Jump (نية فقط)
         if self.input.is_pressed("move_up") and body.on_ground:
-            body.velocity_y = body.jump_force
-            body.on_ground = False
+            body.intent_y = body.jump_force
 
-        # Super jump / fast fall? (keeping user's recent change)
-        if self.input.is_pressed("move_down"):
-            body.velocity_y += body.gravity * 2 * delta
+    # Fast fall (نية فقط)
+        if self.input.is_pressed("move_down") and not body.on_ground:
+            body.intent_y = body.gravity
+
 

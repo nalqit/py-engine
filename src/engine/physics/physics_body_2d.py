@@ -12,6 +12,8 @@ class PhysicsBody2D(Node2D):
         self.controller = None
         self.intent_x = 0
         self.intent_y = 0
+        self.debug_state_name = ""
+
 
 
         # FSM
@@ -41,6 +43,11 @@ class PhysicsBody2D(Node2D):
         
         self.velocity_x = self.intent_x * self.speed
 
+        # jump intent (مرة واحدة)
+        if self.intent_y != 0:
+            self.velocity_y = self.intent_y
+
+
 
 
 
@@ -57,6 +64,8 @@ class PhysicsBody2D(Node2D):
         # and updates the state accordingly.
         self.state_machine.update(delta)
         self.intent_y = 0
+        self.debug_state_name = self.state_machine.current_state.name
+
     def _check_ground(self):
         return self.collision_world.check_collision(
         self.collider,
