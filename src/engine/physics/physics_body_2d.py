@@ -14,8 +14,6 @@ class PhysicsBody2D(Node2D):
         self.intent_y = 0
         self.debug_state_name = ""
 
-
-
         # FSM
         self.state_machine = StateMachine(self)
         self.state_machine.change_state(IdleState(self))
@@ -40,17 +38,11 @@ class PhysicsBody2D(Node2D):
         if self.use_gravity and not self.on_ground:
             self.velocity_y += self.gravity * delta
 
-        
         self.velocity_x = self.intent_x * self.speed
 
         # jump intent (مرة واحدة)
         if self.intent_y != 0:
             self.velocity_y = self.intent_y
-
-
-
-
-
 
         # 3. Resolve movement & collisions
         dx = self.velocity_x * delta
@@ -68,11 +60,12 @@ class PhysicsBody2D(Node2D):
 
     def _check_ground(self):
         return self.collision_world.check_collision(
-        self.collider,
-        self.local_x,
-        self.local_y + 1,
-        margin=(-2, 0),
-    )
+            self.collider,
+            self.local_x,
+            self.local_y + 1,
+            margin=(-2, 0),
+        )
+
     def move_and_collide(self, dx, dy, delta):
         # --- X axis (Horizontal) ---
         if dx != 0:
@@ -84,51 +77,39 @@ class PhysicsBody2D(Node2D):
             if not hit_x:
                 self.local_x += dx
             else:
-                # Dynamic Collision Resolution
-                if not hit_x.is_static:
-                    body_to_push = hit_x.parent
-
-                    # Check if the pushed body (Box) is blocked by something else (NPC/Wall)
-                    blocker = self.collision_world.check_collision(
-                        hit_x,
-                        body_to_push.local_x + dx,
-                        body_to_push.local_y,
-                        margin=(0, -2),
-                    )
-
-                    can_push = True
-                    if blocker:
-                        can_push = False
-
-                    if can_push:
-                        body_to_push.local_x += dx
-                        self.local_x += dx
+                # Collision detected: Stop movement
+                self.velocity_x = 0
 
         # --- Y axis (Vertical) ---
-        # Initialize as false, will be set true if we hit floor
-        # --- Y axis (Vertical) ---
-        ground_hit = self._check_ground()
-        hit_y = None
+        # Resolve Y independently.
 
-        self.on_ground = bool(ground_hit)
+        # Reset on_ground to False by default (assume air)
+        # We will only set it to True if we hit the floor.
+        self.on_ground = False
 
         if dy != 0:
             target_y = self.local_y + dy
             hit_y = self.collision_world.check_collision(
                 self.collider, self.local_x, target_y, margin=(-2, 0)
-        )
+            )
 
-        if not hit_y:
-            self.local_y += dy
-        else:
-            if dy > 0:
-                self.velocity_y = 0
-                self.on_ground = True
-            elif dy < 0:
-                self.velocity_y = 0
+            if not hit_y:
+                self.local_y += dy
+            else:
+                if dy > 0:
+                    # Falling and hit floor
+                    self.velocity_y = 0
+                    self.on_ground = True
+                elif dy < 0:
+                    # Jumping and hit ceiling
+                    self.velocity_y *= -1
+                    # on_ground remains False
 
-
-
+        # Final ground check
+        # Only check if we are NOT jumping (dy >= 0)
+        # This prevents on_ground sticking when starting a jump
+        if dy >= 0 and self._check_ground():
+            self.on_ground = True
 
     def on_collision_enter(self, other):
         pass

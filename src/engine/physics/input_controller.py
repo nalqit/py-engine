@@ -22,6 +22,6 @@ class InputController(Controller):
 
     # Fast fall (نية فقط)
         if self.input.is_pressed("move_down") and not body.on_ground:
-            body.intent_y = body.gravity
+            body.intent_y = body.gravity 
 
 

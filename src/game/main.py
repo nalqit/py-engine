@@ -107,7 +107,7 @@ def main():
     create_wall("Floor", -1000, 500, 2000, 100)
     create_wall("Wall1", -1000, 420, 80, 80)
     create_wall("Wall1", 1000, 420, 80, 80)
-    create_wall("platform",0,150,200,50)
+    create_wall("platform",0,150,200,200)
 
 
 
@@ -216,7 +216,7 @@ def main():
         screen.fill((30, 30, 30))
 
         root.render(screen)   # ← ترسم العالم
-
+        print(player.velocity_y)
         # ===== هنا ترسم الـ FSM TEXT =====
         font = pygame.font.SysFont(None, 16)
 
