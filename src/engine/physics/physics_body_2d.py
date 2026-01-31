@@ -1,6 +1,7 @@
 from src.engine.scene.node2d import Node2D
 from src.engine.fsm.state_machine import StateMachine
 from src.engine.fsm.idle_state import IdleState
+from src.engine.fsm.walk_state import WalkState
 
 
 class PhysicsBody2D(Node2D):
@@ -28,6 +29,9 @@ class PhysicsBody2D(Node2D):
         self.use_gravity = False
         self.gravity = 800.0
         self.on_ground = False
+        self.hit_ceiling = False
+        self.hit_wall_left = False
+        self.hit_wall_right = False
 
     def update(self, delta):
         # 1. Controller logic
@@ -39,10 +43,19 @@ class PhysicsBody2D(Node2D):
             self.velocity_y += self.gravity * delta
 
         self.velocity_x = self.intent_x * self.speed
+        if self.on_ground:
+            if abs(self.velocity_x) > 0:
+                self.state_machine.change_state(WalkState(self))
+            else:
+                self.state_machine.change_state(IdleState(self))
+
 
         # jump intent (مرة واحدة)
         if self.intent_y != 0:
             self.velocity_y = self.intent_y
+        if self.intent_y > 0:
+            self.velocity_y += self.gravity * 2 * delta  # Fast fall multiplier
+
 
         # 3. Resolve movement & collisions
         dx = self.velocity_x * delta
@@ -67,6 +80,12 @@ class PhysicsBody2D(Node2D):
         )
 
     def move_and_collide(self, dx, dy, delta):
+        # Reset collision flags
+        self.on_ground = False
+        self.hit_ceiling = False
+        self.hit_wall_left = False
+        self.hit_wall_right = False
+
         # --- X axis (Horizontal) ---
         if dx != 0:
             target_x = self.local_x + dx
@@ -79,13 +98,13 @@ class PhysicsBody2D(Node2D):
             else:
                 # Collision detected: Stop movement
                 self.velocity_x = 0
+                if dx < 0:
+                    self.hit_wall_left = True
+                elif dx > 0:
+                    self.hit_wall_right = True
 
         # --- Y axis (Vertical) ---
         # Resolve Y independently.
-
-        # Reset on_ground to False by default (assume air)
-        # We will only set it to True if we hit the floor.
-        self.on_ground = False
 
         if dy != 0:
             target_y = self.local_y + dy
@@ -100,10 +119,11 @@ class PhysicsBody2D(Node2D):
                     # Falling and hit floor
                     self.velocity_y = 0
                     self.on_ground = True
+                    self.local_y = hit_y.get_rect().top - self.collider.height
                 elif dy < 0:
                     # Jumping and hit ceiling
                     self.velocity_y *= -1
-                    # on_ground remains False
+                    self.hit_ceiling = True
 
         # Final ground check
         # Only check if we are NOT jumping (dy >= 0)
