@@ -43,10 +43,11 @@ def main():
 
     player = Player(
         "Player",
-        x=100, y=0,
+        x=100, y=100,
         input_manager=input_manager,
         collider=player_col,
         collision_world=collision_world
+        
     )
     player.use_gravity = True
     visual_world.add_child(player)
@@ -58,6 +59,8 @@ def main():
     # FSM Label
     label = FSMLabel("label", player, -10)
     player.add_child(label)
+    DebugDraw(player,player)
+    # player.add_child(dorw)
 
     # ---------------- Walls & Platforms ----------------
     def create_wall(name, x, y, w, h):
