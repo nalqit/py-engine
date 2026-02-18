@@ -7,26 +7,19 @@ from src.game.entities.player import Player
 from src.game.entities.box import Box
 from src.game.entities.npc import NPC
 from src.engine.ui.stats_hud import StatsHUD
-from src.engine.ui.debug_draw import DebugDraw
-from src.engine.input.input_manager import InputManager
 from src.engine.collision.collider2d import Collider2D
 from src.engine.collision.collision_world import CollisionWorld
 from src.engine.scene.camera2d import Camera2D
-from src.engine.ui.fsm_label import FSMLabel  # ← النص اللي يتبع اللاعب
 
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("PyEngine 2D - Physics Collision Test")
+    pygame.display.set_caption("PyEngine 2D - Level 2 Collision Test")
     clock = pygame.time.Clock()
 
     # Root
     root = Node2D("Root")
-
-    # Input
-    input_manager = InputManager("Input")
-    root.add_child(input_manager)
 
     # Collision World
     collision_world = CollisionWorld("CollisionWorld")
@@ -44,35 +37,26 @@ def main():
     player = Player(
         "Player",
         x=100, y=100,
-        input_manager=input_manager,
         collider=player_col,
-        collision_world=collision_world
-        
+        collision_world=collision_world,
     )
-    player.use_gravity = True
     visual_world.add_child(player)
     player.add_child(player_col)
 
     player_vis = RectangleNode("PlayerVis", 0, 0, 50, 50, (255, 0, 0))
     player.add_child(player_vis)
 
-    # FSM Label
-    label = FSMLabel("label", player, -10)
-    player.add_child(label)
-    DebugDraw(player,player)
-    # player.add_child(dorw)
-
     # ---------------- Walls & Platforms ----------------
     def create_wall(name, x, y, w, h):
         wall = Node2D(name, x, y)
         visual_world.add_child(wall)
 
-        col = Collider2D(name+"Col", 0, 0, w, h, is_static=True)
+        col = Collider2D(name + "Col", 0, 0, w, h, is_static=True)
         col.layer = "wall"
         col.mask = {"player", "box", "npc"}
         wall.add_child(col)
 
-        vis = RectangleNode(name+"Vis", 0, 0, w, h, (100, 100, 100))
+        vis = RectangleNode(name + "Vis", 0, 0, w, h, (100, 100, 100))
         wall.add_child(vis)
 
     # Ground & Ceiling
@@ -99,11 +83,10 @@ def main():
         npc_col.mask = {"wall", "player", "box"}
 
         npc = NPC(
-            f"NPC{i}", x=pos_x, y=0,
+            f"NPC{i}", x=pos_x, y=100,
             collider=npc_col,
-            collision_world=collision_world
+            collision_world=collision_world,
         )
-        npc.use_gravity = True
         visual_world.add_child(npc)
         npc.add_child(npc_col)
 
@@ -117,11 +100,10 @@ def main():
         box_col.mask = {"wall", "player", "npc", "box"}
 
         box = Box(
-            f"Box{i}", x=pos_x, y=0,
+            f"Box{i}", x=pos_x, y=100,
             collider=box_col,
-            collision_world=collision_world
+            collision_world=collision_world,
         )
-        box.use_gravity = True
         visual_world.add_child(box)
         box.add_child(box_col)
 
