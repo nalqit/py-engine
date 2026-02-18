@@ -16,8 +16,8 @@ The engine is built using a **layered architecture**, with each level stabilized
 |   0   | Runtime Core        |   ✅   |
 |   1   | Scene System        |   ✅   |
 |   2   | Collision System    |   ✅   |
-|   3   | Physics Layer       |   🔜   |
-|   4   | Gameplay Systems    |   ⬜   |
+|   3   | Physics Layer       |   ✅   |
+|   4   | Gameplay Systems    |   🔜   |
 
 ### Level 0 — Runtime Core
 - Game loop, delta timing, base `Node` class, scene tree hierarchy.
@@ -25,11 +25,17 @@ The engine is built using a **layered architecture**, with each level stabilized
 ### Level 1 — Scene System
 - Parent/child transform propagation, local vs global position, update lifecycle.
 
-### Level 2 — Collision System *(current)*
+### Level 2 — Collision System
 - **Collider2D**: Pure AABB data — dimensions, layer/mask, static/trigger flags.
 - **CollisionResult**: Structured dataclass with collision normal and penetration depth.
-- **CollisionWorld**: Centralized collision queries using Minimum Translation Vector (MTV). Layer/mask filtering, trigger support, enter/stay/exit event callbacks.
-- **PhysicsBody2D**: Generic body with velocity, per-axis move-and-collide resolution, and velocity zeroing on impact axis only. **No gameplay logic** — no gravity, input, FSM, or controllers.
+- **CollisionWorld**: Float-precision AABB overlap checks with MTV resolution. Layer/mask filtering, trigger support, enter/stay/exit event callbacks.
+- **PhysicsBody2D**: Generic body with per-axis move-and-collide resolution.
+
+### Level 3 — Physics Layer *(current)*
+- **Gravity**: Engine-level `use_gravity` flag with configurable `gravity` constant (default 800).
+- **Impulses**: `apply_impulse(ix, iy)` for instantaneous velocity changes.
+- **Direction-based snapping**: Position correction uses movement direction + obstacle edge, not MTV normals — eliminates ambiguity in per-axis resolution.
+- **Float-precision collision**: Sub-pixel overlap detection prevents gravity hopping artifacts.
 
 ---
 
@@ -52,8 +58,10 @@ The engine is built using a **layered architecture**, with each level stabilized
 ### ⚙️ PhysicsBody2D
 
 - Holds `velocity_x`, `velocity_y`.
-- `update(delta)` computes displacement and calls `move_and_collide(dx, dy)`.
-- Resolves X then Y independently — on collision, corrects position by penetration and zeroes velocity on the impacted axis only.
+- Applies gravity acceleration when `use_gravity` is enabled.
+- `apply_impulse(ix, iy)` for instant velocity changes (jumps, knockback at higher levels).
+- `update(delta)` integrates gravity → computes displacement → calls `move_and_collide(dx, dy)`.
+- Resolves X then Y independently — on collision, snaps to obstacle edge and zeroes velocity on the impacted axis only.
 - Provides empty `on_collision_enter/stay/exit` hooks for subclasses.
 - **Fully generic** — no assumptions about what the body represents.
 
@@ -86,7 +94,7 @@ tests/
 1. **Python**: 3.10+
 2. **Dependencies**: `pip install pygame`
 3. **Run**: `python -m src.game.main`
-4. **Test**: `python tests/test_collision_system.py`
+4. **Test**: `python tests/test_collision_system.py` and `python tests/test_physics_layer.py`
 
 ---
 
@@ -95,22 +103,21 @@ tests/
 ### Completed
 - [x] Runtime Core (game loop, delta timing, scene tree).
 - [x] Scene System (transforms, parent/child propagation).
-- [x] Collision System (AABB, CollisionResult with penetration/normal, MTV resolution).
+- [x] Collision System (AABB, CollisionResult, float-precision overlap).
 - [x] Layer/mask filtering and trigger support.
 - [x] Collision callbacks (enter/stay/exit).
 - [x] Generic PhysicsBody2D with axis-separated resolution.
+- [x] Engine-level gravity and impulse system.
+- [x] Direction-based position snapping.
 - [x] Debug collider visualization.
 - [x] Integrated performance HUD.
 
-### Up Next (Level 3 — Physics Layer)
-- [ ] Gravity system.
-- [ ] Ground detection.
-- [ ] Velocity clamping / terminal velocity.
-
-### Future
+### Up Next (Level 4 — Gameplay Systems)
 - [ ] Controller & Intent system (Input, AI).
 - [ ] Finite State Machine (Idle / Walk / Fall).
 - [ ] Push mechanics between dynamic bodies.
+
+### Future
 - [ ] Circular collision support.
 - [ ] Tilemap integration.
 - [ ] Visual Scene Editor.

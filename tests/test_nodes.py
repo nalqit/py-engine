@@ -1,4 +1,4 @@
-from src.scene import Node
+from src.engine.scene.node import Node
 
 class TestNode(Node):
     """Subclass of Node to verify update calls."""

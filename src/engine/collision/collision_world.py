@@ -45,23 +45,28 @@ class CollisionWorld(Node2D):
         Test whether moving *collider*'s owner to (target_x, target_y)
         would cause an overlap with any other collider.
 
+        Uses float-precision AABB checks (not integer pygame.Rects)
+        to avoid sub-pixel hopping near surfaces.
+
         Returns a CollisionResult describing the shallowest penetration
         found (i.e. the first axis that should be resolved).
         """
-        # Build a test rect as if the collider's parent were at target_x/y.
-        # The collider's local offset relative to its parent is preserved.
+        # Compute the collider's float position at the target.
+        # collider.local_x/y is the offset from its parent (the body).
         current_parent_gx, current_parent_gy = 0.0, 0.0
         if collider.parent:
             current_parent_gx, current_parent_gy = (
                 collider.parent.get_global_position()
             )
 
-        # Delta the parent would move
-        dx = target_x - current_parent_gx
-        dy = target_y - current_parent_gy
+        move_dx = target_x - current_parent_gx
+        move_dy = target_y - current_parent_gy
 
-        base_rect = collider.get_rect()
-        test_rect = base_rect.move(dx, dy)
+        # Float-precision test bounds
+        test_left = current_parent_gx + move_dx + collider.local_x
+        test_top = current_parent_gy + move_dy + collider.local_y
+        test_right = test_left + collider.width
+        test_bottom = test_top + collider.height
 
         root = self._get_root()
 
@@ -84,33 +89,39 @@ class CollisionWorld(Node2D):
             if other.is_trigger:
                 continue
 
-            other_rect = other.get_rect()
+            # Other collider bounds (float from global position)
+            ogx, ogy = other.get_global_position()
+            other_left = ogx
+            other_top = ogy
+            other_right = other_left + other.width
+            other_bottom = other_top + other.height
 
-            if not test_rect.colliderect(other_rect):
+            # Float-precision overlap check (strict inequality = no touching)
+            if (test_left >= other_right or test_right <= other_left or
+                    test_top >= other_bottom or test_bottom <= other_top):
                 continue
 
-            # --- Compute penetration on each axis ---
-            overlap_left  = test_rect.right - other_rect.left
-            overlap_right = other_rect.right - test_rect.left
-            overlap_top   = test_rect.bottom - other_rect.top
-            overlap_bottom = other_rect.bottom - test_rect.top
+            # --- Compute penetration on each axis (float) ---
+            overlap_left = test_right - other_left
+            overlap_right = other_right - test_left
+            overlap_top = test_bottom - other_top
+            overlap_bottom = other_bottom - test_top
 
-            # Smallest positive overlap per axis gives penetration direction
             if overlap_left < overlap_right:
                 pen_x = overlap_left
-                normal_x = -1.0  # push left
+                normal_x = -1.0
             else:
                 pen_x = overlap_right
-                normal_x = 1.0   # push right
+                normal_x = 1.0
 
             if overlap_top < overlap_bottom:
                 pen_y = overlap_top
-                normal_y = -1.0  # push up
+                normal_y = -1.0
             else:
                 pen_y = overlap_bottom
-                normal_y = 1.0   # push down
+                normal_y = 1.0
 
-            # Choose the axis with the smallest penetration (MTV)
+            # Choose axis with smallest penetration (MTV)
             if pen_x < pen_y:
                 pen = pen_x
                 nx, ny = normal_x, 0.0

@@ -15,7 +15,7 @@ from src.engine.scene.camera2d import Camera2D
 def main():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("PyEngine 2D - Level 2 Collision Test")
+    pygame.display.set_caption("PyEngine 2D - Level 3 Physics Test")
     clock = pygame.time.Clock()
 
     # Root
