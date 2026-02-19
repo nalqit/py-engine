@@ -17,7 +17,8 @@ The engine is built using a **layered architecture**, with each level stabilized
 |   1   | Scene System        |   ✅   |
 |   2   | Collision System    |   ✅   |
 |   3   | Physics Layer       |   ✅   |
-|   4   | Gameplay Systems    |   🔜   |
+|   4   | Gameplay Layer      |   ✅   |
+|   5   | State Layer (FSM)   |   ✅   |
 
 ### Level 0 — Runtime Core
 - Game loop, delta timing, base `Node` class, scene tree hierarchy.
@@ -28,42 +29,41 @@ The engine is built using a **layered architecture**, with each level stabilized
 ### Level 2 — Collision System
 - **Collider2D**: Pure AABB data — dimensions, layer/mask, static/trigger flags.
 - **CollisionResult**: Structured dataclass with collision normal and penetration depth.
-- **CollisionWorld**: Float-precision AABB overlap checks with MTV resolution. Layer/mask filtering, trigger support, enter/stay/exit event callbacks.
-- **PhysicsBody2D**: Generic body with per-axis move-and-collide resolution.
+- **CollisionWorld**: Float-precision AABB overlap checks with MTV resolution. Layer/mask filtering, trigger support.
 
-### Level 3 — Physics Layer *(current)*
-- **Gravity**: Engine-level `use_gravity` flag with configurable `gravity` constant (default 800).
+### Level 3 — Physics Layer
+- **PhysicsBody2D**: Generic body with per-axis move-and-collide resolution.
+- **Gravity**: Engine-level `use_gravity` flag with configurable `gravity` constant.
 - **Impulses**: `apply_impulse(ix, iy)` for instantaneous velocity changes.
-- **Direction-based snapping**: Position correction uses movement direction + obstacle edge, not MTV normals — eliminates ambiguity in per-axis resolution.
-- **Float-precision collision**: Sub-pixel overlap detection prevents gravity hopping artifacts.
+- **Direction-based snapping**: Eliminates ambiguity in per-axis resolution.
+
+### Level 4 — Gameplay Layer
+- **PlayerController**: Engine-agnostic controller that maps abstract input to physics intentions.
+- **Movement**: Acceleration-based horizontal movement with friction and max speed clamping.
+- **Ground Detection**: Non-invasive pure probe check (downward offset) via `CollisionWorld`.
+- **Architectural Isolation**: Control logic is detached from the physics engine.
+
+### Level 5 — State Layer (FSM) *(current)*
+- **PlayerStateMachine**: Manages behavioral states (Idle, Run, Jump, Fall).
+- **Lightweight States**: Concrete state objects (`IdleState`, `RunState`, etc.) that handle transitions based on velocity and grounded status.
+- **Strict Order**: Input → Physics → FSM execution sequence ensures behavioral consistency.
+- **Stability**: Movement thresholds prevent transition flickering.
 
 ---
 
 ## ✨ Core Architecture
 
-### 🌳 Scene System
+### 🎮 Gameplay & Control (Levels 4-5)
 
-- **Node-based Hierarchy**: All game objects inherit from `Node` or `Node2D` (found in `src/engine/scene/`).
-- **Recursive Logic**: Parents automatically update and render children.
-- **Transform System**: Handles local vs global coordinate management.
+- **Engine-Agnostic Controllers**: The `PlayerController` does not import `pygame`, receiving an abstract `input_state` dictionary instead. This makes the logic testable and portable.
+- **Finite State Machine**: Decouples "what the player is doing" (Run, Jump) from "how the player moves" (force, velocity).
+- **Non-Invasive Probes**: Ground detection is a side-effect-free collision check, not a mutation of physics state.
 
-### �️ Collision System
+### ⚙️ Physics & Collision (Levels 2-3)
 
-- **Collider2D**: Axis-Aligned Bounding Box attached as a child node. Computes its world-space rect from the scene tree transform.
-- **CollisionResult**: Dataclass describing whether a collision occurred, the hit collider, collision normal (direction to push out), and penetration depth.
-- **CollisionWorld**: Walks the scene tree to find colliders. `check_collision(collider, target_x, target_y)` returns a `CollisionResult`. Also runs broad-phase pair detection with `process_collisions()` for enter/stay/exit events.
-- **Layers & Masks**: Fine-grained control over which objects interact.
-- **Triggers**: Non-blocking colliders that still fire collision events.
-
-### ⚙️ PhysicsBody2D
-
-- Holds `velocity_x`, `velocity_y`.
-- Applies gravity acceleration when `use_gravity` is enabled.
-- `apply_impulse(ix, iy)` for instant velocity changes (jumps, knockback at higher levels).
-- `update(delta)` integrates gravity → computes displacement → calls `move_and_collide(dx, dy)`.
-- Resolves X then Y independently — on collision, snaps to obstacle edge and zeroes velocity on the impacted axis only.
-- Provides empty `on_collision_enter/stay/exit` hooks for subclasses.
-- **Fully generic** — no assumptions about what the body represents.
+- **Axis-Separated Resolution**: X is resolved, then Y. On collision, position is snapped to the obstacle edge and velocity is zeroed on that axis.
+- **Float-Precision**: Avoids integer rounding artifacts common in basic AABB engines.
+- **Generic Bodies**: `PhysicsBody2D` carries no gameplay assumptions (no "is_player" or "jump_force" flags).
 
 ---
 
@@ -72,19 +72,21 @@ The engine is built using a **layered architecture**, with each level stabilized
 ```text
 src/
 ├── engine/                # Core engine (reusable)
-│   ├── scene/             # Node system, camera, shapes (Node, Node2D, RectangleNode, CircleNode)
+│   ├── scene/             # Node system, camera, shapes
 │   ├── collision/         # Collider2D, CollisionResult, CollisionWorld
-│   ├── physics/           # PhysicsBody2D
-│   ├── fsm/               # Finite State Machine (reserved for future levels)
-│   ├── input/             # InputManager (reserved for future levels)
-│   └── ui/                # StatsHUD and debug UI
+│   └── physics/           # PhysicsBody2D
 │
-├── game/                  # Example game / sandbox
+├── game/                  # Gameplay Layer
 │   ├── entities/          # Player, NPC, Box
+│   ├── player_controller.py  # Level 4: Input/Movement logic
+│   ├── player_fsm.py         # Level 5: State machine manager
+│   ├── player_states.py      # Level 5: State definitions (Idle, Run...)
 │   └── main.py            # Game entry point
 │
-tests/
-└── test_collision_system.py  # Level 2 collision tests
+├── tests/
+│   ├── test_gameplay_layer.py # Level 4 tests
+│   ├── test_state_layer.py    # Level 5 tests
+│   └── ...
 ```
 
 ---
@@ -94,28 +96,26 @@ tests/
 1. **Python**: 3.10+
 2. **Dependencies**: `pip install pygame`
 3. **Run**: `python -m src.game.main`
-4. **Test**: `python tests/test_collision_system.py` and `python tests/test_physics_layer.py`
+4. **Test**: `python tests/test_state_layer.py`
 
 ---
 
 ## 🚀 Roadmap
 
 ### Completed
-- [x] Runtime Core (game loop, delta timing, scene tree).
-- [x] Scene System (transforms, parent/child propagation).
-- [x] Collision System (AABB, CollisionResult, float-precision overlap).
-- [x] Layer/mask filtering and trigger support.
-- [x] Collision callbacks (enter/stay/exit).
-- [x] Generic PhysicsBody2D with axis-separated resolution.
-- [x] Engine-level gravity and impulse system.
-- [x] Direction-based position snapping.
-- [x] Debug collider visualization.
-- [x] Integrated performance HUD.
+- [x] Runtime Core & Scene Tree.
+- [x] AABB Collision System (Layer/Mask, Triggers).
+- [x] Generic PhysicsBody2D with axis-separation.
+- [x] Engine-level Gravity and Impulse support.
+- [x] Engine-Agnostic Player Controller (Level 4).
+- [x] Non-invasive Download Ground Probe.
+- [x] Behavioral State Machine (Level 5).
+- [x] Threshold-based transition stabilization.
 
-### Up Next (Level 4 — Gameplay Systems)
-- [ ] Controller & Intent system (Input, AI).
-- [ ] Finite State Machine (Idle / Walk / Fall).
-- [ ] Push mechanics between dynamic bodies.
+### Up Next (Level 6 — Animation Layer)
+- [ ] Spritesheet support.
+- [ ] State-bound animation playback.
+- [ ] Frame-perfect event hooks.
 
 ### Future
 - [ ] Circular collision support.
