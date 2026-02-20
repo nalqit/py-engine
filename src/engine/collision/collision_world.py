@@ -25,6 +25,7 @@ class CollisionWorld(Node2D):
         """Update cache before children update."""
         self._refresh_collider_cache()
         self._refresh_rect_cache()
+        self.process_collisions()
         super().update(delta)
 
     def _refresh_collider_cache(self):
