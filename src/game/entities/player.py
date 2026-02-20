@@ -13,11 +13,47 @@ class Player(PhysicsBody2D):
         self.use_gravity = True
         self.controller = PlayerController()
         self.state_machine = PlayerStateMachine(self)
+        self.was_grounded = False # Added was_grounded state
         
         # Add a particle emitter for jump/land effects
         self.particles = ParticleEmitter2D("PlayerParticles")
         self.add_child(self.particles)
         
+    def _get_tween_manager(self):
+        root = self
+        while root.parent:
+            root = root.parent
+        return root.get_node("TweenManager")
+
+    def apply_juice(self, sx, sy, duration=0.2):
+        tm = self._get_tween_manager()
+        if not tm: return
+        
+        vis = self.get_node("PlayerVis")
+        if not vis: return
+
+        from src.engine.scene.tween import Easing
+        
+        # Calculate offsets to keep bottom-center anchored
+        # Base dimensions are 50x50
+        def get_offsets(ts_x, ts_y):
+            ox = 50 * (1 - ts_x) / 2
+            oy = 50 * (1 - ts_y)
+            return ox, oy
+
+        # Squash/Stretch then return to normal
+        def reset_scale():
+            tm.interpolate(vis, "scale_x", vis.scale_x, 1.0, duration, Easing.quad_out)
+            tm.interpolate(vis, "scale_y", vis.scale_y, 1.0, duration, Easing.quad_out)
+            tm.interpolate(vis, "local_x", vis.local_x, 0.0, duration, Easing.quad_out)
+            tm.interpolate(vis, "local_y", vis.local_y, 0.0, duration, Easing.quad_out)
+
+        ox, oy = get_offsets(sx, sy)
+        tm.interpolate(vis, "scale_x", 1.0, sx, duration/2, Easing.quad_out, on_complete=reset_scale)
+        tm.interpolate(vis, "scale_y", 1.0, sy, duration/2, Easing.quad_out)
+        tm.interpolate(vis, "local_x", 0.0, ox, duration/2, Easing.quad_out)
+        tm.interpolate(vis, "local_y", 0.0, oy, duration/2, Easing.quad_out)
+
         self.score = 0
 
     def jump_effect(self):
@@ -41,10 +77,19 @@ class Player(PhysicsBody2D):
         old_vel_y = self.velocity_y
         self.controller.update(self, delta, input_state)
         
-        # Check for jump to trigger effect
-        # We check the controller's grounded state
-        if input_state["jump"] and self.controller.is_grounded and self.velocity_y < 0:
+        # Squash & Stretch Logic
+        is_grounded = self.controller.is_grounded
+        
+        # 1. LANDING SQUASH
+        if is_grounded and not self.was_grounded:
+            self.apply_juice(1.4, 0.6) # Squash
+            
+        # 2. JUMP STRETCH
+        if input_state["jump"] and is_grounded and self.velocity_y < 0:
              self.jump_effect()
+             self.apply_juice(0.7, 1.3) # Stretch
+
+        self.was_grounded = is_grounded
 
         # 3. Proceed with physics integration (Position resolution, gravity)
         super().update(delta)

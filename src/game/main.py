@@ -11,8 +11,11 @@ from src.engine.collision.collider2d import Collider2D
 from src.engine.collision.collision_world import CollisionWorld
 from src.engine.scene.camera2d import Camera2D
 from src.engine.scene.parallax import ParallaxBackground, ParallaxLayer
+from src.engine.scene.tween import TweenManager
+from src.engine.scene.sprite_node import SpriteNode
 from src.game.entities.coin import Coin
 import random
+from typing import Optional
 
 
 def main():
@@ -23,6 +26,10 @@ def main():
 
     # Root
     root = Node2D("Root")
+    
+    # Tween Manager (Global)
+    tween_manager = TweenManager("TweenManager")
+    root.add_child(tween_manager)
 
     # Collision World
     collision_world = CollisionWorld("CollisionWorld")
@@ -32,25 +39,26 @@ def main():
     parallax_bg = ParallaxBackground("Background")
     root.add_child(parallax_bg)
 
-    # Layer 0: Distant Clouds (moves 5%)
+    # Layer 0: Distant Sky/Clouds (moves 5%)
     clouds = ParallaxLayer("Clouds", parallax_factor=(0.05, 0.02))
     parallax_bg.add_child(clouds)
-    for i in range(-5, 10):
-        c = RectangleNode(f"Cloud{i}", i * 500, random.randint(50, 150), 200, 60, (200, 200, 220))
+    # Using existing background_layer_1 for sky
+    for i in range(-2, 5):
+        c = SpriteNode(f"Sky{i}", "src/game/background_layer_1.png", i * 800, 0)
         clouds.add_child(c)
 
     # Layer 1: Far Mountains (moves 15%)
     mountains = ParallaxLayer("Mountains", parallax_factor=(0.15, 0.05))
     parallax_bg.add_child(mountains)
     for i in range(-5, 10):
-        m = RectangleNode(f"Mtn{i}", i * 600, 250, 400, 350, (40, 40, 70))
+        m = SpriteNode(f"Mtn{i}", "src/game/background_layer_2.png", i * 600, 100)
         mountains.add_child(m)
 
     # Layer 2: Mid Hills (moves 35%)
     hills = ParallaxLayer("Hills", parallax_factor=(0.35, 0.1))
     parallax_bg.add_child(hills)
     for i in range(-10, 20):
-        h = RectangleNode(f"Hill{i}", i * 300, 400, 250, 200, (60, 90, 60))
+        h = SpriteNode(f"Hill{i}", "src/game/background_layer_3.png", i * 400, 300)
         hills.add_child(h)
 
     # Visual World (The Ground Layer)
@@ -142,6 +150,7 @@ def main():
     running = True
     fixed_dt = 1/60.0
     accumulator = 0.0
+    debug_colliders = False
 
     while running:
         dt = clock.tick(60) / 1000.0
@@ -150,6 +159,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F1:
+                    debug_colliders = not debug_colliders
 
         while accumulator >= fixed_dt:
             root.update_transforms()
@@ -158,6 +170,12 @@ def main():
 
         screen.fill((30, 30, 40)) # Slightly bluer sky
         root.render(screen)
+        
+        if debug_colliders:
+            # Recursive check or just draw through collision world
+            for col in collision_world.colliders:
+                col.render(screen)
+
         pygame.display.flip()
 
     pygame.quit()
