@@ -7,13 +7,25 @@ class Node2D(Node):
         super().__init__(name)
         self.local_x = local_x
         self.local_y = local_y
+        self._cached_global_x = local_x
+        self._cached_global_y = local_y
+
+    def update_transforms(self):
+        """Pre-calculate global positions recursively."""
+        if not self.parent or not isinstance(self.parent, Node2D):
+            self._cached_global_x = self.local_x
+            self._cached_global_y = self.local_y
+        else:
+            pgx, pgy = self.parent.get_global_position()
+            self._cached_global_x = pgx + self.local_x
+            self._cached_global_y = pgy + self.local_y
+        
+        # Propagation to children
+        super().update_transforms()
 
     def get_global_position(self):
-        if not self.parent:
-            return self.local_x, self.local_y
-        else:
-            parent_pos = self.parent.get_global_position()
-            return parent_pos[0] + self.local_x, parent_pos[1] + self.local_y
+        """Returns the pre-calculated global position."""
+        return self._cached_global_x, self._cached_global_y
     def get_screen_position(self):
         gx, gy = self.get_global_position()
         if Node2D.camera:

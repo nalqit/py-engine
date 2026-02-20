@@ -123,16 +123,27 @@ def main():
     # ---------------- Main Loop ----------------
     root.print_tree()
     running = True
+    fixed_dt = 1/60.0
+    accumulator = 0.0
+
     while running:
-        dt = clock.tick(60) / 1000
+        dt = clock.tick(60) / 1000.0  # Cap at 120fps for visuals, but physics is fixed
+        accumulator += dt
 
         # Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-        # Update
-        root.update(dt)
+        # Physics/Logic Steps (Fixed Timestep)
+        while accumulator >= fixed_dt:
+            # 1. Update all global positions and transformation caches
+            root.update_transforms()
+            
+            # 2. Update logic nodes (which now use the cached transforms)
+            root.update(fixed_dt)
+            
+            accumulator -= fixed_dt
 
         # Draw
         screen.fill((30, 30, 30))

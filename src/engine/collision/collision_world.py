@@ -18,6 +18,29 @@ class CollisionWorld(Node2D):
     def __init__(self, name):
         super().__init__(name)
         self._last_collisions = set()
+        self._cached_colliders = []
+        self._cached_rects = {}  # collider -> (l, t, r, b)
+
+    def update(self, delta):
+        """Update cache before children update."""
+        self._refresh_collider_cache()
+        self._refresh_rect_cache()
+        super().update(delta)
+
+    def _refresh_collider_cache(self):
+        """Flatten the collider list once per frame to avoid O(N^2) tree walking."""
+        root = self._get_root()
+        self._cached_colliders = [
+            node for node in self._walk(root)
+            if isinstance(node, Collider2D)
+        ]
+
+    def _refresh_rect_cache(self):
+        """Pre-calculate all world-space collider bounds."""
+        self._cached_rects = {}
+        for col in self._cached_colliders:
+            gx, gy = col.get_global_position()
+            self._cached_rects[col] = (gx, gy, gx + col.width, gy + col.height)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -73,11 +96,7 @@ class CollisionWorld(Node2D):
         best_result = CollisionResult.none()
         smallest_penetration = float('inf')
 
-        for node in self._walk(root):
-            if not isinstance(node, Collider2D):
-                continue
-
-            other = node
+        for other in self._cached_colliders:
             if other is collider:
                 continue
 
@@ -89,12 +108,12 @@ class CollisionWorld(Node2D):
             if other.is_trigger:
                 continue
 
-            # Other collider bounds (float from global position)
-            ogx, ogy = other.get_global_position()
-            other_left = ogx
-            other_top = ogy
-            other_right = other_left + other.width
-            other_bottom = other_top + other.height
+            # Other collider bounds (float from cache)
+            other_rect = self._cached_rects.get(other)
+            if not other_rect:
+                continue
+            
+            other_left, other_top, other_right, other_bottom = other_rect
 
             # Float-precision overlap check (strict inequality = no touching)
             if (test_left >= other_right or test_right <= other_left or
@@ -147,12 +166,7 @@ class CollisionWorld(Node2D):
 
     def process_collisions(self):
         """Call once per frame to emit collision enter/stay/exit events."""
-        root = self._get_root()
-
-        all_colliders = [
-            node for node in self._walk(root)
-            if isinstance(node, Collider2D)
-        ]
+        all_colliders = self._cached_colliders
 
         current = set()
 

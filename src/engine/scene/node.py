@@ -22,8 +22,14 @@ class Node:
         if child in self.children:
             self.children.remove(child)
             child.parent = None
+    def update_transforms(self) -> None:
+        """
+        Updates transforms for this node and all of its children.
+        Base Node doesn't have transform data, but propagates to children.
+        """
+        for child in self.children:
+            child.update_transforms()
 
-    
     def update(self, delta: float) -> None:
         """
         Updates this node and all of its children.

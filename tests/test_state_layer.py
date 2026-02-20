@@ -13,6 +13,12 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import pygame
+# Initialize pygame and a dummy display for tests (needed for key.get_pressed)
+pygame.init()
+if not pygame.display.get_surface():
+    pygame.display.set_mode((1, 1), pygame.NOFRAME | pygame.HIDDEN)
+
 from src.engine.collision.collider2d import Collider2D
 from src.engine.collision.collision_world import CollisionWorld
 from src.engine.scene.node2d import Node2D
@@ -39,6 +45,9 @@ def build_scene():
     floor_col.mask = {"player"}
     floor.add_child(floor_col)
     root.add_child(floor)
+
+    # Populate CollisionWorld cache manually to avoid triggering Player.update() prematurely
+    cw._refresh_collider_cache()
 
     return root, cw, player
 
