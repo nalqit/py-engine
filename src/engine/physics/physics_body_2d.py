@@ -67,7 +67,8 @@ class PhysicsBody2D(Node2D):
                 other_rect = result.collider.get_rect()
                 if dx > 0:
                     # Moving right → align our right edge with obstacle's left
-                    self.local_x = other_rect.left - self.collider.width - self.collider.local_x
+                    sw = self.collider.width * self.collider.scale_x
+                    self.local_x = other_rect.left - sw - self.collider.local_x
                 else:
                     # Moving left → align our left edge with obstacle's right
                     self.local_x = other_rect.right - self.collider.local_x
@@ -86,7 +87,8 @@ class PhysicsBody2D(Node2D):
                 other_rect = result.collider.get_rect()
                 if dy > 0:
                     # Moving down → align our bottom edge with obstacle's top
-                    self.local_y = other_rect.top - self.collider.height - self.collider.local_y
+                    sh = self.collider.height * self.collider.scale_y
+                    self.local_y = other_rect.top - sh - self.collider.local_y
                 else:
                     # Moving up → align our top edge with obstacle's bottom
                     self.local_y = other_rect.bottom - self.collider.local_y

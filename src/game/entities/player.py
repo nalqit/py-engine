@@ -43,16 +43,28 @@ class Player(PhysicsBody2D):
 
         # Squash/Stretch then return to normal
         def reset_scale():
+            # Reset Visuals
             tm.interpolate(vis, "scale_x", vis.scale_x, 1.0, duration, Easing.quad_out)
             tm.interpolate(vis, "scale_y", vis.scale_y, 1.0, duration, Easing.quad_out)
             tm.interpolate(vis, "local_x", vis.local_x, 0.0, duration, Easing.quad_out)
             tm.interpolate(vis, "local_y", vis.local_y, 0.0, duration, Easing.quad_out)
+            # Reset Collider
+            tm.interpolate(self.collider, "scale_x", self.collider.scale_x, 1.0, duration, Easing.quad_out)
+            tm.interpolate(self.collider, "scale_y", self.collider.scale_y, 1.0, duration, Easing.quad_out)
+            tm.interpolate(self.collider, "local_x", self.collider.local_x, 0.0, duration, Easing.quad_out)
+            tm.interpolate(self.collider, "local_y", self.collider.local_y, 0.0, duration, Easing.quad_out)
 
         ox, oy = get_offsets(sx, sy)
+        # Tween Visuals
         tm.interpolate(vis, "scale_x", 1.0, sx, duration/2, Easing.quad_out, on_complete=reset_scale)
         tm.interpolate(vis, "scale_y", 1.0, sy, duration/2, Easing.quad_out)
         tm.interpolate(vis, "local_x", 0.0, ox, duration/2, Easing.quad_out)
         tm.interpolate(vis, "local_y", 0.0, oy, duration/2, Easing.quad_out)
+        # Tween Collider
+        tm.interpolate(self.collider, "scale_x", 1.0, sx, duration/2, Easing.quad_out)
+        tm.interpolate(self.collider, "scale_y", 1.0, sy, duration/2, Easing.quad_out)
+        tm.interpolate(self.collider, "local_x", 0.0, ox, duration/2, Easing.quad_out)
+        tm.interpolate(self.collider, "local_y", 0.0, oy, duration/2, Easing.quad_out)
 
         self.score = 0
 
