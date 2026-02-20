@@ -93,4 +93,5 @@ We have recently implemented a **Performance & Consistency Patch** to address po
 ### ✅ Stable Snapping (Zero-Velocity Resolution)
 **Solution**: By resolving X and Y independently and using a fixed timestep, we've eliminated "Ghost Collisions."
 
+
 - When hitting a ceiling or wall, the specific velocity component is zeroed immediately, preventing "vibration" or sticking against surfaces.
