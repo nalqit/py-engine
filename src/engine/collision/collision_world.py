@@ -37,11 +37,14 @@ class CollisionWorld(Node2D):
         ]
 
     def _refresh_rect_cache(self):
-        """Pre-calculate all world-space collider bounds."""
+        """Pre-calculate all world-space collider bounds, accounting for scale."""
         self._cached_rects = {}
         for col in self._cached_colliders:
             gx, gy = col.get_global_position()
-            self._cached_rects[col] = (gx, gy, gx + col.width, gy + col.height)
+            # Account for scale in bounds
+            sw = col.width * col.scale_x
+            sh = col.height * col.scale_y
+            self._cached_rects[col] = (gx, gy, gx + sw, gy + sh)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -86,11 +89,13 @@ class CollisionWorld(Node2D):
         move_dx = target_x - current_parent_gx
         move_dy = target_y - current_parent_gy
 
-        # Float-precision test bounds
+        # Float-precision test bounds (scaled)
+        sw = collider.width * collider.scale_x
+        sh = collider.height * collider.scale_y
         test_left = current_parent_gx + move_dx + collider.local_x
         test_top = current_parent_gy + move_dy + collider.local_y
-        test_right = test_left + collider.width
-        test_bottom = test_top + collider.height
+        test_right = test_left + sw
+        test_bottom = test_top + sh
 
         root = self._get_root()
 

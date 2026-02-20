@@ -92,9 +92,7 @@ class Player(PhysicsBody2D):
         # Squash & Stretch Logic
         is_grounded = self.controller.is_grounded
         
-        # 1. LANDING SQUASH
-        if is_grounded and not self.was_grounded:
-            self.apply_juice(1.4, 0.6) # Squash
+        # 1. LANDING SQUASH (Removed per user request to stabilize physics)
             
         # 2. JUMP STRETCH
         if input_state["jump"] and is_grounded and self.velocity_y < 0:

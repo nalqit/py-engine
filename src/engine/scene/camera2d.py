@@ -11,12 +11,10 @@ class Camera2D(Node2D):
     def update(self, delta: float):
         if self.target:
             tx, ty = self.target.get_global_position()
-            target_x = tx - 400
-            target_y = ty - 300
             
-            # Smoothly interpolate current position to target position
+            # Smoothly interpolate current position to target position center
             smooth_speed = 5.0
-            self.local_x += (target_x - self.local_x) * smooth_speed * delta
-            self.local_y += (target_y - self.local_y) * smooth_speed * delta
+            self.local_x += (tx - self.local_x) * smooth_speed * delta
+            self.local_y += (ty - self.local_y) * smooth_speed * delta
 
         super().update(delta)

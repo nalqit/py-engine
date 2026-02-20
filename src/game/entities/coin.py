@@ -32,11 +32,12 @@ class Coin(Area2D):
     def _start_bob(self, tm):
         from src.engine.scene.tween import Easing
         
+        # We tween 'self' (the Area2D) so the collider moves with the visual
         def bob_down():
-             tm.interpolate(self.vis, "local_y", -10, 0, 1.2, Easing.sine_in_out, on_complete=bob_up)
+             tm.interpolate(self, "local_y", self.local_y - 10, self.local_y, 1.2, Easing.sine_in_out, on_complete=bob_up)
              
         def bob_up():
-             tm.interpolate(self.vis, "local_y", 0, -10, 1.2, Easing.sine_in_out, on_complete=bob_down)
+             tm.interpolate(self, "local_y", self.local_y, self.local_y - 10, 1.2, Easing.sine_in_out, on_complete=bob_down)
 
         bob_up()
 
