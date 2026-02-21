@@ -16,9 +16,11 @@ class SimplePlayer(PhysicsBody2D):
     def __init__(self, name, x, y, collider, collision_world):
         super().__init__(name, x, y, collider, collision_world)
         self.use_gravity = True
-        self.movespeed = 350.0 # Snappy movement
+        self.movespeed = 250.0
         self.jumpforce = 500.0
-        self.intended_vx = 0.0
+        # Engine push system — just set flags!
+        self.can_push = True
+        self.push_strength = 2.0
 
     def update(self, delta):
         keys = pygame.key.get_pressed()
@@ -28,44 +30,46 @@ class SimplePlayer(PhysicsBody2D):
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             move_dir += 1
         
-        self.intended_vx = move_dir * self.movespeed
-        self.velocity_x = self.intended_vx
+        self.velocity_x = move_dir * self.movespeed
         
         # Ground check
-        probe_offset = 2.0
-        result = self.collision_world.check_collision(self.collider, self.local_x, self.local_y + probe_offset)
-        if (keys[pygame.K_SPACE] or keys[pygame.K_w] or keys[pygame.K_UP]) and result.collided and result.normal_y < 0:
+        is_grounded = False
+        pgx, pgy = self.get_global_position()
+        sw = self.collider.width * self.collider.scale_x
+        sh = self.collider.height * self.collider.scale_y
+        
+        # Test a small box just below the player's feet
+        test_left = pgx + 4.0
+        test_right = pgx + sw - 4.0
+        test_top = pgy + sh
+        test_bottom = pgy + sh + 2.0
+        
+        for other in self.collision_world._cached_colliders:
+            if other is self.collider or other.is_trigger or other.layer not in self.collider.mask:
+                continue
+            orect = self.collision_world._cached_rects.get(other)
+            if orect:
+                ol, ot, oright, ob = orect
+                if not (test_left >= oright or test_right <= ol or test_top >= ob or test_bottom <= ot):
+                    is_grounded = True
+                    break
+        
+        if (keys[pygame.K_SPACE] or keys[pygame.K_w] or keys[pygame.K_UP]) and is_grounded:
             self.velocity_y = -self.jumpforce
 
         super().update(delta)
-
-    def on_collision_stay(self, other):
-        """Forcefully push boxes when touching."""
-        body = other.parent
-        if isinstance(body, SimpleBox):
-            # If we are walking into the box's side
-            # Check horizontal distance to be sure we are on the side
-            px, py = self.get_global_position()
-            bx, by = body.get_global_position()
-            
-            # Simple side check: if intended move matches relative direction
-            is_to_right = bx > px
-            if (self.intended_vx > 0 and is_to_right) or (self.intended_vx < 0 and not is_to_right):
-                 # Directly match velocity to player for "sticky" pushing
-                 body.velocity_x = self.intended_vx
 
 class SimpleBox(PhysicsBody2D):
     def __init__(self, name, x, y, collider, collision_world):
         super().__init__(name, x, y, collider, collision_world)
         self.use_gravity = True
-        self.friction = 800.0 # High friction so it stops quickly when not pushed
+        # Engine push system — just set flags!
+        self.pushable = True
+        self.push_weight = 1.0
 
     def update(self, delta):
-        # Apply friction
-        if self.velocity_x > 0:
-            self.velocity_x = max(0, self.velocity_x - self.friction * delta)
-        elif self.velocity_x < 0:
-            self.velocity_x = min(0, self.velocity_x + self.friction * delta)
+        # Box has no horizontal movement on its own — only pushed by engine
+        self.velocity_x = 0.0
         super().update(delta)
 
 class SimpleButton(Area2D):
