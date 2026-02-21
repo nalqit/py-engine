@@ -16,10 +16,19 @@ class RectangleNode(Node2D):
         # Recursive update
         super().update(delta)
 
-    def render(self, surface: pygame.Surface) -> None:
-        sx, sy = self.get_screen_position() 
-        rect = pygame.Rect(int(sx), int(sy), self.width, self.height)
-        pygame.draw.rect(surface, self.color, rect)
+    def render(self, surface):
+        screen_x, screen_y = self.get_screen_position()
         
-        # Recursive render
+        # Apply scaling to width and height
+        sw = self.width * self.scale_x
+        sh = self.height * self.scale_y
+        
+        # Center the rectangle based on scale (optional, but better for juice)
+        # gx = screen_x - (sw - self.width) / 2
+        # gy = screen_y - (sh - self.height) / 2
+        
+        # For simple squash/stretch from bottom, we offset Y differently
+        # Let's just do standard scaling for now
+        rect = pygame.Rect(int(screen_x), int(screen_y), int(sw), int(sh))
+        pygame.draw.rect(surface, self.color, rect)
         super().render(surface)

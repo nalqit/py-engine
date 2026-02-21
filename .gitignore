@@ -20,3 +20,5 @@ Thumbs.db
 # Build / temp
 build/
 dist/
+
+PROJECT_OVERVIEW.md

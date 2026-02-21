@@ -49,48 +49,57 @@ class PhysicsBody2D(Node2D):
     def move_and_collide(self, dx, dy):
         """
         Attempt to move by (dx, dy), resolving collisions per-axis.
-
-        X is resolved first, then Y (using the updated X position).
-        On collision, position is snapped to the obstacle edge based
-        on movement direction, and velocity is zeroed on that axis.
+        Fixed to be scale-aware and coordinate-space consistent.
         """
+        # Get parent total offset to convert between local and global space
+        pgx, pgy = 0.0, 0.0
+        if self.parent and isinstance(self.parent, Node2D):
+            pgx, pgy = self.parent.get_global_position()
+
         # --- X axis ---
         if dx != 0:
-            target_x = self.local_x + dx
+            target_lx = self.local_x + dx
+            # check_collision expects target in GLOBAL space
             result = self.collision_world.check_collision(
-                self.collider, target_x, self.local_y
+                self.collider, pgx + target_lx, pgy + self.local_y
             )
             if not result.collided:
-                self.local_x = target_x
+                self.local_x = target_lx
             else:
-                # Snap to obstacle edge based on movement direction
                 other_rect = result.collider.get_rect()
+                sw = self.collider.width * self.collider.scale_x
                 if dx > 0:
-                    # Moving right → align our right edge with obstacle's left
-                    self.local_x = other_rect.left - self.collider.width - self.collider.local_x
+                    # Move right: snap our right edge to obstacle's left
+                    self.local_x = other_rect.left - sw - self.collider.local_x - pgx
                 else:
-                    # Moving left → align our left edge with obstacle's right
-                    self.local_x = other_rect.right - self.collider.local_x
+                    # Move left: snap our left edge to obstacle's right
+                    self.local_x = other_rect.right - self.collider.local_x - pgx
                 self.velocity_x = 0.0
+            
+            # Sync transforms so Y check uses the new, correct X position
+            self.update_transforms()
 
         # --- Y axis (uses updated local_x) ---
         if dy != 0:
-            target_y = self.local_y + dy
+            target_ly = self.local_y + dy
             result = self.collision_world.check_collision(
-                self.collider, self.local_x, target_y
+                self.collider, pgx + self.local_x, pgy + target_ly
             )
             if not result.collided:
-                self.local_y = target_y
+                self.local_y = target_ly
             else:
-                # Snap to obstacle edge based on movement direction
                 other_rect = result.collider.get_rect()
+                sh = self.collider.height * self.collider.scale_y
                 if dy > 0:
-                    # Moving down → align our bottom edge with obstacle's top
-                    self.local_y = other_rect.top - self.collider.height - self.collider.local_y
+                    # Move down: snap our bottom edge to obstacle's top
+                    self.local_y = other_rect.top - sh - self.collider.local_y - pgy
                 else:
-                    # Moving up → align our top edge with obstacle's bottom
-                    self.local_y = other_rect.bottom - self.collider.local_y
+                    # Move up: snap our top edge to obstacle's bottom
+                    self.local_y = other_rect.bottom - self.collider.local_y - pgy
                 self.velocity_y = 0.0
+            
+            # Sync transforms again
+            self.update_transforms()
 
     # ------------------------------------------------------------------
     # Impulse

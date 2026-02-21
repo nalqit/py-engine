@@ -7,6 +7,8 @@ class Node2D(Node):
         super().__init__(name)
         self.local_x = local_x
         self.local_y = local_y
+        self.scale_x = 1.0
+        self.scale_y = 1.0
         self._cached_global_x = local_x
         self._cached_global_y = local_y
 
