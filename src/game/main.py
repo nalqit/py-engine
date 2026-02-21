@@ -15,6 +15,7 @@ from src.engine.scene.camera2d import Camera2D
 from src.engine.scene.tween import TweenManager
 from src.engine.scene.sprite_node import SpriteNode
 from src.game.entities.coin import Coin
+from src.game.entities.patrol_enemy import PatrolEnemy
 
 def main():
     pygame.init()
@@ -71,6 +72,16 @@ def main():
         return coin
 
     # ---------------- Map Design ----------------
+    def spawn_enemy(name, x, y):
+        enemy_col = Collider2D(name + "Col", 0, 0, 40, 40)
+        enemy_col.layer = "enemy"
+        enemy_col.mask = {"wall", "player", "box"}
+        enemy = PatrolEnemy(name, x, y, enemy_col, collision_world, speed=60.0)
+        visual_world.add_child(enemy)
+        enemy.add_child(enemy_col)
+        enemy.add_child(RectangleNode(name + "Vis", 0, 0, 40, 40, (200, 50, 200)))
+        return enemy
+
     # 1. HUGE FLOOR
     create_wall("Ground", -1000, 500, 5000, 200)
     
@@ -78,6 +89,9 @@ def main():
     spawn_coin("Coin_Start1", 300, 450)
     spawn_coin("Coin_Start2", 500, 450)
     spawn_coin("Coin_Start3", 700, 450)
+    
+    # Spawn first enemy patrolling the start area
+    spawn_enemy("Enemy1", 600, 450)
 
     # 3. VERTICAL CHALLENGE
     create_wall("Wall_Blocker", 900, 400, 50, 100)
@@ -91,6 +105,9 @@ def main():
     spawn_coin("Coin_Plat3", 1100, 100)
 
     # 4. NPC OUTPOST
+    # Enemy guarding the NPC
+    spawn_enemy("Enemy2", 1500, 450)
+
     npc_col = Collider2D("VillageNPCCol", 0, 0, 40, 40)
     npc_col.layer = "npc"
     npc_col.mask = {"wall", "player", "box"}
@@ -127,7 +144,7 @@ def main():
     fixed_dt = 1/60.0
     accumulator = 0.0
     debug_colliders = False
-
+    root.print_tree()
     while running:
         dt = clock.tick(60) / 1000.0
         accumulator += dt

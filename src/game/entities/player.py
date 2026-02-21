@@ -107,6 +107,14 @@ class Player(PhysicsBody2D):
         # 4. Update behavioral state (Observation: what am I doing now?)
         self.state_machine.update(delta)
 
+    def die(self):
+        # Drop the player back to the starting point
+        self.local_x = 100
+        self.local_y = 400
+        self.velocity_x = 0.0
+        self.velocity_y = 0.0
+        self.update_transforms()
+
     def on_collision_enter(self, other):
         pass
 
