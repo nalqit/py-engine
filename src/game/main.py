@@ -18,6 +18,7 @@ from src.game.entities.coin import Coin
 from src.game.entities.patrol_enemy import PatrolEnemy
 from src.game.entities.spring import Spring
 from src.game.entities.spike import Spike
+from src.game.entities.trophy import Trophy
 
 def main():
     pygame.init()
@@ -88,7 +89,6 @@ def main():
         spring = Spring(name, x, y)
         spring.get_node(name + "_Col").mask = {"player", "box", "npc"}
         visual_world.add_child(spring)
-        spring.add_child(RectangleNode(name + "_Vis", 0, 0, 40, 20, (50, 200, 50)))
         return spring
         
     def spawn_spike(name, x, y):
@@ -97,6 +97,11 @@ def main():
         # Visual representation: Red square for now
         spike.add_child(RectangleNode(name + "_Vis", 0, 0, 40, 40, (255, 0, 0)))
         return spike
+
+    def spawn_trophy(name, x, y):
+        trophy = Trophy(name, x, y)
+        visual_world.add_child(trophy)
+        return trophy
 
     # 1. HUGE FLOOR
     create_wall("Ground", -1000, 500, 5000, 200)
@@ -152,6 +157,10 @@ def main():
         visual_world.add_child(box)
         box.add_child(box_col)
         box.add_child(RectangleNode(f"BoxVis{i}", 0, 0, 50, 50, (200, 150, 50)))
+
+    # 6. THE END
+    create_wall("EndWall", 3000, 300, 50, 400) # Prevents player from leaving
+    spawn_trophy("GoldenTrophy", 2800, 450)
 
     # ---------------- Camera ----------------
     camera = Camera2D("Camera")

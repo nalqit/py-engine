@@ -61,6 +61,12 @@ class TweenManager(Node):
         self.tweens.append(tween)
         return tween
 
+    def is_tweening(self, target: Any, property_name: str) -> bool:
+        for t in self.tweens:
+            if t.target == target and t.property_name == property_name and not t.finished:
+                return True
+        return False
+
     def update(self, delta: float):
         # Update all active tweens
         for t in self.tweens:

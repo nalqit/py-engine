@@ -62,9 +62,16 @@ class ParticleEmitter2D(Node2D):
     def render(self, surface):
         # We need to render particles in screen space
         # Camera is usually set as a static variable on Node2D or we find it
-        root = self._get_root()
-        camera = root.get_node("Camera")
-        cam_x, cam_y = (camera.local_x, camera.local_y) if camera else (0, 0)
+        cx, cy = 0, 0
+        if Node2D.camera:
+            cx = Node2D.camera.local_x - 400
+            cy = Node2D.camera.local_y - 300
+        else:
+            root = self._get_root()
+            camera = root.get_node("Camera")
+            if camera:
+                cx = camera.local_x - 400
+                cy = camera.local_y - 300
 
         for p in self.particles:
             alpha = int((p.lifetime / p.initial_lifetime) * 255)
@@ -73,8 +80,8 @@ class ParticleEmitter2D(Node2D):
             # We skip real alpha for performance/simplicity in this demo
             color = self._adjust_color_alpha(p.color, alpha)
             
-            screen_x = p.x - cam_x
-            screen_y = p.y - cam_y
+            screen_x = p.x - cx
+            screen_y = p.y - cy
             
             size = max(1, int(3 * (p.lifetime / p.initial_lifetime)))
             pygame.draw.circle(surface, color, (int(screen_x), int(screen_y)), size)

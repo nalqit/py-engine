@@ -16,6 +16,14 @@ class Spring(Node2D):
         self.collider.mask = {"player", "box", "npc"}
         self.add_child(self.collider)
 
+        # Build a multi-part visual so it doesn't look like a "green mass"
+        from src.engine.scene.rectangle_node import RectangleNode
+        self.vis = Node2D(name + "_Vis", 0, 0)
+        self.vis.add_child(RectangleNode("Base", 0, height*0.75, width, height*0.25, (100, 100, 100)))
+        self.vis.add_child(RectangleNode("Coil", 5, 5, width-10, height*0.75, (180, 180, 180)))
+        self.vis.add_child(RectangleNode("Top", 0, 0, width, 5, (255, 60, 60)))
+        self.add_child(self.vis)
+
     def _get_tween_manager(self):
         root = self
         while root.parent:

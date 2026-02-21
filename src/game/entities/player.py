@@ -28,9 +28,13 @@ class Player(PhysicsBody2D):
     def apply_juice(self, sx, sy, duration=0.2):
         tm = self._get_tween_manager()
         if not tm: return
-        
+
         vis = self.get_node("PlayerVis")
         if not vis: return
+
+        # Prevent overlapping tweens from fighting and ruining the shape
+        if tm.is_tweening(vis, "scale_y"):
+            return
 
         from src.engine.scene.tween import Easing
         
@@ -75,6 +79,15 @@ class Player(PhysicsBody2D):
                             speed_range=(20, 80), 
                             angle_range=(200, 340), # Upwards-ish
                             color=(150, 150, 150))
+                            
+    def dash_effect(self):
+        gx, gy = self.get_global_position()
+        # Emit horizontal streaks behind the player
+        angle = (180, 200) if self.controller.facing_right else (340, 360)
+        self.particles.emit(gx + 25, gy + 25, count=2, 
+                            speed_range=(100, 200), 
+                            angle_range=angle,
+                            color=(200, 255, 255))
 
     def update(self, delta):
         # 1. Capture abstract input (Engine-Agnostic requirement)
@@ -83,28 +96,31 @@ class Player(PhysicsBody2D):
             "move_left": keys[pygame.K_LEFT] or keys[pygame.K_a],
             "move_right": keys[pygame.K_RIGHT] or keys[pygame.K_d],
             "jump": keys[pygame.K_SPACE] or keys[pygame.K_w] or keys[pygame.K_UP],
+            "dash": keys[pygame.K_LSHIFT] or keys[pygame.K_z] or keys[pygame.K_x]
         }
 
         # 2. Update gameplay logic (Intentions: velocity changes, impulse)
         old_vel_y = self.velocity_y
+        was_grounded = self.controller.is_grounded
+        
         self.controller.update(self, delta, input_state)
         
         # Squash & Stretch Logic
-        is_grounded = self.controller.is_grounded
-        
-        # 1. LANDING SQUASH (Removed per user request to stabilize physics)
-            
         # 2. JUMP STRETCH
-        if input_state["jump"] and is_grounded and self.velocity_y < 0:
+        if input_state["jump"] and was_grounded and self.velocity_y < 0:
              self.jump_effect()
              self.apply_juice(0.7, 1.3) # Stretch
 
-        self.was_grounded = is_grounded
+        self.was_grounded = self.controller.is_grounded
 
         # 3. Proceed with physics integration (Position resolution, gravity)
         super().update(delta)
 
-        # 4. Update behavioral state (Observation: what am I doing now?)
+        # 4. Out-of-bounds check (Kill plane)
+        if self.get_global_position()[1] > 2000:
+            self.die()
+
+        # 5. Update behavioral state (Observation: what am I doing now?)
         self.state_machine.update(delta)
 
     def die(self):
