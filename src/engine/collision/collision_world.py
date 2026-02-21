@@ -184,14 +184,29 @@ class CollisionWorld(Node2D):
                 if not a_sees_b and not b_sees_a:
                     continue
 
-                if a.get_rect().colliderect(b.get_rect()):
-                    pair = tuple(sorted((a, b), key=id))
-                    current.add(pair)
+                # Use float-precision rectangles from cache instead of integer pygame.Rects
+                rect_a = self._cached_rects.get(a)
+                rect_b = self._cached_rects.get(b)
 
-                    if pair not in self._last_collisions:
-                        self._emit(a, b, "enter")
-                    else:
-                        self._emit(a, b, "stay")
+                if rect_a and rect_b:
+                    la, ta, ra, ba = rect_a
+                    lb, tb, rb, bb = rect_b
+
+                    # Standard AABB overlap check (floats)
+                    # Standard AABB overlap check (floats)
+                    # We use a small EPS (epsilon) to make the check inclusive
+                    # so that "touching" edges (common in physics snapping)
+                    # correctly trigger enter/stay events.
+                    EPS = 0.5 # Half a pixel of tolerance
+                    if (la < rb + EPS and ra > lb - EPS and 
+                        ta < bb + EPS and ba > tb - EPS):
+                        pair = tuple(sorted((a, b), key=id))
+                        current.add(pair)
+
+                        if pair not in self._last_collisions:
+                            self._emit(a, b, "enter")
+                        else:
+                            self._emit(a, b, "stay")
 
         # Exited pairs
         for pair in self._last_collisions - current:

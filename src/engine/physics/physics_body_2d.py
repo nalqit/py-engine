@@ -66,14 +66,18 @@ class PhysicsBody2D(Node2D):
             if not result.collided:
                 self.local_x = target_lx
             else:
-                other_rect = result.collider.get_rect()
+                # Fix: Calculate exact float bounds of the other collider instead of using get_rect() which truncates to integer
+                ogx, ogy = result.collider.get_global_position()
+                osw = result.collider.width * result.collider.scale_x
+                other_left, other_right = ogx, ogx + osw
+                
                 sw = self.collider.width * self.collider.scale_x
                 if dx > 0:
                     # Move right: snap our right edge to obstacle's left
-                    self.local_x = other_rect.left - sw - self.collider.local_x - pgx
+                    self.local_x = other_left - sw - self.collider.local_x - pgx
                 else:
                     # Move left: snap our left edge to obstacle's right
-                    self.local_x = other_rect.right - self.collider.local_x - pgx
+                    self.local_x = other_right - self.collider.local_x - pgx
                 self.velocity_x = 0.0
             
             # Sync transforms so Y check uses the new, correct X position
@@ -88,14 +92,17 @@ class PhysicsBody2D(Node2D):
             if not result.collided:
                 self.local_y = target_ly
             else:
-                other_rect = result.collider.get_rect()
+                ogx, ogy = result.collider.get_global_position()
+                osh = result.collider.height * result.collider.scale_y
+                other_top, other_bottom = ogy, ogy + osh
+                
                 sh = self.collider.height * self.collider.scale_y
                 if dy > 0:
                     # Move down: snap our bottom edge to obstacle's top
-                    self.local_y = other_rect.top - sh - self.collider.local_y - pgy
+                    self.local_y = other_top - sh - self.collider.local_y - pgy
                 else:
                     # Move up: snap our top edge to obstacle's bottom
-                    self.local_y = other_rect.bottom - self.collider.local_y - pgy
+                    self.local_y = other_bottom - self.collider.local_y - pgy
                 self.velocity_y = 0.0
             
             # Sync transforms again

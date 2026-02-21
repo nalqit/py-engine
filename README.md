@@ -30,10 +30,10 @@ The engine is built using a **layered architecture**, with each level stabilized
 ### Level 2 — Collision System
 - **Collider2D**: Scale-aware AABB data — dimensions, layer/mask, static/trigger flags.
 - **CollisionResult**: Structured dataclass with collision normal and penetration depth.
-- **CollisionWorld**: Float-precision AABB overlap checks with MTV resolution. Layer/mask filtering, trigger support.
+- **CollisionWorld**: Float-precision AABB overlap checks with MTV resolution. Layer/mask filtering, trigger support, and epsilon-inclusive edge detection.
 
 ### Level 3 — Physics Layer
-- **PhysicsBody2D**: Generic body with per-axis move-and-collide resolution.
+- **PhysicsBody2D**: Generic body with per-axis move-and-collide float-precision resolution.
 - **Gravity**: Engine-level `use_gravity` flag with configurable `gravity` constant.
 - **Impulses**: `apply_impulse(ix, iy)` for instantaneous velocity changes.
 - **Coordinate-Space Consistency**: Precise conversion between local and global spaces during resolution.
@@ -69,6 +69,7 @@ The engine is built using a **layered architecture**, with each level stabilized
 ### ⚙️ Physics & Collision (Levels 2-3)
 - **Axis-Separated Resolution**: X is resolved, then Y, with forced transform synchronization between steps.
 - **Coordinate Integrity**: Robust handling of local-to-global translations to prevent "teleportation" glitches.
+- **Float Precision**: Uses exact float boundaries and inclusive epsilon bounds for reliable contact detection (e.g., box pushing, springs).
 
 ---
 
@@ -84,12 +85,17 @@ src/
 │   ├── physics/           # PhysicsBody2D
 │   └── ui/                # StatsHUD
 │
-├── game/                  # Gameplay Layer
+├── game/                  # Main Game Example ("The Great Adventure")
 │   ├── entities/          # Player, NPC, Box, Coin
 │   ├── player_controller.py
 │   ├── player_fsm.py
 │   ├── player_states.py
-│   └── main.py            # Game entry point: "The Great Adventure"
+│   └── main.py            
+│
+├── games/                 # Minimal Engine-Only Examples
+│   ├── spring_bounce/     # Vertical Platformer (Trigger/Spring mechanics)
+│   ├── spike_rain/        # Survival Game (Falling hazards, Game loop reset)
+│   └── box_pusher/        # Puzzle Game (Robust Box Pushing mechanics)
 │
 ├── tests/                 # Unit tests for all layers
 ```
@@ -100,8 +106,12 @@ src/
 
 1. **Python**: 3.10+
 2. **Dependencies**: `pip install pygame`
-3. **Run**: `python -m src.game.main`
-4. **Debug**: Press **F1** in-game to toggle collider visualization.
+3. **Run Main Game**: `python -m src.game.main`
+4. **Run Examples**: 
+    - `python -m src.games.spring_bounce.main`
+    - `python -m src.games.spike_rain.main`
+    - `python -m src.games.box_pusher.main`
+5. **Debug**: Press **F1** in-game to toggle collider visualization.
 
 ---
 
@@ -110,7 +120,7 @@ src/
 ### Completed
 - [x] Runtime Core & Scene Tree.
 - [x] AABB Collision System (Layer/Mask, Triggers).
-- [x] Generic PhysicsBody2D with axis-separation.
+- [x] Generic PhysicsBody2D with axis-separation and float precision.
 - [x] Engine-level Gravity and Impulse support.
 - [x] Engine-Agnostic Player Controller (Level 4).
 - [x] Behavioral State Machine (Level 5).
@@ -118,6 +128,7 @@ src/
 - [x] Particle System & Sprite Rendering (Level 6).
 - [x] Scale-Aware Physics Sync.
 - [x] World Overhaul (Structured Map & Unified Background).
+- [x] **Engine-Only Examples**: Created 3 isolated games (`spring_bounce`, `spike_rain`, `box_pusher`) to prove engine independence.
 
 ### Up Next
 - [ ] Sound & Music Layer.

@@ -26,7 +26,7 @@ The engine is built on a modular "Node" architecture, similar to major game engi
 
 ### ⚙️ Physics Layer (`src/engine/physics/`)
 
-- **[physics_body_2d.py](file:///c:/Users/dell/Desktop/try3(gpt prompts)/src/engine/physics/physics_body_2d.py)**: Provides mass-like behavior, including gravity and velocity-based motion with automatic collision resolution.
+- **[physics_body_2d.py](file:///c:/Users/dell/Desktop/try3(gpt prompts)/src/engine/physics/physics_body_2d.py)**: Provides mass-like behavior, including gravity and velocity-based motion. Handles robust sub-pixel overlapping resolution with exact float boundaries.
 
 ### 🖥️ UI Layer (`src/engine/ui/`)
 
@@ -34,9 +34,9 @@ The engine is built on a modular "Node" architecture, similar to major game engi
 
 ---
 
-## 🎮 Game Logic (`src/game/`)
+## 🎮 Main Game Demo (`src/game/`)
 
-This directory contains the actual "content" of the game using the engine's tools.
+This directory contains the flagship "Great Adventure" game demonstrating the Gameplay, State, and Juice layers working together.
 
 ### 🧩 Entities (`src/game/entities/`)
 
@@ -54,6 +54,16 @@ This directory contains the actual "content" of the game using the engine's tool
 ### 🚀 Entry Point
 
 - **[main.py](file:///c:/Users/dell/Desktop/try3(gpt prompts)/src/game/main.py)**: The "glue" that binds everything. It initializes Pygame, builds the world map, sets up the parallax background, and runs the main loop.
+
+---
+
+## 🎲 Isolated Engine Examples (`src/games/`)
+
+This directory contains pure, engine-only examples that prove the engine's modularity by zero-dependency implementations of different genres.
+
+- **[spring_bounce/main.py](file:///c:/Users/dell/Desktop/try3(gpt prompts)/src/games/spring_bounce/main.py)**: A vertical platformer demonstrating trigger areas acting as powerful springs.
+- **[spike_rain/main.py](file:///c:/Users/dell/Desktop/try3(gpt prompts)/src/games/spike_rain/main.py)**: A survival dodging game demonstrating dynamic instantiation, score tracking, and clean game loop resets upon death.
+- **[box_pusher/main.py](file:///c:/Users/dell/Desktop/try3(gpt prompts)/src/games/box_pusher/main.py)**: A puzzle prototype proving the robustness of the engine's float-precision physics and epsilon-inclusive contact detection for pushing blocks onto buttons.
 
 ---
 
