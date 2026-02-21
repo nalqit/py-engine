@@ -16,6 +16,8 @@ from src.engine.scene.tween import TweenManager
 from src.engine.scene.sprite_node import SpriteNode
 from src.game.entities.coin import Coin
 from src.game.entities.patrol_enemy import PatrolEnemy
+from src.game.entities.spring import Spring
+from src.game.entities.spike import Spike
 
 def main():
     pygame.init()
@@ -82,6 +84,20 @@ def main():
         enemy.add_child(RectangleNode(name + "Vis", 0, 0, 40, 40, (200, 50, 200)))
         return enemy
 
+    def spawn_spring(name, x, y):
+        spring = Spring(name, x, y)
+        spring.get_node(name + "_Col").mask = {"player", "box", "npc"}
+        visual_world.add_child(spring)
+        spring.add_child(RectangleNode(name + "_Vis", 0, 0, 40, 20, (50, 200, 50)))
+        return spring
+        
+    def spawn_spike(name, x, y):
+        spike = Spike(name, x, y, 40, 40)
+        visual_world.add_child(spike)
+        # Visual representation: Red square for now
+        spike.add_child(RectangleNode(name + "_Vis", 0, 0, 40, 40, (255, 0, 0)))
+        return spike
+
     # 1. HUGE FLOOR
     create_wall("Ground", -1000, 500, 5000, 200)
     
@@ -108,6 +124,11 @@ def main():
     # Enemy guarding the NPC
     spawn_enemy("Enemy2", 1500, 450)
 
+    # Some spikes before the village
+    spawn_spike("SpikeGap1", 1300, 460)
+    spawn_spike("SpikeGap2", 1340, 460)
+    spawn_spike("SpikeGap3", 1380, 460)
+
     npc_col = Collider2D("VillageNPCCol", 0, 0, 40, 40)
     npc_col.layer = "npc"
     npc_col.mask = {"wall", "player", "box"}
@@ -118,6 +139,9 @@ def main():
     
     create_wall("Roof", 1700, 350, 300, 20, (120, 100, 80))
     spawn_coin("RoofCoin", 1840, 300)
+    
+    # A spring to bounce up to the roof
+    spawn_spring("RoofSpring", 1600, 480)
 
     # 5. PHYSICS PLAYGROUND (Boxes far from coins)
     for i in range(3):
