@@ -41,8 +41,11 @@ class CollisionWorld(Node2D):
         self._cached_rects = {}
         for col in self._cached_colliders:
             if hasattr(col, 'get_rect'):
-                rect = col.get_rect()
-                self._cached_rects[col] = (rect.left, rect.top, rect.right, rect.bottom)
+                res = col.get_rect()
+                if isinstance(res, tuple):
+                    self._cached_rects[col] = res
+                else:
+                    self._cached_rects[col] = (res.left, res.top, res.right, res.bottom)
             else:
                 gx, gy = col.get_global_position()
                 sw = col.width * col.scale_x
@@ -177,9 +180,92 @@ class CollisionWorld(Node2D):
         This is the public API for ground-checks, proximity tests, etc.
         Games should use this instead of accessing _cached_colliders directly.
 
-        Returns: CollisionResult
+        Returns: CollisionResult (the shallowest penetration found)
         """
         return self.check_collision(collider, test_x, test_y)
+        
+    def query_overlap_all(self, collider, test_x, test_y):
+        """
+        Public query: test if a collider at (test_x, test_y) overlaps
+        any non-trigger collider visible via layer/mask.
+        Returns ALL overlaps, instead of just the nearest.
+
+        Returns: list of CollisionResult
+        """
+        current_parent_gx, current_parent_gy = 0.0, 0.0
+        if collider.parent:
+            current_parent_gx, current_parent_gy = collider.parent.get_global_position()
+
+        move_dx = test_x - current_parent_gx
+        move_dy = test_y - current_parent_gy
+
+        sw = collider.width * collider.scale_x
+        sh = collider.height * collider.scale_y
+        test_left = current_parent_gx + move_dx + collider.local_x
+        test_top = current_parent_gy + move_dy + collider.local_y
+        test_right = test_left + sw
+        test_bottom = test_top + sh
+
+        results = []
+
+        for other in self._cached_colliders:
+            if other is collider or other.layer not in collider.mask or other.is_trigger:
+                continue
+
+            other_rect = self._cached_rects.get(other)
+            if not other_rect:
+                continue
+            
+            other_left, other_top, other_right, other_bottom = other_rect
+
+            if (test_left >= other_right or test_right <= other_left or
+                    test_top >= other_bottom or test_bottom <= other_top):
+                continue
+
+            overlap_left = test_right - other_left
+            overlap_right = other_right - test_left
+            overlap_top = test_bottom - other_top
+            overlap_bottom = other_bottom - test_top
+
+            if overlap_left < overlap_right:
+                pen_x, normal_x = overlap_left, -1.0
+            else:
+                pen_x, normal_x = overlap_right, 1.0
+
+            if overlap_top < overlap_bottom:
+                pen_y, normal_y = overlap_top, -1.0
+            else:
+                pen_y, normal_y = overlap_bottom, 1.0
+
+            if pen_x < pen_y:
+                pen, nx, ny = pen_x, normal_x, 0.0
+            else:
+                pen, nx, ny = pen_y, 0.0, normal_y
+
+            results.append(CollisionResult(
+                collided=True, collider=other, normal_x=nx, normal_y=ny, penetration=pen
+            ))
+
+        return results
+
+    def query_rect(self, test_left, test_top, test_right, test_bottom, masks=None, exclude=None):
+        """Public API: test if any cached collider overlaps the given float rect."""
+        results = []
+        for col in self._cached_colliders:
+            if exclude and col is exclude:
+                continue
+            if col.is_trigger:
+                continue
+            if masks and col.layer not in masks:
+                continue
+            rect = self._cached_rects.get(col)
+            if not rect:
+                continue
+            
+            ol, ot, oright, ob = rect
+            if not (test_left >= oright or test_right <= ol or test_top >= ob or test_bottom <= ot):
+                results.append(col)
+        return results
 
     def get_collider_count(self):
         """Returns the number of active colliders in the cache."""

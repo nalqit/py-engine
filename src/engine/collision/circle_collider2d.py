@@ -26,19 +26,19 @@ class CircleCollider2D(Node2D):
         # x, y is the center, so top-left is x-r, y-r
         return pygame.Rect(int(gx - r), int(gy - r), int(r * 2), int(r * 2))
 
-    def render(self, surface: pygame.Surface) -> None:
+    def render(self, surface) -> None:
         """Debug draw for circle collider."""
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
         sx, sy = self.get_screen_position()
         r = self.radius * self.scale_x
-        
-        color = (0, 0, 255, 128) if self.is_static else (255, 0, 0, 128)
-        
-        # Transparent fill via temporary surface
-        s = pygame.Surface((int(r*2 + 1), int(r*2 + 1)), pygame.SRCALPHA)
-        pygame.draw.circle(s, color, (int(r), int(r)), int(r))
-        surface.blit(s, (int(sx - r), int(sy - r)))
-        
-        # Outline
-        pygame.draw.circle(surface, (255, 255, 255), (int(sx), int(sy)), int(r), 1)
+
+        if renderer:
+            color = (0, 0, 255, 128) if self.is_static else (255, 0, 0, 128)
+            overlay = renderer.create_surface(int(r * 2 + 1), int(r * 2 + 1), alpha=True)
+            renderer.draw_circle(overlay, color, int(r), int(r), int(r))
+            renderer.blit(surface, overlay, (int(sx - r), int(sy - r)))
+            renderer.draw_circle(surface, (255, 255, 255), int(sx), int(sy), int(r), 1)
 
         super().render(surface)
+

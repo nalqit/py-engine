@@ -87,6 +87,10 @@ class AnimatedSprite(Node2D):
         sx, sy = self.get_screen_position()
         dest_pos = (int(sx), int(sy))
         
-        surface.blit(self.sprite_sheet, dest_pos, src_rect)
+        from src.engine.core.engine import Engine
+        if Engine.instance:
+            Engine.instance.renderer.blit(surface, self.sprite_sheet, dest_pos, area=src_rect)
+        else:
+            surface.blit(self.sprite_sheet, dest_pos, src_rect)
         
         super().render(surface)

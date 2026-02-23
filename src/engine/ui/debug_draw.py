@@ -28,11 +28,9 @@ class DebugDraw:
 
     def _draw_flags(self, body):
         text_lines = [
-            f"on_ground: {body.on_ground}",
-            f"hit_ceiling: {body.hit_ceiling}",
-            f"hit_wall_L: {body.hit_wall_left}",
-            f"hit_wall_R: {body.hit_wall_right}",
             f"vel: ({body.velocity_x:.1f}, {body.velocity_y:.1f})",
+            f"gravity: {body.use_gravity}",
+            f"pushable: {body.pushable}",
         ]
         sx, sy = body.collider.get_screen_position()
         for i, line in enumerate(text_lines):

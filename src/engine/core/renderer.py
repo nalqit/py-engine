@@ -14,6 +14,7 @@ class Renderer:
     def __init__(self):
         self._font_cache = {}
         self._text_cache = {}
+        self.MAX_TEXT_CACHE = 256
 
     # ---- Surface management ----
 
@@ -25,14 +26,17 @@ class Renderer:
     def fill(self, surface, color):
         surface.fill(color)
 
-    def blit(self, dest, src, pos, blend_mode=None):
+    def blit(self, dest, src, pos, area=None, blend_mode=None):
         if blend_mode is not None:
-            dest.blit(src, pos, special_flags=blend_mode)
+            dest.blit(src, pos, area=area, special_flags=blend_mode)
         else:
-            dest.blit(src, pos)
+            dest.blit(src, pos, area=area)
 
     def scale_surface(self, surface, w, h):
         return pygame.transform.scale(surface, (int(w), int(h)))
+
+    def get_surface_size(self, surface):
+        return surface.get_size()
 
     # ---- Primitives ----
 
@@ -57,11 +61,20 @@ class Renderer:
             self._font_cache[key] = pygame.font.SysFont("Arial", size, bold=bold)
         return self._font_cache[key]
 
+    def draw_text(self, surface, text, color, x, y, size=16, bold=False):
+        """Convenience method to render and blit text using the cache in one call."""
+        surf = self.render_text(text, color, size, bold)
+        self.blit(surface, surf, (int(x), int(y)))
+
     def render_text(self, text, color, size=16, bold=False):
         """Returns a surface with the rendered text. Results are cached."""
         key = (text, color, size, bold)
         if key in self._text_cache:
             return self._text_cache[key]
+        if len(self._text_cache) >= self.MAX_TEXT_CACHE:
+            # Evict oldest entry
+            oldest = next(iter(self._text_cache))
+            del self._text_cache[oldest]
         font = self._get_font(size, bold)
         surf = font.render(text, True, color)
         self._text_cache[key] = surf

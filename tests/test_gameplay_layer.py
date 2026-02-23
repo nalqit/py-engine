@@ -58,13 +58,17 @@ def test_horizontal_acceleration():
     input_state = {"move_left": False, "move_right": True, "jump": False}
     
     # 0.1s update
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, input_state)
     # acc=1200, 1200 * 0.1 = 120
     assert player.velocity_x == 120.0
     
-    # Continue moving right
     for _ in range(10):
+        root.update_transforms()
+        cw.update(0.1)
         player.controller.update(player, 0.1, input_state)
+        player.update_transforms() # needed otherwise player doesn't actually move its bounds
     
     # must clamp to max_speed (400)
     assert player.velocity_x == 400.0
@@ -80,11 +84,14 @@ def test_friction():
     input_state = {"move_left": False, "move_right": False, "jump": False}
     
     # friction=800, 200 / 800 = 0.25s to stop
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, input_state)
     assert player.velocity_x == 200.0 - (800.0 * 0.1)
     
-    # Wait until stopped
     for _ in range(5):
+        root.update_transforms()
+        cw.update(0.1)
         player.controller.update(player, 0.1, input_state)
         
     assert player.velocity_x == 0.0
@@ -95,17 +102,23 @@ def test_ground_detection():
     root, cw, player = build_scene()
     
     # 1. Player in air (y=100, floor at y=400)
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, {})
     assert player.controller.is_grounded == False
     
     # 2. Player touching ground
     # Player rect is 50x50. If y=350, bottom is 400.
     player.local_y = 350.0
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, {})
     assert player.controller.is_grounded == True
     
     # 3. Slighly above
     player.local_y = 345.0
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, {})
     # probe is 2.0px. 400 - (345+50) = 5px. Should be False.
     assert player.controller.is_grounded == False
@@ -120,11 +133,15 @@ def test_jump_logic():
     # 1. Try jump while in air
     player.local_y = 100.0
     input_state = {"jump": True}
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, input_state)
     assert player.velocity_y == 0.0 # No jump
     
     # 2. Try jump while grounded
     player.local_y = 350.0
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, input_state)
     # jump_force = 450. velocity_y should be -450
     assert player.velocity_y == -450.0

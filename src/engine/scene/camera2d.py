@@ -14,7 +14,8 @@ class Camera2D(Node2D):
             
             # Smoothly interpolate current position to target position center
             smooth_speed = 5.0
-            self.local_x += (tx - self.local_x) * smooth_speed * delta
-            self.local_y += (ty - self.local_y) * smooth_speed * delta
+            t = min(1.0, smooth_speed * delta)
+            self.local_x += (tx - self.local_x) * t
+            self.local_y += (ty - self.local_y) * t
 
         super().update(delta)

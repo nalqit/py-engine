@@ -169,7 +169,7 @@ def main():
     Node2D.camera = camera 
 
     # ---------------- HUD ----------------
-    hud = StatsHUD("HUD", root, clock)
+    hud = StatsHUD("HUD")
     root.add_child(hud)
 
     # ---------------- Main Loop ----------------

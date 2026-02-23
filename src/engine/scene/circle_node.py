@@ -24,12 +24,9 @@ class CircleNode(Node2D):
     def render(self, surface: pygame.Surface) -> None:
         sx, sy = self.get_screen_position()
 
-        pygame.draw.circle(
-            surface,
-            self.color,
-            (int(sx), int(sy)),
-            self.radius
-        )
+        from src.engine.core.engine import Engine
+        if Engine.instance:
+            Engine.instance.renderer.draw_circle(surface, self.color, sx, sy, self.radius)
 
         # Recursive render
         super().render(surface)

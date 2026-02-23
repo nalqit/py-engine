@@ -23,12 +23,7 @@ class RectangleNode(Node2D):
         sw = self.width * self.scale_x
         sh = self.height * self.scale_y
         
-        # Center the rectangle based on scale (optional, but better for juice)
-        # gx = screen_x - (sw - self.width) / 2
-        # gy = screen_y - (sh - self.height) / 2
-        
-        # For simple squash/stretch from bottom, we offset Y differently
-        # Let's just do standard scaling for now
-        rect = pygame.Rect(int(screen_x), int(screen_y), int(sw), int(sh))
-        pygame.draw.rect(surface, self.color, rect)
+        from src.engine.core.engine import Engine
+        if Engine.instance:
+            Engine.instance.renderer.draw_rect(surface, self.color, screen_x, screen_y, sw, sh)
         super().render(surface)

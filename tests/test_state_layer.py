@@ -56,6 +56,8 @@ def test_idle_to_run_transition():
     root, cw, player = build_scene()
     # Ground the player so it doesn't transition to FallState
     player.local_y = 350.0 
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, {}) 
     assert player.state_machine.get_state_name() == "IdleState"
     
@@ -75,6 +77,8 @@ def test_run_to_idle_transition():
     root, cw, player = build_scene()
     # Ground the player
     player.local_y = 350.0
+    root.update_transforms()
+    cw.update(0.1)
     player.controller.update(player, 0.1, {})
 
     player.velocity_x = 50.0
@@ -115,7 +119,9 @@ def test_fall_to_idle_on_landing():
     player.local_y = 350.0
     player.velocity_y = 0.0
     # Must update controller first to set grounded flag for the FSM to see
-    player.controller.update(player, 0.1, {}) 
+    root.update_transforms()
+    cw.update(0.1)
+    player.controller.update(player, 0.1, {})
     player.state_machine.update(0.1)
     assert player.state_machine.get_state_name() == "IdleState"
     print("[PASS] test_fall_to_idle_on_landing")

@@ -6,12 +6,12 @@ class Area2D(Node2D):
     A node for detection overlaps without physical response.
     Triggers 'on_area_entered' and 'on_area_exited' signals.
     """
-    def __init__(self, name, x, y, width, height):
+    def __init__(self, name, x, y, width, height, layer="default", mask=None):
         super().__init__(name, x, y)
         self.collider = Collider2D(name + "_AreaCol", 0, 0, width, height, is_static=False)
         self.collider.is_trigger = True
-        self.collider.layer = "default"
-        self.collider.mask = set()
+        self.collider.layer = layer
+        self.collider.mask = mask if mask is not None else set()
         self.add_child(self.collider)
         
         # We'll use these to track overlaps

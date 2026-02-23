@@ -100,6 +100,8 @@ def test_gravity_stops_at_floor():
 
     # Simulate several frames — body should fall and stop at floor
     for _ in range(200):
+        root.update_transforms()
+        cw.update(1 / 60)
         body.update(1 / 60)
 
     # Body bottom (local_y + 50) should not exceed floor top (400)

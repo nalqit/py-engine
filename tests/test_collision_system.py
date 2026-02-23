@@ -104,8 +104,8 @@ def test_collider_rect_at_origin():
     col = Collider2D("C", 0, 0, 30, 40)
     parent.add_child(col)
     rect = col.get_rect()
-    assert rect.x == 0 and rect.y == 0
-    assert rect.width == 30 and rect.height == 40
+    assert rect[0] == 0 and rect[1] == 0
+    assert rect[2] - rect[0] == 30 and rect[3] - rect[1] == 40
     print("[PASS] test_collider_rect_at_origin")
 
 
@@ -113,8 +113,9 @@ def test_collider_rect_with_parent_offset():
     parent = Node2D("P", 100, 200)
     col = Collider2D("C", 5, 10, 30, 40)
     parent.add_child(col)
+    parent.update_transforms()
     rect = col.get_rect()
-    assert rect.x == 105 and rect.y == 210
+    assert rect[0] == 105 and rect[1] == 210
     print("[PASS] test_collider_rect_with_parent_offset")
 
 
@@ -124,6 +125,8 @@ def test_collider_rect_with_parent_offset():
 
 def test_no_collision_when_far():
     root, cw, body, body_col, wall, wall_col = build_simple_scene()
+    root.update_transforms()
+    cw.update(0.1)
     # Player at (100,100), wall at (200,100). Move player to (110,100) — no overlap.
     result = cw.check_collision(body_col, 110, 100)
     assert result.collided is False
@@ -132,6 +135,8 @@ def test_no_collision_when_far():
 
 def test_collision_returns_result_on_overlap():
     root, cw, body, body_col, wall, wall_col = build_simple_scene()
+    root.update_transforms()
+    cw.update(0.1)
     # Move player to x=160 → player rect right edge = 210, wall left = 200 → overlap 10px
     result = cw.check_collision(body_col, 160, 100)
     assert result.collided is True
@@ -142,6 +147,8 @@ def test_collision_returns_result_on_overlap():
 
 def test_collision_normal_direction():
     root, cw, body, body_col, wall, wall_col = build_simple_scene()
+    root.update_transforms()
+    cw.update(0.1)
     # Move player into wall from the left → normal should push left (normal_x = -1)
     result = cw.check_collision(body_col, 170, 100)
     assert result.collided is True
@@ -158,6 +165,8 @@ def test_free_movement():
     root, cw, body, body_col, wall, wall_col = build_simple_scene()
     body.velocity_x = 100.0
     body.velocity_y = 0.0
+    root.update_transforms()
+    cw.update(0.1)
     # dt=0.1 → dx=10, new x=110 (no collision)
     body.update(0.1)
     assert abs(body.local_x - 110.0) < 0.01
@@ -168,6 +177,8 @@ def test_blocked_movement_x():
     root, cw, body, body_col, wall, wall_col = build_simple_scene()
     body.velocity_x = 1000.0  # large velocity to overshoot into wall
     body.velocity_y = 50.0
+    root.update_transforms()
+    cw.update(0.1)
     body.update(0.1)
     # X should be corrected (not past wall), velocity_x zeroed
     assert body.velocity_x == 0.0
@@ -181,6 +192,8 @@ def test_velocity_zeroed_only_on_impact_axis():
     root, cw, body, body_col, wall, wall_col = build_simple_scene()
     body.velocity_x = 2000.0
     body.velocity_y = 200.0
+    root.update_transforms()
+    cw.update(0.1)
     body.update(0.05)
     assert body.velocity_x == 0.0   # impacted axis
     assert body.velocity_y == 200.0  # free axis preserved

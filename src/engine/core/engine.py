@@ -4,6 +4,7 @@ import sys
 from src.engine.core.input import InputSystem
 from src.engine.core.renderer import Renderer
 from src.engine.utils.profiler import EngineProfiler
+from src.engine.time.master_clock import MasterClock
 
 
 class EngineEvent:
@@ -39,11 +40,13 @@ class Engine:
         self.input = InputSystem(self)
         self.renderer = Renderer()
         self.profiler = EngineProfiler()
+        self.master_clock = MasterClock()
         self.events = []
 
     def begin_frame(self):
         """Call at the start of each frame. Returns raw dt."""
         self.dt = self._clock.tick(60) / 1000.0
+        self.dt = min(self.dt, 0.25)  # Cap to prevent spiral-of-death
         self.fps = self._clock.get_fps()
         self.profiler.log_frame(self.dt)
         self.events.clear()
@@ -79,9 +82,11 @@ class Engine:
         while self.running:
             dt = self.begin_frame()
             accumulator += dt
+            accumulator = min(accumulator, self.fixed_dt * 8)
 
             self.profiler.begin("Logic")
             while accumulator >= self.fixed_dt:
+                self.master_clock.update(self.fixed_dt)
                 root.update_transforms()
                 root.update(self.fixed_dt)
                 if on_fixed_update:

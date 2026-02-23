@@ -73,21 +73,24 @@ class ParticleEmitter2D(Node2D):
             root = self._get_root()
             camera = root.get_node("Camera")
             if camera:
-                cx = camera.local_x - 400
-                cy = camera.local_y - 300
+                from src.engine.core.engine import Engine
+                half_w = Engine.instance.virtual_w // 2 if Engine.instance else 400
+                half_h = Engine.instance.virtual_h // 2 if Engine.instance else 300
+                cx = camera.local_x - half_w
+                cy = camera.local_y - half_h
+
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
 
         for p in self.particles:
-            alpha = int((p.lifetime / p.initial_lifetime) * 255)
-            # Use a slightly complex color to respect alpha if needed, 
-            # but pygame.draw.circle is simpler
-            # We skip real alpha for performance/simplicity in this demo
-            color = self._adjust_color_alpha(p.color, alpha)
-            
+            color = self._adjust_color_alpha(p.color, int((p.lifetime / p.initial_lifetime) * 255))
+
             screen_x = p.x - cx
             screen_y = p.y - cy
-            
+
             size = max(1, int(3 * (p.lifetime / p.initial_lifetime)))
-            pygame.draw.circle(surface, color, (int(screen_x), int(screen_y)), size)
+            if renderer:
+                renderer.draw_circle(surface, color, int(screen_x), int(screen_y), size)
 
         super().render(surface)
 
