@@ -31,8 +31,9 @@ class Node2D(Node):
     def get_screen_position(self):
         gx, gy = self.get_global_position()
         if Node2D.camera:
-            # هذه المرة نحسب offset بحيث اللاعب في منتصف الشاشة
-            screen_w, screen_h = 800, 600  # أو أرسل من main
+            from src.engine.core.engine import Engine
+            screen_w = Engine.instance.virtual_w if Engine.instance else 800
+            screen_h = Engine.instance.virtual_h if Engine.instance else 600
             cx, cy = Node2D.camera.get_global_position()
             return gx - cx + screen_w//2, gy - cy + screen_h//2
         return gx, gy

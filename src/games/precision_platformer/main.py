@@ -35,7 +35,7 @@ class PlatformerPlayer(PhysicsBody2D):
         self.use_gravity = True
         self.gravity = 1200.0
         self.movespeed = 250.0
-        self.jumpforce = 450.0
+        self.jumpforce = 600.0
         self.coyote_timer = 0.0
         self.coyote_time_max = 0.1
         self.jump_buffer = 0.0

@@ -21,7 +21,7 @@ class Note(Node2D):
         self.col_idx = col_idx
         self.target_time = target_time
         colors = [(255, 100, 100), (100, 255, 100), (100, 100, 255), (255, 255, 100)]
-        self.add_child(RectangleNode(name + "Vis", -20, -10, 40, 20, colors[col_idx]))
+        self.add_child(RectangleNode(name + "Vis", -20, -10, 40, 40, colors[col_idx]))
         self.hit = False
 
     def update_position(self, current_time):

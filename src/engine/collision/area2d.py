@@ -10,8 +10,8 @@ class Area2D(Node2D):
         super().__init__(name, x, y)
         self.collider = Collider2D(name + "_AreaCol", 0, 0, width, height, is_static=False)
         self.collider.is_trigger = True
-        self.collider.layer = "coin"
-        self.collider.mask = {"player"}
+        self.collider.layer = "default"
+        self.collider.mask = set()
         self.add_child(self.collider)
         
         # We'll use these to track overlaps

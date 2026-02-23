@@ -59,7 +59,7 @@ class MetroidvaniaPlayer(PhysicsBody2D):
         self.use_gravity = True
         self.gravity = 1200.0
         self.movespeed = 250.0
-        self.jumpforce = 500.0
+        self.jumpforce = 900.0
         self.add_child(col)
         self.add_child(RectangleNode("PVis", 0, 0, 20, 30, (255, 100, 100)))
         self.is_grounded = False

@@ -64,8 +64,11 @@ class ParticleEmitter2D(Node2D):
         # Camera is usually set as a static variable on Node2D or we find it
         cx, cy = 0, 0
         if Node2D.camera:
-            cx = Node2D.camera.local_x - 400
-            cy = Node2D.camera.local_y - 300
+            from src.engine.core.engine import Engine
+            half_w = Engine.instance.virtual_w // 2 if Engine.instance else 400
+            half_h = Engine.instance.virtual_h // 2 if Engine.instance else 300
+            cx = Node2D.camera.local_x - half_w
+            cy = Node2D.camera.local_y - half_h
         else:
             root = self._get_root()
             camera = root.get_node("Camera")

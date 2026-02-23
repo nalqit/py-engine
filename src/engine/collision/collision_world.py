@@ -169,6 +169,21 @@ class CollisionWorld(Node2D):
 
         return best_result
 
+    def query_overlap(self, collider, test_x, test_y):
+        """
+        Public query: test if a collider at (test_x, test_y) overlaps
+        any non-trigger collider visible via layer/mask.
+
+        This is the public API for ground-checks, proximity tests, etc.
+        Games should use this instead of accessing _cached_colliders directly.
+
+        Returns: CollisionResult
+        """
+        return self.check_collision(collider, test_x, test_y)
+
+    def get_collider_count(self):
+        """Returns the number of active colliders in the cache."""
+        return len(self._cached_colliders)
     # ------------------------------------------------------------------
     # Broad-phase pair detection (enter / stay / exit events)
     # ------------------------------------------------------------------
@@ -228,10 +243,10 @@ class CollisionWorld(Node2D):
                             pair = tuple(sorted((a, b), key=id))
                             current.add(pair)
 
-                        if pair not in self._last_collisions:
-                            self._emit(a, b, "enter")
-                        else:
-                            self._emit(a, b, "stay")
+                            if pair not in self._last_collisions:
+                                self._emit(a, b, "enter")
+                            else:
+                                self._emit(a, b, "stay")
 
         # Exited pairs
         for pair in self._last_collisions - current:
