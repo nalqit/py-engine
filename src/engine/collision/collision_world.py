@@ -40,11 +40,14 @@ class CollisionWorld(Node2D):
         """Pre-calculate all world-space collider bounds, accounting for scale."""
         self._cached_rects = {}
         for col in self._cached_colliders:
-            gx, gy = col.get_global_position()
-            # Account for scale in bounds
-            sw = col.width * col.scale_x
-            sh = col.height * col.scale_y
-            self._cached_rects[col] = (gx, gy, gx + sw, gy + sh)
+            if hasattr(col, 'get_rect'):
+                rect = col.get_rect()
+                self._cached_rects[col] = (rect.left, rect.top, rect.right, rect.bottom)
+            else:
+                gx, gy = col.get_global_position()
+                sw = col.width * col.scale_x
+                sh = col.height * col.scale_y
+                self._cached_rects[col] = (gx, gy, gx + sw, gy + sh)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -192,16 +195,38 @@ class CollisionWorld(Node2D):
                     la, ta, ra, ba = rect_a
                     lb, tb, rb, bb = rect_b
 
-                    # Standard AABB overlap check (floats)
-                    # Standard AABB overlap check (floats)
-                    # We use a small EPS (epsilon) to make the check inclusive
-                    # so that "touching" edges (common in physics snapping)
-                    # correctly trigger enter/stay events.
-                    EPS = 0.5 # Half a pixel of tolerance
-                    if (la < rb + EPS and ra > lb - EPS and 
-                        ta < bb + EPS and ba > tb - EPS):
-                        pair = tuple(sorted((a, b), key=id))
-                        current.add(pair)
+                    # Standard AABB broad-phase overlap check
+                    EPS = 0.5
+                    broadphase_hit = (la < rb + EPS and ra > lb - EPS and ta < bb + EPS and ba > tb - EPS)
+                    
+                    if broadphase_hit:
+                        # Narrow-phase circle collision
+                        is_a_circle = hasattr(a, 'radius')
+                        is_b_circle = hasattr(b, 'radius')
+                        
+                        narrow_hit = True
+                        if is_a_circle and is_b_circle:
+                            # Circle-Circle
+                            dx = a.get_global_position()[0] - b.get_global_position()[0]
+                            dy = a.get_global_position()[1] - b.get_global_position()[1]
+                            r = (a.radius * a.scale_x) + (b.radius * b.scale_x)
+                            narrow_hit = (dx*dx + dy*dy) <= (r*r)
+                        elif is_a_circle or is_b_circle:
+                            # Circle-AABB
+                            circle, rect_col = (a, b) if is_a_circle else (b, a)
+                            cx, cy = circle.get_global_position()
+                            r = circle.radius * circle.scale_x
+                            rl, rt, rr, rb_edge = (lb, tb, rb, bb) if circle is b else (la, ta, ra, ba)
+                            
+                            closest_x = max(rl, min(cx, rr))
+                            closest_y = max(rt, min(cy, rb_edge))
+                            dx = cx - closest_x
+                            dy = cy - closest_y
+                            narrow_hit = (dx*dx + dy*dy) <= (r*r)
+
+                        if narrow_hit:
+                            pair = tuple(sorted((a, b), key=id))
+                            current.add(pair)
 
                         if pair not in self._last_collisions:
                             self._emit(a, b, "enter")
@@ -224,3 +249,55 @@ class CollisionWorld(Node2D):
             method = f"on_collision_{phase}"
             if hasattr(body, method):
                 getattr(body, method)(other)
+
+    # ------------------------------------------------------------------
+    # Raycasting
+    # ------------------------------------------------------------------
+
+    def raycast(self, x1, y1, x2, y2, mask=None):
+        """
+        Casts a ray from (x1, y1) to (x2, y2).
+        Returns (hit: bool, hit_x: float, hit_y: float, collider)
+        Finds the closest intersection with AABBs.
+        mask is a set of layer strings to hit. If None, hits everything except triggers.
+        """
+        closest_hit = None
+        closest_dist = float('inf')
+        hit_x = x2
+        hit_y = y2
+
+        for col, rect in self._cached_rects.items():
+            if mask is not None and col.layer not in mask:
+                continue
+            if col.is_trigger:
+                continue
+                
+            l, t, r, b = rect
+            
+            # 4 edges of the AABB
+            edges = [
+                ((l, t), (r, t)), # top
+                ((r, t), (r, b)), # right
+                ((r, b), (l, b)), # bottom
+                ((l, b), (l, t))  # left
+            ]
+            
+            for (p3x, p3y), (p4x, p4y) in edges:
+                den = (x1 - x2) * (p3y - p4y) - (y1 - y2) * (p3x - p4x)
+                if den == 0: 
+                    continue
+                    
+                t_val = ((x1 - p3x) * (p3y - p4y) - (y1 - p3y) * (p3x - p4x)) / den
+                u_val = -((x1 - x2) * (y1 - p3y) - (y1 - y2) * (x1 - p3x)) / den
+                
+                if 0 <= t_val <= 1 and 0 <= u_val <= 1:
+                    hx = x1 + t_val * (x2 - x1)
+                    hy = y1 + t_val * (y2 - y1)
+                    dist = (hx - x1)**2 + (hy - y1)**2
+                    if dist < closest_dist:
+                        closest_dist = dist
+                        closest_hit = col
+                        hit_x = hx
+                        hit_y = hy
+                        
+        return (closest_hit is not None, hit_x, hit_y, closest_hit)
