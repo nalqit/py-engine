@@ -5,6 +5,7 @@ from src.engine.collision.collider2d import Collider2D
 from src.engine.scene.camera2d import Camera2D
 from src.engine.scene.rectangle_node import RectangleNode
 from src.engine.ui.stats_hud import StatsHUD
+from src.engine.scene.sprite_node import SpriteNode
 
 def main():
     # Initialize Engine (800x600 virtual resolution)
@@ -50,12 +51,15 @@ def main():
     player_col = Collider2D("Player_Col", -20, -20, 40, 40)
     player_col.layer = "player"
     player_col.mask = {"wall", "enemy"}
+    spirit = SpriteNode("Spirit",  "src/games/neon_tank/spaceship1.jpg",-20, -20,)
     
     from .entities.tank import PlayerTank
     player = PlayerTank("Player", 0, 0, player_col, collision_world)
     player.add_child(player_col)
     arena.add_child(player)
-    
+    spirit.width = 40
+    spirit.height = 40
+    player.add_child(spirit)
     # Spawner
     from .entities.spawner import Spawner
     spawner = Spawner("Spawner", collision_world)
@@ -118,9 +122,10 @@ def main():
                     if e.parent:
                         e.parent.remove_child(e)
                 break
-
+    root.print_tree()
+    print(root.get_screen_position())
     print("Neon Tank Arena Initialized.")
     engine.run(root, on_fixed_update=on_fixed_update)
-    root.print_tree()
+    
 if __name__ == "__main__":
     main()
