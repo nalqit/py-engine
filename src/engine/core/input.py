@@ -30,6 +30,10 @@ class Keys:
     NUM_3 = pygame.K_3
     NUM_4 = pygame.K_4
 
+    Z = pygame.K_z
+    X = pygame.K_x
+    F1 = pygame.K_F1
+
 
 class InputSystem:
     """Engine input abstraction. Wraps all keyboard and mouse state."""
@@ -39,10 +43,17 @@ class InputSystem:
         self._keys = {}
         self._prev_keys = {}
         self._mouse_buttons = (False, False, False)
+        self._prev_mouse_buttons = (False, False, False)
         self._mouse_pos = (0, 0)
+        self._consumed_keys = set()
+        self._consumed_mouse_buttons = set()
 
     def _update(self):
         self._prev_keys = dict(self._keys)
+        self._prev_mouse_buttons = tuple(self._mouse_buttons)
+        self._consumed_keys.clear()
+        self._consumed_mouse_buttons.clear()
+        
         pressed = pygame.key.get_pressed()
         self._keys = {i: bool(pressed[i]) for i in range(len(pressed))}
         self._mouse_buttons = pygame.mouse.get_pressed()
@@ -52,14 +63,38 @@ class InputSystem:
         self._mouse_pos = (mx * (vw / max(1, sw)), my * (vh / max(1, sh)))
 
     def is_key_pressed(self, key):
+        if key in self._consumed_keys: return False
         return self._keys.get(key, False)
 
     def is_key_just_pressed(self, key):
+        if key in self._consumed_keys: return False
         return self._keys.get(key, False) and not self._prev_keys.get(key, False)
+        
+    def is_key_just_released(self, key):
+        if key in self._consumed_keys: return False
+        return not self._keys.get(key, False) and self._prev_keys.get(key, False)
+
+    def consume_key(self, key):
+        """Prevents further reading of this key for the current frame."""
+        self._consumed_keys.add(key)
 
     def get_mouse_pos(self):
         """Returns mouse position in virtual (world) coordinates."""
         return self._mouse_pos
 
     def is_mouse_pressed(self, button=0):
+        if button in self._consumed_mouse_buttons: return False
         return self._mouse_buttons[button]
+        
+    def is_mouse_just_pressed(self, button=0):
+        if button in self._consumed_mouse_buttons: return False
+        return self._mouse_buttons[button] and not self._prev_mouse_buttons[button]
+        
+    def is_mouse_just_released(self, button=0):
+        if button in self._consumed_mouse_buttons: return False
+        return not self._mouse_buttons[button] and self._prev_mouse_buttons[button]
+        
+    def consume_mouse(self, button=0):
+        """Prevents further reading of this mouse button for the current frame."""
+        self._consumed_mouse_buttons.add(button)
+

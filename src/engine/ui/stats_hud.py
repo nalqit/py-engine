@@ -19,7 +19,7 @@ class StatsHUD(Node):
             f"Logic: {p.get_average('Logic'):.2f}ms",
             f"Render: {p.get_average('Render'):.2f}ms",
             f"Frame Time: {p.get_average('Frame'):.2f}ms",
-            f"Spikes: {p._spikes}",
+            f"Spikes: {len(p.spike_log)}",
         ]
         
         y = 10

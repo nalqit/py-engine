@@ -1,0 +1,32 @@
+[
+    {
+        "name": "Sprite Stress (10k Objects)",
+        "passed": false,
+        "errors": [
+            "Update time 637.2ms exceeds budget 16.0ms",
+            "Render time 112.6ms exceeds budget 16.0ms"
+        ],
+        "avg_fps": 60.0,
+        "memory_diff_kb": 607.1201171875,
+        "max_update_ms": 637.2379000004003,
+        "max_render_ms": 112.63429999962682
+    },
+    {
+        "name": "Deep UI Layout (Nested)",
+        "passed": true,
+        "errors": [],
+        "avg_fps": 60.0,
+        "memory_diff_kb": -4212.681640625,
+        "max_update_ms": 2.6477000001250417,
+        "max_render_ms": 4.866499999479856
+    },
+    {
+        "name": "Virtual List (100k Items)",
+        "passed": true,
+        "errors": [],
+        "avg_fps": 60.0,
+        "memory_diff_kb": -251.90234375,
+        "max_update_ms": 0.9828000002016779,
+        "max_render_ms": 0.4192000005787122
+    }
+]

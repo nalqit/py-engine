@@ -1,4 +1,4 @@
-import pygame
+
 from src.engine.collision.area2d import Area2D
 from src.engine.scene.rectangle_node import RectangleNode
 

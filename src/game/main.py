@@ -1,8 +1,5 @@
-import pygame
-import sys
-import random
-from typing import Optional
-
+from src.engine.core.engine import Engine
+from src.engine.core.input import Keys
 from src.engine.scene.node2d import Node2D
 from src.engine.scene.rectangle_node import RectangleNode
 from src.game.entities.player import Player
@@ -21,10 +18,7 @@ from src.game.entities.spike import Spike
 from src.game.entities.trophy import Trophy
 
 def main():
-    pygame.init()
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("PyEngine 2D - The Great Adventure")
-    clock = pygame.time.Clock()
+    engine = Engine("PyEngine 2D - The Great Adventure", 800, 600)
 
     # Root
     root = Node2D("Root")
@@ -172,39 +166,29 @@ def main():
     hud = StatsHUD("HUD")
     root.add_child(hud)
 
-    # ---------------- Main Loop ----------------
-    running = True
-    fixed_dt = 1/60.0
-    accumulator = 0.0
+    # Debug collider toggle state
     debug_colliders = False
-    root.print_tree()
-    while running:
-        dt = clock.tick(60) / 1000.0
-        accumulator += dt
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_F1:
+    def on_fixed_update(eng, scene_root, fixed_dt):
+        pass  # All logic handled by node tree updates
+
+    def on_render(eng, scene_root, surface):
+        nonlocal debug_colliders
+        # Check for F1 toggle in engine events
+        for event in eng.events:
+            if event.type == 'key_down':
+                if event.key == Keys.F1:
                     debug_colliders = not debug_colliders
 
-        while accumulator >= fixed_dt:
-            root.update_transforms()
-            root.update(fixed_dt)
-            accumulator -= fixed_dt
-
-        screen.fill((30, 30, 40)) 
-        root.render(screen)
-        
         if debug_colliders:
             for col in collision_world._cached_colliders:
-                col.render(screen)
+                col.render(surface)
 
-        pygame.display.flip()
+    # Print scene tree for debugging
+    root.print_tree()
 
-    pygame.quit()
-    sys.exit()
+    # Use the engine's built-in game loop
+    engine.run(root, on_fixed_update=on_fixed_update, on_render=on_render)
 
 if __name__ == "__main__":
     main()

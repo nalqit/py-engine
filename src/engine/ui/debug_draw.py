@@ -1,10 +1,10 @@
-import pygame
+from src.engine.scene.node2d import Node2D
+
 
 class DebugDraw:
     def __init__(self, parent_node, surface):
         self.parent = parent_node
         self.surface = surface
-        self.font = pygame.font.SysFont(None, 12)
 
     def draw(self):
         # Recursively draw debug info for all PhysicsBodies under parent
@@ -19,14 +19,27 @@ class DebugDraw:
             yield from self._walk(child)
 
     def _draw_collider(self, body):
-        rect = body.collider.get_rect()
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
+        if not renderer:
+            return
+
         sx, sy = body.collider.get_screen_position()
-        debug_surf = pygame.Surface((body.collider.width, body.collider.height), pygame.SRCALPHA)
-        debug_surf.fill((0, 255, 0, 50))  # Translucent green overlay
-        self.surface.blit(debug_surf, (sx, sy))
-        pygame.draw.rect(self.surface, (0, 255, 0), (sx, sy, body.collider.width, body.collider.height), 1)
+        w = int(body.collider.width)
+        h = int(body.collider.height)
+
+        # Translucent green overlay
+        debug_surf = renderer.create_surface(w, h, alpha=True)
+        renderer.fill(debug_surf, (0, 255, 0, 50))
+        renderer.blit(self.surface, debug_surf, (int(sx), int(sy)))
+        renderer.draw_rect(self.surface, (0, 255, 0), sx, sy, w, h, 1)
 
     def _draw_flags(self, body):
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
+        if not renderer:
+            return
+
         text_lines = [
             f"vel: ({body.velocity_x:.1f}, {body.velocity_y:.1f})",
             f"gravity: {body.use_gravity}",
@@ -34,5 +47,5 @@ class DebugDraw:
         ]
         sx, sy = body.collider.get_screen_position()
         for i, line in enumerate(text_lines):
-            text_surf = self.font.render(line, True, (255, 255, 0))
-            self.surface.blit(text_surf, (sx + body.collider.width + 2, sy + i*12))
+            renderer.draw_text(self.surface, line, (255, 255, 0),
+                               sx + body.collider.width + 2, sy + i * 12, size=12)

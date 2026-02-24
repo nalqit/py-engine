@@ -1,22 +1,27 @@
-import pygame
-
 class FontCache:
     """
-    Engine Level Utility for caching font surfaces.
-    Reduces the cost of pygame.font.render() during heavy UI frames.
+    Engine Level Utility for caching rendered text surfaces.
+    Reduces the cost of text rendering during heavy UI frames.
+    Routes through the engine Renderer — no direct pygame usage.
     """
     _cache = {}
     _hits = 0
     _misses = 0
     
     @classmethod
-    def get_text_surface(cls, font: pygame.font.Font, text: str, color: tuple) -> pygame.Surface:
-        key = (font, text, color)
+    def get_text_surface(cls, text: str, color: tuple, size: int = 16, bold: bool = False):
+        """Returns a cached text surface using the engine Renderer."""
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
+        if not renderer:
+            return None
+
+        key = (text, color, size, bold)
         if key in cls._cache:
             cls._hits += 1
             return cls._cache[key]
         cls._misses += 1
-        surf = font.render(text, True, color)
+        surf = renderer.render_text(text, color, size, bold)
         cls._cache[key] = surf
         return surf
         

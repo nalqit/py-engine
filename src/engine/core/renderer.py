@@ -1,4 +1,5 @@
 import pygame
+from typing import Optional
 
 
 class BlendMode:
@@ -37,6 +38,21 @@ class Renderer:
 
     def get_surface_size(self, surface):
         return surface.get_size()
+
+    def get_clip(self, surface) -> Optional[tuple]:
+        """Returns the current clip rect (x, y, w, h) or None if not set."""
+        rect = surface.get_clip()
+        if rect.width == 0 or rect.height == 0:
+            return None # Pygame returns 0-sized rect if not set/full surface
+        return (rect.x, rect.y, rect.width, rect.height)
+
+    def set_clip(self, surface, x, y, w, h):
+        """Sets the clipping rectangle for all subsequent drawing on this surface."""
+        surface.set_clip((int(x), int(y), int(w), int(h)))
+
+    def clear_clip(self, surface):
+        """Removes the clipping rectangle."""
+        surface.set_clip(None)
 
     # ---- Primitives ----
 

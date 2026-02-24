@@ -1,6 +1,7 @@
 from typing import List, Optional
+from src.engine.core.signal import SignalMixin
 
-class Node:
+class Node(SignalMixin):
     """
     Represents a node in the scene graph hierarchy.
     Handles parent-child relationships and recursive updates.
@@ -22,6 +23,18 @@ class Node:
         if child in self.children:
             self.children.remove(child)
             child.parent = None
+
+    def destroy(self) -> None:
+        """
+        Removes this node from its parent and disconnects all signals.
+        Call this instead of remove_child when an object is being permanently deleted.
+        """
+        self.disconnect_all_signals()
+        for child in list(self.children):
+            child.destroy()
+        if self.parent:
+            self.parent.remove_child(self)
+
     def update_transforms(self) -> None:
         """
         Updates transforms for this node and all of its children.

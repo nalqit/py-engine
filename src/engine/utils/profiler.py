@@ -5,6 +5,7 @@ class EngineProfiler:
     """Per-subsystem timing + delta spike detection + memory tracking + resource counters."""
     def __init__(self):
         self.timings = {}
+        self._averages = {} # subsystem -> moving avg
         self.spike_log = []
         self.frame_count = 0
         self.spike_threshold = 0.025  # 25ms = below 40fps
@@ -17,7 +18,15 @@ class EngineProfiler:
 
     def end(self, subsystem: str):
         if subsystem in self._starts:
-            self.timings[subsystem] = (time.perf_counter() - self._starts[subsystem]) * 1000
+            duration_ms = (time.perf_counter() - self._starts[subsystem]) * 1000
+            self.timings[subsystem] = duration_ms
+            
+            # Update moving average (alpha=0.1)
+            old_avg = self._averages.get(subsystem, duration_ms)
+            self._averages[subsystem] = old_avg * 0.9 + duration_ms * 0.1
+
+    def get_average(self, subsystem: str) -> float:
+        return self._averages.get(subsystem, 0.0)
 
     def log_frame(self, dt: float):
         self.frame_count += 1

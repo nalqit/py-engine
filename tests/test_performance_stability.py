@@ -1,9 +1,9 @@
 import sys
 import os
-import pygame
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from src.engine.core.engine import Engine
 from src.engine.collision.collider2d import Collider2D
 from src.engine.collision.collision_world import CollisionWorld
 from src.engine.scene.node2d import Node2D
@@ -90,9 +90,8 @@ def test_global_position_cache():
     print("[PASS] test_global_position_cache")
 
 if __name__ == "__main__":
-    pygame.init()
-    if not pygame.display.get_surface():
-        pygame.display.set_mode((1, 1), pygame.NOFRAME | pygame.HIDDEN)
-    
+    # Initialize engine (this handles pygame.init() and sets Engine.instance)
+    engine = Engine("Test", 1, 1)
+
     test_global_position_cache()
     test_consistent_jump_height()

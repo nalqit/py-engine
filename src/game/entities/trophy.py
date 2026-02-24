@@ -2,7 +2,7 @@ from src.engine.collision.area2d import Area2D
 from src.engine.scene.particles import ParticleEmitter2D
 from src.engine.scene.rectangle_node import RectangleNode
 from src.engine.scene.tween import Easing
-import pygame
+
 
 class Trophy(Area2D):
     """

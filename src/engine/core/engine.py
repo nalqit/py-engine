@@ -5,6 +5,8 @@ from src.engine.core.input import InputSystem
 from src.engine.core.renderer import Renderer
 from src.engine.utils.profiler import EngineProfiler
 from src.engine.time.master_clock import MasterClock
+from src.engine.ui.event_system import EventPropagationSystem
+from src.engine.scene.scene_manager import SceneManager
 
 
 class EngineEvent:
@@ -42,6 +44,8 @@ class Engine:
         self.profiler = EngineProfiler()
         self.master_clock = MasterClock()
         self.events = []
+        self.ui_events = EventPropagationSystem(self)
+        self.scene_manager = SceneManager(self)
 
     def begin_frame(self):
         """Call at the start of each frame. Returns raw dt."""
@@ -64,7 +68,7 @@ class Engine:
         self._screen.blit(scaled, (0, 0))
         pygame.display.flip()
 
-    def run(self, root, on_fixed_update=None, on_render=None):
+    def run(self, root=None, on_fixed_update=None, on_render=None):
         """
         Built-in game loop with fixed-timestep accumulator.
 
@@ -80,27 +84,39 @@ class Engine:
         """
         accumulator = 0.0
         while self.running:
+            self.profiler.begin("Frame")
             dt = self.begin_frame()
+            
+            active_root = root if root is not None else self.scene_manager.current_scene
+            
+            # Process UI Events once per frame
+            if active_root:
+                self.ui_events.process_events(active_root)
+            
             accumulator += dt
             accumulator = min(accumulator, self.fixed_dt * 8)
 
             self.profiler.begin("Logic")
             while accumulator >= self.fixed_dt:
                 self.master_clock.update(self.fixed_dt)
-                root.update_transforms()
-                root.update(self.fixed_dt)
-                if on_fixed_update:
-                    on_fixed_update(self, root, self.fixed_dt)
+                if active_root:
+                    active_root.update_transforms()
+                    active_root.update(self.fixed_dt)
+                if on_fixed_update and active_root:
+                    on_fixed_update(self, active_root, self.fixed_dt)
                 accumulator -= self.fixed_dt
             self.profiler.end("Logic")
 
             self.profiler.begin("Render")
             self.renderer.fill(self.game_surface, (0, 0, 0))
-            root.render(self.game_surface)
-            if on_render:
-                on_render(self, root, self.game_surface)
+            if active_root:
+                active_root.render(self.game_surface)
+            if on_render and active_root:
+                on_render(self, active_root, self.game_surface)
             self.profiler.end("Render")
 
+            self.scene_manager.process_pending_changes()
+            self.profiler.end("Frame")
             self.end_frame()
 
         self.quit()

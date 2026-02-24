@@ -1,4 +1,5 @@
-import pygame
+from src.engine.core.engine import Engine
+from src.engine.core.input import Keys
 from src.engine.physics.physics_body_2d import PhysicsBody2D
 from src.game.player_controller import PlayerController
 from src.game.player_fsm import PlayerStateMachine
@@ -90,13 +91,13 @@ class Player(PhysicsBody2D):
                             color=(200, 255, 255))
 
     def update(self, delta):
-        # 1. Capture abstract input (Engine-Agnostic requirement)
-        keys = pygame.key.get_pressed()
+        # 1. Capture abstract input (Engine-Agnostic)
+        inp = Engine.instance.input
         input_state = {
-            "move_left": keys[pygame.K_LEFT] or keys[pygame.K_a],
-            "move_right": keys[pygame.K_RIGHT] or keys[pygame.K_d],
-            "jump": keys[pygame.K_SPACE] or keys[pygame.K_w] or keys[pygame.K_UP],
-            "dash": keys[pygame.K_LSHIFT] or keys[pygame.K_z] or keys[pygame.K_x]
+            "move_left": inp.is_key_pressed(Keys.LEFT) or inp.is_key_pressed(Keys.A),
+            "move_right": inp.is_key_pressed(Keys.RIGHT) or inp.is_key_pressed(Keys.D),
+            "jump": inp.is_key_pressed(Keys.SPACE) or inp.is_key_pressed(Keys.W) or inp.is_key_pressed(Keys.UP),
+            "dash": inp.is_key_pressed(Keys.LSHIFT)
         }
 
         # 2. Update gameplay logic (Intentions: velocity changes, impulse)
