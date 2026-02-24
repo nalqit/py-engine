@@ -1,23 +1,16 @@
 import pygame
-from src.engine.scene.node2d import Node2D
+from src.engine.collision.collider2d import Collider2D
 
-class CircleCollider2D(Node2D):
+class CircleCollider2D(Collider2D):
     """
     Circular collider for narrow-phase collision.
     Seamlessly integrates with AABB broadphase.
     Note: position is the CENTER of the circle.
     """
     def __init__(self, name, x, y, radius, is_static=False, is_trigger=False):
-        super().__init__(name, x, y)
+        # Initialize the base Collider2D with a bounding box (width/height = radius * 2)
+        super().__init__(name, x, y, radius * 2, radius * 2, is_static, is_trigger)
         self.radius = radius
-        self.is_static = is_static
-        self.is_trigger = is_trigger
-        self.layer = "default"
-        self.mask = set()
-        
-        # Mock AABB definitions for broadphase compatibility
-        self.width = radius * 2
-        self.height = radius * 2
 
     def get_rect(self) -> pygame.Rect:
         """Returns the broad-phase AABB encompassing the circle."""
