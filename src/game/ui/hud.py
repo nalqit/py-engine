@@ -1,5 +1,4 @@
-from src.engine.scene.node import Node
-from src.engine.core.engine import Engine
+from src.engine import Node
 
 class HUD(Node):
     def __init__(self, name="HUD"):

@@ -1,9 +1,5 @@
 import random
-from src.engine.core.engine import Engine
-from src.engine.scene.node2d import Node2D
-from src.engine.collision.collision_world import CollisionWorld
-from src.engine.collision.collider2d import Collider2D
-from src.engine.scene.camera2d import Camera2D
+from src.engine import *
 
 # Neon Odyssey: PyEngine Showcase Demo
 # This logic serves to initialize the engine and the core scene hierarchy.

@@ -1,4 +1,4 @@
-from src.engine.scene.node2d import Node2D
+from src.engine import Node2D
 
 class HUD(Node2D):
     """
@@ -28,7 +28,7 @@ class HUD(Node2D):
 
     def render(self, surface):
         # Developer Guide Hint: Import Engine locally in render to avoid circular imports
-        from src.engine.core.engine import Engine
+        from src.engine import Engine
         if not Engine.instance:
             return
             

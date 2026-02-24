@@ -1,6 +1,5 @@
 from typing import List
 from src.engine.ui.ui_node import UINode, SizePolicy
-from src.engine.core.engine import Engine
 
 class BoxContainer(UINode):
     """Base for VBox and HBox. Manages spacing and child alignment."""

@@ -1,8 +1,0 @@
-============================= test session starts =============================
-platform win32 -- Python 3.11.0, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\dell\Desktop\try3(gpt prompts)
-collected 3 items
-
-tests\test_engine_features.py ...                                        [100%]
-
-============================== 3 passed in 1.34s ==============================

@@ -1,7 +1,4 @@
-from src.engine.collision.area2d import Area2D
-from src.engine.collision.circle_collider2d import CircleCollider2D
-from src.engine.scene.rectangle_node import RectangleNode
-from src.engine.scene.tween import TweenManager, Easing
+from src.engine import Area2D,CircleCollider2D,CircleNode,TweenManager,Tween,Easing
 
 class Coin(Area2D):
     def __init__(self, name, x, y):
@@ -15,7 +12,6 @@ class Coin(Area2D):
         self.add_child(self.collider)
         
         # We can implement a circle child node simply via Engine
-        from src.engine.scene.circle_node import CircleNode
         self.vis = CircleNode(f"{name}_Vis", 0, 0, 15, (255, 215, 0))
         self.add_child(self.vis)
         

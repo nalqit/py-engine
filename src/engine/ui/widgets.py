@@ -1,7 +1,6 @@
 from typing import Optional, Tuple, Callable
 from src.engine.ui.ui_node import UINode, Anchor, SizePolicy
 from src.engine.ui.data_binding import ObservableModel, DataBinding
-from src.engine.core.engine import Engine
 
 Color = Tuple[int, int, int]
 
@@ -14,7 +13,8 @@ class UIPanel(UINode):
         self.border_width = border_width
 
     def render(self, surface):
-        renderer = Engine.instance.renderer
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
         if not renderer: return
         
         sx, sy = self.get_screen_position()
@@ -77,7 +77,8 @@ class UILabel(UINode):
                 self._height = max(self.height, self.min_height)
 
     def render(self, surface):
-        renderer = Engine.instance.renderer
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
         if not renderer: return
         
         sx, sy = self.get_screen_position()
@@ -145,7 +146,10 @@ class UIProgressBar(UIPanel):
         super().render(surface)
         if self.progress <= 0: return
         
-        renderer = Engine.instance.renderer
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
+        if not renderer: return
+
         sx, sy = self.get_screen_position()
         fill_w = int(self.width * self.progress)
         # Pad slightly to sit inside the border
@@ -174,17 +178,13 @@ class UIListView(UINode):
         
         for i in range(self.visible_rows):
             # Instantiate pool of widget rows
-            # The item_class must take (name, text) or be configureable.
-            # For simplicity, we assume we can call item_class("Row_i", text="...") 
-            # or just item_class("Row_i") and set .text/.data later.
             try:
                 widget = item_class(f"{name}_Row_{i}", "")
             except TypeError:
                 widget = item_class(f"{name}_Row_{i}")
                 
             widget.parent = self
-            widget.is_layout_container = False # Normal anchoring/positioning is off since we manual position
-            # Add them directly to children so they update/render
+            widget.is_layout_container = False 
             self.children.append(widget)
             self.row_widgets.append(widget)
 
@@ -209,12 +209,9 @@ class UIListView(UINode):
             item_idx = start_idx + i
             if item_idx < len(self.items):
                 widget.visible = True
-                # Bind data
                 if hasattr(widget, "text"):
-                    # Assuming items is list of strings or we convert
                     widget.text = str(self.items[item_idx])
                 
-                # Position it
                 widget.local_x = 0
                 widget.local_y = (i * self.row_height) - offset_y
                 if widget.size_policy_x == SizePolicy.FILL:
@@ -227,7 +224,8 @@ class UIListView(UINode):
                 widget.visible = False
 
     def render(self, surface):
-        renderer = Engine.instance.renderer
+        from src.engine.core.engine import Engine
+        renderer = Engine.instance.renderer if Engine.instance else None
         if not renderer: return
         
         sx, sy = self.get_screen_position()
@@ -243,4 +241,3 @@ class UIListView(UINode):
             renderer.set_clip(surface, *old_clip)
         else:
             renderer.clear_clip(surface)
-

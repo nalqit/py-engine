@@ -1,10 +1,5 @@
 import math
-from src.engine.core.engine import Engine
-from src.engine.core.input import Keys
-from src.engine.physics.physics_body_2d import PhysicsBody2D
-from src.engine.scene.node2d import Node2D
-from src.engine.scene.rectangle_node import RectangleNode
-from src.engine.scene.particles import ParticleEmitter2D
+from src.engine import Engine,Keys,PhysicsBody2D,Node2D,RectangleNode,ParticleEmitter2D
 
 # ------------------------------------------------------------------
 # Advanced Player Example

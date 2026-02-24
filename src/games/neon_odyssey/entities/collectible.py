@@ -1,7 +1,4 @@
-from src.engine.scene.node2d import Node2D
-from src.engine.scene.circle_node import CircleNode
-from src.engine.collision.area2d import Area2D
-from src.engine.scene.tween import TweenManager, Tween, Easing
+from src.engine import Node2D,CircleNode,Area2D,TweenManager,Tween,Easing
 
 # ------------------------------------------------------------------
 # Collectible Example
