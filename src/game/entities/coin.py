@@ -1,63 +1,63 @@
-
 from src.engine.collision.area2d import Area2D
+from src.engine.collision.circle_collider2d import CircleCollider2D
 from src.engine.scene.rectangle_node import RectangleNode
+from src.engine.scene.tween import TweenManager, Easing
 
 class Coin(Area2D):
-    """
-    A simple collectable coin.
-    """
     def __init__(self, name, x, y):
-        super().__init__(name, x, y, 20, 20)
-        self.vis = RectangleNode(name + "_Vis", 0, 0, 20, 20, (255, 215, 0)) # Gold color
-        self.add_child(self.vis)
-        self.collected = False
-        self.base_vis_y = 0.0
+        # 15px radius circle area roughly mapped to a 30x30 bounding box
+        super().__init__(name, x, y, 30, 30)
+        self.remove_child(self.collider) # remove default AABB
         
-        # We will use the global TweenManager if it exists in the tree
-        self.tween_started = False
+        self.collider = CircleCollider2D(name + "_Col", 0, 0, 15, is_static=False, is_trigger=True)
+        self.collider.layer = "pickup"
+        self.collider.mask = {"player"}
+        self.add_child(self.collider)
+        
+        # We can implement a circle child node simply via Engine
+        from src.engine.scene.circle_node import CircleNode
+        self.vis = CircleNode(f"{name}_Vis", 0, 0, 15, (255, 215, 0))
+        self.add_child(self.vis)
+        
+        self.collected = False
+        self.base_y = y
+        self.score_value = 10
+        
+        self.register_signal("on_collected")
+
+        self.tween_mgr = TweenManager("TweenMgr")
+        self.add_child(self.tween_mgr)
+        self._start_bob()
 
     def update(self, delta):
-        if not self.tween_started:
-            root = self._get_root()
-            tm = root.get_node("TweenManager")
-            if tm:
-                # Start a simple bobbing animation
-                from src.engine.scene.tween import Easing
-                # Note: We'd ideally want a 'repeat' or 'yoyo' feature in the tween system.
-                # For now, we'll just implement a simple loop.
-                self._start_bob(tm)
-                self.tween_started = True
         super().update(delta)
+        self.update_transforms()
+        if hasattr(self, "collision_world") and self.collision_world:
+            res = self.collider.get_rect()
+            if isinstance(res, tuple):
+                 self.collision_world._cached_rects[self.collider] = res
+            else:
+                 self.collision_world._cached_rects[self.collider] = (res.left, res.top, res.right, res.bottom)
 
-    def _start_bob(self, tm):
-        from src.engine.scene.tween import Easing
-        
-        base_y = self.local_y
+    def _start_bob(self):
         def bob_down():
-             tm.interpolate(self, "local_y", base_y - 10, base_y, 1.2, Easing.sine_in_out, on_complete=bob_up)
+             self.tween_mgr.interpolate(self, "local_y", self.base_y - 10, self.base_y, 1.2, Easing.sine_in_out, on_complete=bob_up)
              
         def bob_up():
-             tm.interpolate(self, "local_y", base_y, base_y - 10, 1.2, Easing.sine_in_out, on_complete=bob_down)
+             self.tween_mgr.interpolate(self, "local_y", self.base_y, self.base_y - 10, 1.2, Easing.sine_in_out, on_complete=bob_down)
 
         bob_up()
-
-    def _get_root(self):
-        root = self
-        while root.parent:
-            root = root.parent
-        return root
 
     def on_area_entered(self, body):
         if self.collected:
             return
-            
-        # Check if the body is the player
         if body.name == "Player":
-            self.collect()
+            self.collect(body)
 
-    def collect(self):
+    def collect(self, player):
         self.collected = True
-        # Remove from parent to disappear
+        self.emit_signal("on_collected", score_value=self.score_value)
+        # Assuming player has add_score
+        player.add_score(self.score_value)
         if self.parent:
             self.parent.remove_child(self)
-        print(f"Coin {self.name} collected!")

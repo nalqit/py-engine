@@ -71,7 +71,8 @@ class Collectible(Area2D):
     def _sync_collider(self):
         """Update the collision world's cached rect for this collectible's collider."""
         if not self.collision_world: return
-        gx, gy = self.collider.get_global_position()
-        sw = self.collider.width * self.collider.scale_x
-        sh = self.collider.height * self.collider.scale_y
-        self.collision_world._cached_rects[self.collider] = (gx, gy, gx + sw, gy + sh)
+        res = self.collider.get_rect()
+        if isinstance(res, tuple):
+             self.collision_world._cached_rects[self.collider] = res
+        else:
+             self.collision_world._cached_rects[self.collider] = (res.left, res.top, res.right, res.bottom)

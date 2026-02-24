@@ -224,6 +224,9 @@ class PhysicsBody2D(Node2D):
 
             self.update_transforms()
 
+        if dx != 0 or dy != 0:
+            self._refresh_collider_cache(self)
+
     # ------------------------------------------------------------------
     # Impulse
     # ------------------------------------------------------------------

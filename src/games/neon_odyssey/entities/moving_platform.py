@@ -67,8 +67,13 @@ class MovingPlatform(Node2D):
             width = self.collider.width * self.collider.scale_x
             
             # Create a small trigger zone just above the platform to catch riders
-            # test_left, test_top, test_right, test_bottom
-            riders = self.collision_world.query_rect(gx, gy - 2, gx + width, gy + 2, exclude=self.collider)
+            # Expand it backward by the delta to ensure we don't leave riders behind when moving fast
+            test_left = gx - max(0, dx)
+            test_top = gy - max(0, dy) - 2
+            test_right = gx + width - min(0, dx)
+            test_bottom = gy + max(0, -dy) + 2
+            
+            riders = self.collision_world.query_rect(test_left, test_top, test_right, test_bottom, exclude=self.collider)
             
             from src.engine.physics.physics_body_2d import PhysicsBody2D
             for rider_col in riders:
@@ -79,6 +84,8 @@ class MovingPlatform(Node2D):
                     # but simple translation is effective for typical kinematic platforms.
                     body.local_x += dx
                     body.local_y += dy
+                    if dy > 0 and body.velocity_y > 0:
+                        body.velocity_y = 0.0 # Clear gravity accumulation while sliding down on the platform
                     body.update_transforms()
                     # Also sync the rider's collider cache so their move_and_collide is accurate
                     if hasattr(body, '_refresh_collider_cache'):

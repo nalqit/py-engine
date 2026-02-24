@@ -128,5 +128,6 @@ class Engine:
     def quit(self):
         self.profiler.print_summary()
         pygame.quit()
-        sys.exit()
+        if not getattr(self, "suppress_exit", False):
+            sys.exit()
 

@@ -317,7 +317,7 @@ class CollisionWorld(Node2D):
                             circle, rect_col = (a, b) if is_a_circle else (b, a)
                             cx, cy = circle.get_global_position()
                             r = circle.radius * circle.scale_x
-                            rl, rt, rr, rb_edge = (lb, tb, rb, bb) if circle is b else (la, ta, ra, ba)
+                            rl, rt, rr, rb_edge = (la, ta, ra, ba) if circle is b else (lb, tb, rb, bb)
                             
                             closest_x = max(rl, min(cx, rr))
                             closest_y = max(rt, min(cy, rb_edge))

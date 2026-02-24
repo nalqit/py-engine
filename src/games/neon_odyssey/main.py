@@ -34,10 +34,12 @@ class NeonOdyssey:
         from .entities.player import Player
         player_col = Collider2D("Player_Col", -20, -20, 40, 40)
         player_col.layer = "player"
-        player_col.mask = {"wall", "pickup"}
+        player_col.mask = {"wall", "pickup", "box", "enemy"}
         
         self.player = Player("Player", -300, 300, player_col, self.collision_world)
         self.player.add_child(player_col)
+        self.player.pushable = True
+        
         self.world.add_child(self.player)
         
         # 7. Add moving Platforms
@@ -47,6 +49,31 @@ class NeonOdyssey:
         
         plat_side = MovingPlatform("Ferry", 1200, 0, 150, 20, 300, 0, 3.0, self.collision_world)
         self.world.add_child(plat_side)
+        
+        # 7.5 Add pushable boxes and enemies
+        from .entities.box import Box
+        box_col = Collider2D("BoxCol1", 0, 0, 40, 40)
+        box_col.layer = "box"
+        box_col.mask = {"wall", "box"}
+        box1 = Box("Box1", -50, 450, box_col, self.collision_world)
+        box1.add_child(box_col)
+        self.world.add_child(box1)
+
+        box_col2 = Collider2D("BoxCol2", 0, 0, 40, 40)
+        box_col2.layer = "box"
+        box_col2.mask = {"wall", "box"}
+        box2 = Box("Box2", 0, 450, box_col2, self.collision_world)
+        box2.add_child(box_col2)
+        self.world.add_child(box2)
+        
+        from .entities.enemy import Enemy
+        ene_col = Collider2D("EnemyCol1", -20, -20, 40, 40)
+        ene_col.layer = "enemy"
+        ene_col.mask = {"wall", "player", "box"}
+        enemy1 = Enemy("Bot1", 100, 450, ene_col, self.collision_world, move_dist=200)
+        enemy1.add_child(ene_col)
+        enemy1.can_push = True
+        self.world.add_child(enemy1)
         
         # 8. Add Collectibles (Area2D)
         from .entities.collectible import Collectible

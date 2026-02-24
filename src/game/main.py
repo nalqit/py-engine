@@ -1,193 +1,90 @@
 from src.engine.core.engine import Engine
-from src.engine.core.input import Keys
 from src.engine.scene.node2d import Node2D
-from src.engine.scene.rectangle_node import RectangleNode
-from src.game.entities.player import Player
-from src.game.entities.box import Box
-from src.game.entities.npc import NPC
-from src.engine.ui.stats_hud import StatsHUD
-from src.engine.collision.collider2d import Collider2D
-from src.engine.collision.collision_world import CollisionWorld
 from src.engine.scene.camera2d import Camera2D
-from src.engine.scene.tween import TweenManager
-from src.engine.scene.sprite_node import SpriteNode
-from src.game.entities.coin import Coin
-from src.game.entities.patrol_enemy import PatrolEnemy
-from src.game.entities.spring import Spring
-from src.game.entities.spike import Spike
-from src.game.entities.trophy import Trophy
+from src.engine.collision.collision_world import CollisionWorld
+from src.engine.collision.collider2d import Collider2D
 
 def main():
-    engine = Engine("PyEngine 2D - The Great Adventure", 800, 600)
-
-    # Root
+    engine = Engine("PyEngine 2D - Clean Game", 1000, 600)
+    
     root = Node2D("Root")
     
-    # Tween Manager (Global)
-    tween_manager = TweenManager("TweenManager")
-    root.add_child(tween_manager)
-
-    # Collision World
+    # Core Engine Systems
     collision_world = CollisionWorld("CollisionWorld")
     root.add_child(collision_world)
-
-    # ---------------- Background ----------------
-    # One large background image for the entire world
-    bg = SpriteNode("Background", "src/game/background_layer_1.png", 0, 0)
-    bg.scale_x = 10.0 # Make it very wide
-    bg.scale_y = 2.0
-    root.add_child(bg)
-
-    # Visual World
-    visual_world = Node2D("VisualWorld")
-    root.add_child(visual_world)
-
-    # ---------------- Player ----------------
-    player_col = Collider2D("PlayerCol", 0, 0, 50, 50)
+    
+    # World container for scrolling
+    world = Node2D("World")
+    root.add_child(world)
+    
+    # Build Map
+    from src.game.level import LevelManager
+    level = LevelManager("Level", collision_world)
+    world.add_child(level)
+    
+    # Add Player
+    from src.game.entities.player import Player
+    player_col = Collider2D("Player_Col", -20, -20, 40, 40)
     player_col.layer = "player"
-    player_col.mask = {"wall", "box", "npc", "coin"}
-
-    player = Player("Player", 100, 400, player_col, collision_world)
-    visual_world.add_child(player)
+    player_col.mask = {"wall", "box", "pickup", "enemy"}
+    
+    player = Player("Player", 100, 200, player_col, collision_world)
     player.add_child(player_col)
-    player.add_child(RectangleNode("PlayerVis", 0, 0, 50, 50, (255, 50, 50)))
-
-    # ---------------- Helpers ----------------
-    def create_wall(name, x, y, w, h, color=(80, 80, 90)):
-        wall = Node2D(name, x, y)
-        visual_world.add_child(wall)
-        col = Collider2D(name + "Col", 0, 0, w, h, is_static=True)
-        col.layer = "wall"
-        col.mask = {"player", "box", "npc"}
-        wall.add_child(col)
-        wall.add_child(RectangleNode(name + "Vis", 0, 0, w, h, color))
-        return wall
-
-    def spawn_coin(name, x, y):
-        coin = Coin(name, x, y)
-        visual_world.add_child(coin)
-        return coin
-
-    # ---------------- Map Design ----------------
-    def spawn_enemy(name, x, y):
-        enemy_col = Collider2D(name + "Col", 0, 0, 40, 40)
-        enemy_col.layer = "enemy"
-        enemy_col.mask = {"wall", "player", "box"}
-        enemy = PatrolEnemy(name, x, y, enemy_col, collision_world, speed=60.0)
-        visual_world.add_child(enemy)
-        enemy.add_child(enemy_col)
-        enemy.add_child(RectangleNode(name + "Vis", 0, 0, 40, 40, (200, 50, 200)))
-        return enemy
-
-    def spawn_spring(name, x, y):
-        spring = Spring(name, x, y)
-        spring.get_node(name + "_Col").mask = {"player", "box", "npc"}
-        visual_world.add_child(spring)
-        return spring
+    world.add_child(player)
+    
+    # Add Box
+    from src.game.entities.box import Box
+    box_col = Collider2D("BoxCol", 0, 0, 40, 40)
+    box_col.layer = "box"
+    box_col.mask = {"wall", "box"}
+    box = Box("Box1", 800, 400, box_col, collision_world)
+    box.add_child(box_col)
+    world.add_child(box)
+    
+    # Add Enemy
+    from src.game.entities.enemy import Enemy
+    enemy_col = Collider2D("EnemyCol", -20, -20, 40, 40)
+    enemy_col.layer = "enemy"
+    enemy_col.mask = {"wall", "player", "box"}
+    enemy = Enemy("Bot1", 1400, 450, enemy_col, collision_world, move_dist=300)
+    enemy.add_child(enemy_col)
+    world.add_child(enemy)
+    
+    # Add Coins
+    from src.game.entities.coin import Coin
+    coins_data = [
+        ("Coin1", 350, 400),
+        ("Coin2", 450, 350),
+        ("Coin3", 550, 300),
+        ("Coin4", 1500, 400),
+    ]
+    for c_name, cx, cy in coins_data:
+        coin = Coin(c_name, cx, cy)
+        world.add_child(coin)
+        coin.get_signal("on_collected").connect(lambda score_value, **kwargs: None) # Setup listening below
         
-    def spawn_spike(name, x, y):
-        spike = Spike(name, x, y, 40, 40)
-        visual_world.add_child(spike)
-        # Visual representation: Red square for now
-        spike.add_child(RectangleNode(name + "_Vis", 0, 0, 40, 40, (255, 0, 0)))
-        return spike
-
-    def spawn_trophy(name, x, y):
-        trophy = Trophy(name, x, y)
-        visual_world.add_child(trophy)
-        return trophy
-
-    # 1. HUGE FLOOR
-    create_wall("Ground", -1000, 500, 5000, 200)
-    
-    # 2. INTRO AREA (Coins spread out)
-    spawn_coin("Coin_Start1", 300, 450)
-    spawn_coin("Coin_Start2", 500, 450)
-    spawn_coin("Coin_Start3", 700, 450)
-    
-    # Spawn first enemy patrolling the start area
-    spawn_enemy("Enemy1", 600, 450)
-
-    # 3. VERTICAL CHALLENGE
-    create_wall("Wall_Blocker", 900, 400, 50, 100)
-    create_wall("Plat_1", 1000, 350, 200, 20)
-    spawn_coin("Coin_Plat1", 1080, 300)
-    
-    create_wall("Plat_2", 1300, 250, 200, 20)
-    spawn_coin("Coin_Plat2", 1380, 200)
-    
-    create_wall("Plat_3", 1050, 150, 150, 20)
-    spawn_coin("Coin_Plat3", 1100, 100)
-
-    # 4. NPC OUTPOST
-    # Enemy guarding the NPC
-    spawn_enemy("Enemy2", 1500, 450)
-
-    # Some spikes before the village
-    spawn_spike("SpikeGap1", 1300, 460)
-    spawn_spike("SpikeGap2", 1340, 460)
-    spawn_spike("SpikeGap3", 1380, 460)
-
-    npc_col = Collider2D("VillageNPCCol", 0, 0, 40, 40)
-    npc_col.layer = "npc"
-    npc_col.mask = {"wall", "player", "box"}
-    npc = NPC("VillageNPC", 1800, 460, npc_col, collision_world)
-    visual_world.add_child(npc)
-    npc.add_child(npc_col)
-    npc.add_child(RectangleNode("NPCVis", 0, 0, 40, 40, (0, 200, 255)))
-    
-    create_wall("Roof", 1700, 350, 300, 20, (120, 100, 80))
-    spawn_coin("RoofCoin", 1840, 300)
-    
-    # A spring to bounce up to the roof
-    spawn_spring("RoofSpring", 1600, 480)
-
-    # 5. PHYSICS PLAYGROUND (Boxes far from coins)
-    for i in range(3):
-        box_col = Collider2D(f"BoxCol{i}", 0, 0, 50, 50)
-        box_col.layer = "box"
-        box_col.mask = {"wall", "player", "box"}
-        box = Box(f"Box{i}", 2200 + i*200, 400, box_col, collision_world)
-        visual_world.add_child(box)
-        box.add_child(box_col)
-        box.add_child(RectangleNode(f"BoxVis{i}", 0, 0, 50, 50, (200, 150, 50)))
-
-    # 6. THE END
-    create_wall("EndWall", 3000, 300, 50, 400) # Prevents player from leaving
-    spawn_trophy("GoldenTrophy", 2800, 450)
-
-    # ---------------- Camera ----------------
+    # Camera
     camera = Camera2D("Camera")
     camera.follow(player)
     root.add_child(camera)
-    Node2D.camera = camera 
-
-    # ---------------- HUD ----------------
-    hud = StatsHUD("HUD")
+    Node2D.camera = camera
+    
+    # UI
+    from src.game.ui.hud import HUD
+    hud = HUD("HUD")
     root.add_child(hud)
-
-    # Debug collider toggle state
-    debug_colliders = False
-
+    
+    # Wire up signals
+    player.get_signal("on_score_changed").connect(lambda score: hud.on_score_changed(score))
+    player.get_signal("on_died").connect(hud.on_died)
+    
     def on_fixed_update(eng, scene_root, fixed_dt):
-        pass  # All logic handled by node tree updates
-
+        pass
+        
     def on_render(eng, scene_root, surface):
-        nonlocal debug_colliders
-        # Check for F1 toggle in engine events
-        for event in eng.events:
-            if event.type == 'key_down':
-                if event.key == Keys.F1:
-                    debug_colliders = not debug_colliders
-
-        if debug_colliders:
-            for col in collision_world._cached_colliders:
-                col.render(surface)
-
-    # Print scene tree for debugging
+        pass
+        
     root.print_tree()
-
-    # Use the engine's built-in game loop
     engine.run(root, on_fixed_update=on_fixed_update, on_render=on_render)
 
 if __name__ == "__main__":

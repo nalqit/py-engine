@@ -4,8 +4,8 @@
         "passed": true,
         "errors": [],
         "avg_fps": 60.0,
-        "memory_diff_kb": 53.8671875,
-        "max_update_ms": 0.01809999957913533,
-        "max_render_ms": 0.13100000069243833
+        "memory_diff_kb": 54.296875,
+        "max_update_ms": 0.11559999984456226,
+        "max_render_ms": 0.7809000017005019
     }
 ]

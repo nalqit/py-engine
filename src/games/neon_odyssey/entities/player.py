@@ -19,9 +19,10 @@ class Player(PhysicsBody2D):
         super().__init__(name, x, y, collider, collision_world)
         self.use_gravity = True
         self.gravity = 1500.0  # Heavy, tight gravity
+        self.can_push = True
         
         self.move_speed = 300.0
-        self.jump_force = -700.0
+        self.jump_force = -900.0
         
         # State
         self.health = 3

@@ -22,6 +22,7 @@ class DummyBenchmark(BenchmarkPhase):
 
 def test_benchmark_harness():
     engine = Engine("Test Harness", 800, 600)
+    engine.suppress_exit = True
     runner = BenchmarkRunner(engine)
     
     b1 = DummyBenchmark("Test 1")
@@ -43,11 +44,6 @@ def test_benchmark_harness():
     
     # Check JSON
     assert os.path.exists("test_out.json")
-    
-    # (Since "test_out.json" is written by default to the cwd or the requested name...)
-    # Wait, my logic currently has out_file hardcoded to "benchmark_results.json" in _finish_suite!
-    # Let me fix that in the real code via test confirmation.
-    assert os.path.exists("benchmark_results.json")
 
     print("[PASS] test_benchmark_harness")
 
