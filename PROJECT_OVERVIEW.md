@@ -4,7 +4,12 @@ This document provides a clear explanation of every file in the project, organiz
 
 ## 🛠️ Engine Core (`src/engine/`)
 
-The engine is built on a modular "Node" architecture, similar to major game engines like Godot.
+The engine is built on a modular "Node" architecture with a consolidated top-level API for ease of use.
+
+### 📦 API Management & Exports
+
+- **[engine/__init__.py](file:///c:/Users/dell/Desktop/try3(gpt prompts)/src/engine/**init**.py)**: The primary entry point. Consolidates all submodules and exposes the public API for games.
+- **[__init__.py modules]**: Found in `scene/`, `collision/`, `physics/`, etc. These files define the internal public interface for each engine sub-system using `__all__`.
 
 ### 🌐 Scene Management (`src/engine/scene/`)
 

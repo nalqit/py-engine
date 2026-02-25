@@ -2,18 +2,19 @@
 
 ## Overview
 
-The PyEngine 2D engine provides a layered architecture for building 2D games in pure Python. This guide walks you through using the engine, its core features, and building a simple game step‑by‑step.
+The PyEngine 2D engine provides a layered architecture for building 2D games in pure Python. This guide walks you through using the engine, its core features, and building a simple game step-by-step.
 
 ---
 
 ## Core Engine Components
 
-- **Renderer** – Handles drawing sprites, animated sprites, and particles.
-- **PhysicsBody2D** – Generic physics body with gravity, impulses, and collision resolution.
-- **CollisionWorld** – Manages colliders, performs AABB checks, and returns `CollisionResult`.
-- **InputManager** – Abstracts keyboard/gamepad input into a simple dictionary.
-- **TweenManager** – Property interpolation for smooth animations (juice).
-- **ParticleEmitter2D** – Emits particles for effects like dust or sparks.
+- **Engine** – The main entry point. Handles the game loop, timing, and systems.
+- **Node2D** – Base class for all 2D objects. Handles transform propagation (position, scale).
+- **PhysicsBody2D** – Level 3 physics body with gravity, impulses, and automatic collision resolution.
+- **CollisionWorld** – Manages colliders and performs AABB checks.
+- **InputSystem** – Accessible via `Engine.instance.input`. Handles keyboard signals.
+- **TweenManager** – Component for property interpolation (juice).
+- **ParticleEmitter2D** – Component for visual effects like dust or sparks.
 
 ---
 
@@ -27,106 +28,118 @@ The PyEngine 2D engine provides a layered architecture for building 2D games in 
    ```bash
    python -m src.game.main
    ```
-   This launches the "Great Adventure" demo which showcases all engine layers.
+   This launches "The Great Adventure" which showcases all engine layers.
 
 ---
 
 ## Creating a New Game
 
-### 1. Initialise the Engine
+### 1. Initialize the Engine
+
+Consolidate all engine imports from the top-level API:
 
 ```python
-from engine.scene import Scene
-from engine.runtime import Engine
+from src.engine import *
 
-engine = Engine()
-scene = Scene()
-engine.set_root(scene)
+def main():
+    engine = Engine("My New Game", 1024, 600)
+    root = Node2D("Root")
+
+    # Run the engine
+    engine.run(root)
+
+if __name__ == "__main__":
+    main()
 ```
 
 ### 2. Add a Player Entity
 
 ```python
-from src.game.entities.player import Player
-from src.game.player_controller import PlayerController
+# Create a player body
+player_col = Collider2D("Player_Col", -20, -20, 40, 40)
+player = PhysicsBody2D("Player", 100, 300, player_col, collision_world)
 
-player = Player()
-controller = PlayerController()
-player.add_controller(controller)
-scene.add_child(player)
+# Add visuals
+vis = RectangleNode("PlayerVis", -20, -20, 40, 40, (0, 255, 200))
+player.add_child(vis)
+player.add_child(player_col)
+
+root.add_child(player)
 ```
 
 ### 3. Add Collectibles (Coins)
 
 ```python
-from src.game.entities.coin import Coin
+# Using Area2D for trigger detection
+coin = Area2D("Coin", 200, 300, 30, 30)
+coin_vis = CircleNode("CoinVis", 0, 0, 15, (255, 215, 0))
+coin.add_child(coin_vis)
 
-for i in range(5):
-    coin = Coin(position=(i*64, 200))
-    scene.add_child(coin)
+root.add_child(coin)
 ```
 
 ### 4. Set Up a Simple Level
 
-Create a `Level` node that contains static platforms:
+Create static platforms by using `Collider2D` with `is_static=True`:
 
 ```python
-from engine.collision import Collider2D
-from engine.scene import Node2D
+platform = Node2D("Platform", 0, 400)
+col = Collider2D("Platform_Col", 0, 0, 800, 32, is_static=True)
+vis = RectangleNode("Platform_Vis", 0, 0, 800, 32, (100, 100, 100))
 
-platform = Node2D()
-platform.position = (0, 400)
-platform.add_component(Collider2D(size=(800, 32), static=True))
-scene.add_child(platform)
+platform.add_child(col)
+platform.add_child(vis)
+root.add_child(platform)
 ```
-
-### 5. Run the Game Loop
-
-```python
-engine.run()
-```
-
-The engine will handle delta‑time, physics updates, rendering, and input automatically.
 
 ---
 
 ## Asset Loading
 
-Place image files in `assets/` and load them via the `ResourceManager`:
+Load images directly via `SpriteNode` or `AnimatedSprite`:
 
 ```python
-from engine.resources import ResourceManager
-player_sprite = ResourceManager.load_image('assets/player.png')
+# Static Image
+player_sprite = SpriteNode("PlayerSprite", "assets/player.png", centered=True)
+
+# Animated Sprite Sheet
+anim_sprite = AnimatedSprite("PlayerAnim", "assets/player_sheet.png", 64, 64)
+anim_sprite.add_animation("idle", [0, 1, 2, 3], frame_duration=0.2)
+anim_sprite.play("idle")
 ```
 
 ---
 
 ## Common Patterns
 
-- **State Machines** – Use `PlayerStateMachine` to separate behaviour from movement.
-- **Event Signals** – Connect to `on_pushed` or `on_collect` signals for custom reactions.
-- **Debug Visualisation** – Press **F1** during runtime to toggle collider outlines.
+- **State Machines** – Use `StateMachine` to decouple behavior from movement logic.
+- **Signals** – Connect to engine hooks like `on_collision_enter` or custom signals using `get_signal("name").connect(callback)`.
+- **Debug Visualization** – Press **F1** during runtime to toggle collider outlines.
+- **Juice** – Use `TweenManager` to animate properties:
+  ```python
+  tweens.interpolate(node, "scale_x", 1.0, 1.2, 0.2, Easing.quad_out)
+  ```
 
 ---
 
 ## FAQ
 
-**Q:** My sprite doesn’t appear?
-**A:** Ensure the image path is correct and the node has a `SpriteNode` component attached.
+**Q:** My collisions aren't working?
+**A:** Ensure your `Collider2D` has the correct `layer` and `mask` set, and is added as a child of a `PhysicsBody2D` or monitored by `CollisionWorld`.
 
-**Q:** Collisions feel jittery?
-**A:** Verify that `use_gravity` is enabled and that you’re not manually moving the node outside the physics step.
+**Q:** How do I handle input?
+**A:** Access it via `Engine.instance.input.is_key_pressed(Keys.LEFT)`.
 
 ---
 
 ## Verification Checklist
 
-- [ ] Engine initialises without errors.
-- [ ] Player can move left/right and jump.
-- [ ] Coins are collected and emit a signal.
-- [ ] Platform collision prevents falling through.
-- [ ] Game runs at a stable frame rate.
+- [x] Engine initializes without errors.
+- [x] Player can move left/right and jump.
+- [x] Coins are collected and emit a signal.
+- [x] Platform collision prevents falling through.
+- [x] Game runs at a stable frame rate.
 
 ---
 
-_This guide is kept up‑to‑date with the latest engine version. Refer to the source code for deeper implementation details._
+_This guide is kept up-to-date with the latest engine version. Refer to the source code for deeper implementation details._

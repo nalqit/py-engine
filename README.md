@@ -59,6 +59,7 @@ The engine is built using a **layered architecture**, with each level stabilized
 - **Particle System**: `ParticleEmitter2D` for visual effects like jump dust or sparks.
 - **Sprite Animation**: `SpriteNode` for static assets and `AnimatedSprite` for frame-based sheets.
 - **Parallax Backgrounds**: Multi-layered backgrounds for environmental depth.
+- **Unified Engine API**: Consolidated engine submodules into a single top-level entry point with explicit export management for zero-dependency style game development.
 
 ---
 
@@ -116,12 +117,13 @@ src/
 
 1. **Python**: 3.10+
 2. **Dependencies**: `pip install pygame`
-3. **Run Main Game**: `python -m src.game.main`
-4. **Run Examples**:
+3. **Engine Import Strategy**: Games can now use `from src.engine import *` to access all engine systems from a single, consolidated entry point.
+4. **Run Main Game**: `python -m src.game.main`
+5. **Run Examples**:
    - `python -m src.games.spring_bounce.main`
    - `python -m src.games.spike_rain.main`
    - `python -m src.games.box_pusher.main`
-5. **Debug**: Press **F1** in-game to toggle collider visualization.
+6. **Debug**: Press **F1** in-game to toggle collider visualization.
 
 ## Engine Usage Guide
 
@@ -146,6 +148,7 @@ See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed guide on using the engine 
 - [x] **Engine-Only Examples**: Created minimal isolated games to prove engine independence.
 - [x] **Circular Collision Support**: Implemented `CircleCollider2D` with Circle-Circle and Circle-AABB narrow-phase resolution.
 - [x] **Main Game Refactor**: Rebuilt "The Great Adventure" to use clean architecture (FSM, Controllers, localized TweenManagers).
+- [x] **Unified Engine API**: Consolidated engine submodules into a single top-level entry point (`src/engine/__init__.py`) with explicit export management.
 
 ### Up Next
 
