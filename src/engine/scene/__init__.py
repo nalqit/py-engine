@@ -6,9 +6,9 @@ from .sprite_node import SpriteNode
 from .animated_sprite import AnimatedSprite
 from .rectangle_node import RectangleNode
 from .circle_node import CircleNode
-from .parallax import ParallaxBackground
+from .parallax import ParallaxBackground, ParallaxLayer
 from .particles import ParticleEmitter2D
-from .tween import TweenManager, Easing
+from .tween import TweenManager, Tween, Easing
 
 __all__ = [
     'Node',
@@ -20,7 +20,9 @@ __all__ = [
     'RectangleNode',
     'CircleNode',
     'ParallaxBackground',
+    'ParallaxLayer',
     'ParticleEmitter2D',
     'TweenManager',
+    'Tween',
     'Easing'
 ]

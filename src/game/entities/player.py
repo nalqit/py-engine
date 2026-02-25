@@ -1,4 +1,7 @@
-from src.engine import Engine,Keys,PhysicsBody2D,Node2D,RectangleNode,ParticleEmitter2D
+from src.engine import (
+    Engine, Keys, PhysicsBody2D, Node2D, RectangleNode, 
+    ParticleEmitter2D, TweenManager, Easing
+)
 from src.game.player_controller import PlayerController
 from src.game.player_fsm import PlayerStateMachine
 
@@ -10,6 +13,7 @@ class Player(PhysicsBody2D):
         self.use_gravity = True
         self.gravity = 1500.0
         self.can_push = True
+        self.jump_force = -1200.0
         
         self.controller = PlayerController()
         self.state_machine = PlayerStateMachine(self)

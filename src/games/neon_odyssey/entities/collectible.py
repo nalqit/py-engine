@@ -1,4 +1,6 @@
-from src.engine import Node2D,CircleNode,Area2D,TweenManager,Tween,Easing
+from src.engine import (
+    Node2D, CircleNode, Area2D, TweenManager, Tween, Easing, CircleCollider2D
+)
 
 # ------------------------------------------------------------------
 # Collectible Example
@@ -15,7 +17,7 @@ class Collectible(Area2D):
         self.collision_world = collision_world
         self.remove_child(self.collider) # Remove default AABB
         
-        from src.engine.collision.circle_collider2d import CircleCollider2D
+        
         self.collider = CircleCollider2D(name + "_AreaCol", 0, 0, 15, is_static=False, is_trigger=True)
         self.collider.layer = "pickup"
         self.collider.mask = {"player"}

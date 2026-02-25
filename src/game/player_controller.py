@@ -33,7 +33,7 @@ class PlayerController:
 
         # 3. Jumping
         if input_state.get("jump", False) and self.is_grounded:
-            jump_f = player.jump_force if hasattr(player, "jump_force") else -450.0
+            jump_f = player.jump_force if hasattr(player, "jump_force") else -600.0
             player.velocity_y = jump_f
             self.is_grounded = False
 

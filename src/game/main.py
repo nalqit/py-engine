@@ -1,4 +1,6 @@
-from src.engine import Engine,Node2D,CollisionWorld,Camera2D
+from src.engine import (
+    Engine, Node2D, CollisionWorld, Camera2D, Collider2D
+)
 
 def main():
     engine = Engine("PyEngine 2D - Clean Game", 1000, 600)

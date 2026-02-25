@@ -1,4 +1,6 @@
-from src.engine import Node2D,RectangleNode,Collider2D,TweenManager,Tween,Easing
+from src.engine import (
+    Node2D, RectangleNode, Collider2D, TweenManager, Tween, Easing, PhysicsBody2D
+)
 
 # ------------------------------------------------------------------
 # Moving Platform Example
@@ -70,9 +72,9 @@ class MovingPlatform(Node2D):
             test_right = gx + width - min(0, dx)
             test_bottom = gy + max(0, -dy) + 2
             
+            
             riders = self.collision_world.query_rect(test_left, test_top, test_right, test_bottom, exclude=self.collider)
             
-            from src.engine.physics.physics_body_2d import PhysicsBody2D
             for rider_col in riders:
                 body = rider_col.parent
                 if isinstance(body, PhysicsBody2D):

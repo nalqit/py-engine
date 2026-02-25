@@ -5,8 +5,8 @@ from .core import Engine, InputSystem, Renderer, Keys, Signal, SignalMixin, Blen
 
 # Scene API
 from .scene import (
-    Node, Node2D, SceneManager, TweenManager, Easing, AnimatedSprite, 
-    SpriteNode, Camera2D, ParticleEmitter2D, ParallaxBackground,
+    Node, Node2D, SceneManager, TweenManager, Tween, Easing, AnimatedSprite, 
+    SpriteNode, Camera2D, ParticleEmitter2D, ParallaxBackground, ParallaxLayer,
     RectangleNode, CircleNode
 )
 
@@ -35,12 +35,14 @@ __all__ = [
     'Node2D',
     'SceneManager',
     'TweenManager',
+    'Tween',
     'Easing',
     'AnimatedSprite',
     'SpriteNode',
     'Camera2D',
     'ParticleEmitter2D',
     'ParallaxBackground',
+    'ParallaxLayer',
     'RectangleNode',
     'CircleNode',
     'Collider2D',

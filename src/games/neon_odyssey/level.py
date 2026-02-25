@@ -1,4 +1,6 @@
-from src.engine import *
+from src.engine import (
+    Node2D, ParallaxBackground, ParallaxLayer, RectangleNode, Collider2D
+)
 
 # Neon Odyssey: Level Generation
 # This module demonstrates how to build static geometry and Parallax Backgrounds.
