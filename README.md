@@ -20,6 +20,7 @@ The engine is built using a **layered architecture**, with each level stabilized
 |   4   | Gameplay Layer          |   ✅   |
 |   5   | State Layer (FSM)       |   ✅   |
 |   6   | Juice & Animation Layer |   ✅   |
+|   7   | User Interface (UI)     |   ✅   |
 
 ### Level 0 — Runtime Core
 
@@ -61,6 +62,12 @@ The engine is built using a **layered architecture**, with each level stabilized
 - **Parallax Backgrounds**: Multi-layered backgrounds for environmental depth.
 - **Unified Engine API**: Consolidated engine submodules into a single top-level entry point with explicit export management for zero-dependency style game development.
 
+### Level 7 — User Interface (UI)
+
+- **Control Nodes**: `UIControl`, containers (`VBoxContainer`, `HBoxContainer`), `Button`, and `Label` for HUDs and menus.
+- **Event System**: Propagates input events hierarchically with early-out consumption so clicks don't punch through menus into the game.
+- **Data Binding**: Reactive properties and two-way binding tying UI labels to underlying engine stats natively.
+
 ---
 
 ## ✨ Core Architecture
@@ -91,22 +98,29 @@ For a detailed breakdown of every file, see **[PROJECT_OVERVIEW.md](PROJECT_OVER
 ```text
 src/
 ├── engine/                # Core engine (reusable)
-│   ├── scene/             # Node system, Camera, Tween, Particles, Sprites
+│   ├── benchmark/         # Performance benchmarking tools
 │   ├── collision/         # Collider2D, Area2D, CollisionWorld
+│   ├── core/              # Events, Input, Object Lifecycle
+│   ├── fsm/               # Finite State Machine base classes
 │   ├── physics/           # PhysicsBody2D
-│   └── ui/                # StatsHUD
+│   ├── rendering/         # Renderer, PixelGrid
+│   ├── scene/             # Node system, Camera, Tween, Particles, Sprites
+│   ├── time/              # DeltaTime, Scheduling
+│   ├── ui/                # UI Nodes, Layout Containers, Widgets, Data Binding
+│   └── utils/             # Helper structures
 │
 ├── game/                  # Main Game Example ("The Great Adventure")
 │   ├── entities/          # Player, NPC, Box, Coin
+│   ├── ui/                # Game-specific HUD implementations
 │   ├── player_controller.py
 │   ├── player_fsm.py
 │   ├── player_states.py
 │   └── main.py
 │
 ├── games/                 # Minimal Engine-Only Examples
-│   ├── spring_bounce/     # Vertical Platformer (Trigger/Spring mechanics)
-│   ├── spike_rain/        # Survival Game (Falling hazards, Game loop reset)
-│   └── box_pusher/        # Puzzle Game (Robust Box Pushing mechanics)
+│   ├── neon_heights/      # Platformer focused on jumping and collisions
+│   ├── neon_odyssey/      # Advanced mechanics (moving platforms, combat)
+│   └── neon_tank/         # Top-down tank shooter example
 │
 ├── tests/                 # Unit tests for all layers
 ```
@@ -120,9 +134,9 @@ src/
 3. **Engine Import Strategy**: Games can now use `from src.engine import *` to access all engine systems from a single, consolidated entry point.
 4. **Run Main Game**: `python -m src.game.main`
 5. **Run Examples**:
-   - `python -m src.games.spring_bounce.main`
-   - `python -m src.games.spike_rain.main`
-   - `python -m src.games.box_pusher.main`
+   - `python -m src.games.neon_heights.main`
+   - `python -m src.games.neon_odyssey.main`
+   - `python -m src.games.neon_tank.main`
 6. **Debug**: Press **F1** in-game to toggle collider visualization.
 
 ## Engine Usage Guide
@@ -149,6 +163,7 @@ See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed guide on using the engine 
 - [x] **Circular Collision Support**: Implemented `CircleCollider2D` with Circle-Circle and Circle-AABB narrow-phase resolution.
 - [x] **Main Game Refactor**: Rebuilt "The Great Adventure" to use clean architecture (FSM, Controllers, localized TweenManagers).
 - [x] **Unified Engine API**: Consolidated engine submodules into a single top-level entry point (`src/engine/__init__.py`) with explicit export management.
+- [x] **UI & Event Propagation Framework**: Fully featured UI layer including Containers, Widgets, and reactive Data Binding.
 
 ### Up Next
 

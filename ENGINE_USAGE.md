@@ -15,6 +15,8 @@ The PyEngine 2D engine provides a layered architecture for building 2D games in 
 - **InputSystem** – Accessible via `Engine.instance.input`. Handles keyboard signals.
 - **TweenManager** – Component for property interpolation (juice).
 - **ParticleEmitter2D** – Component for visual effects like dust or sparks.
+- **UIControl** – Base class for UI elements (`Label`, `Button`, `Containers`).
+- **EventSystem** – Hierarchically processes and consumes input events (like clicks).
 
 ---
 
@@ -90,6 +92,31 @@ vis = RectangleNode("Platform_Vis", 0, 0, 800, 32, (100, 100, 100))
 platform.add_child(col)
 platform.add_child(vis)
 root.add_child(platform)
+```
+
+### 5. Add a User Interface
+
+You can build HUDs and Menus using nested UI Container nodes:
+
+```python
+# Create a root UI Control to span the screen
+ui_root = UIControl("UIRoot", width=1024, height=600)
+
+# Add a vertical box for layout
+vbox = VBoxContainer("MainVBox", x=10, y=10, width=200, spacing=10)
+ui_root.add_child(vbox)
+
+# Add a label bound to player health using Data Binding
+hp_label = Label("HPLabel", text="HP: 100")
+hp_label.bind_text(player, "health", formatter=lambda v: f"HP: {v}")
+vbox.add_child(hp_label)
+
+# Add a button with a click event
+btn = Button("Btn", text="Click Me!", width=120, height=40)
+btn.on_pressed.connect(lambda: print("Clicked!"))
+vbox.add_child(btn)
+
+root.add_child(ui_root)
 ```
 
 ---

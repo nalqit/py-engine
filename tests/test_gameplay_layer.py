@@ -143,8 +143,8 @@ def test_jump_logic():
     root.update_transforms()
     cw.update(0.1)
     player.controller.update(player, 0.1, input_state)
-    # jump_force = 450. velocity_y should be -450
-    assert player.velocity_y == -450.0
+    # jump_force = 1200. velocity_y should be -1200
+    assert player.velocity_y == -1200.0
     assert player.controller.is_grounded == False # Instant exit
     
     print("[PASS] test_jump_logic")
