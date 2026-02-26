@@ -1,4 +1,4 @@
-from src.engine import (
+from src.pyengine2D import (
     Engine, Node2D, CollisionWorld, Camera2D, Collider2D
 )
 

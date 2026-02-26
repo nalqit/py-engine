@@ -41,7 +41,7 @@ The PyEngine 2D engine provides a layered architecture for building 2D games in 
 Consolidate all engine imports from the top-level API:
 
 ```python
-from src.engine import *
+from src.pyengine2D import *
 
 def main():
     engine = Engine("My New Game", 1024, 600)

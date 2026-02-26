@@ -1,4 +1,4 @@
-from src.engine import (
+from src.pyengine2D import (
     Node2D, CircleNode, Area2D, TweenManager, Tween, Easing, CircleCollider2D
 )
 

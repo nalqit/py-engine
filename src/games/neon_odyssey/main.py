@@ -1,5 +1,5 @@
 import random
-from src.engine import (
+from src.pyengine2D import (
     Engine, Node2D, CollisionWorld, Collider2D, Camera2D
 )
 

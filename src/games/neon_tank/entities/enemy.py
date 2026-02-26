@@ -1,7 +1,7 @@
 import math
-from src.engine.physics.physics_body_2d import PhysicsBody2D
-from src.engine.scene.rectangle_node import RectangleNode
-from src.engine.core.engine import Engine
+from src.pyengine2D.physics.physics_body_2d import PhysicsBody2D
+from src.pyengine2D.scene.rectangle_node import RectangleNode
+from src.pyengine2D.core.engine import Engine
 
 class Enemy(PhysicsBody2D):
     def __init__(self, name, x, y, collider, collision_world):

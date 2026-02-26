@@ -1,7 +1,7 @@
 import math
-from src.engine.collision.area2d import Area2D
-from src.engine.scene.rectangle_node import RectangleNode
-from src.engine.core.engine import Engine
+from src.pyengine2D.collision.area2d import Area2D
+from src.pyengine2D.scene.rectangle_node import RectangleNode
+from src.pyengine2D.core.engine import Engine
 
 class Bullet(Area2D):
     def __init__(self, name, x, y, angle):

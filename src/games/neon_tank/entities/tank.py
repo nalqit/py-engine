@@ -1,9 +1,9 @@
 import math
-from src.engine.physics.physics_body_2d import PhysicsBody2D
-from src.engine.core.engine import Engine
-from src.engine.core.input import Keys
-from src.engine.scene.node2d import Node2D
-from src.engine.scene.rectangle_node import RectangleNode
+from src.pyengine2D.physics.physics_body_2d import PhysicsBody2D
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.core.input import Keys
+from src.pyengine2D.scene.node2d import Node2D
+from src.pyengine2D.scene.rectangle_node import RectangleNode
 
 class Turret(Node2D):
     def __init__(self, name, x, y):
@@ -14,7 +14,7 @@ class Turret(Node2D):
         self.height = 10
 
     def render(self, surface):
-        from src.engine.core.engine import Engine
+        from src.pyengine2D.core.engine import Engine
         if not Engine.instance:
             return
             

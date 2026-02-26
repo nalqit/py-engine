@@ -1,4 +1,4 @@
-from src.engine import (
+from src.pyengine2D import (
     Engine, Keys, PhysicsBody2D, Node2D, RectangleNode, 
     ParticleEmitter2D, TweenManager, Easing
 )

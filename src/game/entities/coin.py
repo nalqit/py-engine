@@ -1,4 +1,4 @@
-from src.engine import Area2D,CircleCollider2D,CircleNode,TweenManager,Tween,Easing
+from src.pyengine2D import Area2D,CircleCollider2D,CircleNode,TweenManager,Tween,Easing
 
 class Coin(Area2D):
     def __init__(self, name, x, y):

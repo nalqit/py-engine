@@ -4,9 +4,9 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.core.engine import Engine
-from src.engine.benchmark.harness import BenchmarkRunner, BenchmarkPhase
-from src.engine.scene.node2d import Node2D
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.benchmark.harness import BenchmarkRunner, BenchmarkPhase
+from src.pyengine2D.scene.node2d import Node2D
 
 class FastDot(Node2D):
     def __init__(self, name, x, y):
@@ -22,7 +22,7 @@ class FastDot(Node2D):
         if self.local_y < 0 or self.local_y > 600: self.vy *= -1
         
     def render(self, surface):
-        from src.engine.core.engine import Engine
+        from src.pyengine2D.core.engine import Engine
         rx, ry = self.get_global_position()
         Engine.instance.renderer.draw_rect(surface, (255, 100, 100), rx, ry, 2, 2)
 
@@ -42,9 +42,9 @@ class B01_SpriteStress(BenchmarkPhase):
             self.container.add_child(dot)
             
 
-from src.engine.ui.ui_node import UINode, Anchor, SizePolicy
-from src.engine.ui.containers import VBoxContainer, HBoxContainer
-from src.engine.ui.widgets import UILabel, UIPanel
+from src.pyengine2D.ui.ui_node import UINode, Anchor, SizePolicy
+from src.pyengine2D.ui.containers import VBoxContainer, HBoxContainer
+from src.pyengine2D.ui.widgets import UILabel, UIPanel
 
 class B02_DeepUI(BenchmarkPhase):
     def __init__(self):
@@ -83,8 +83,8 @@ class B02_DeepUI(BenchmarkPhase):
                 cell.add_child(panel)
 
 
-from src.engine.ui.data_binding import ObservableModel
-from src.engine.ui.widgets import UIListView
+from src.pyengine2D.ui.data_binding import ObservableModel
+from src.pyengine2D.ui.widgets import UIListView
 
 class B03_VirtualDataList(BenchmarkPhase):
     def __init__(self):

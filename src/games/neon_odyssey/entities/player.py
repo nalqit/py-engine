@@ -1,5 +1,5 @@
 import math
-from src.engine import Engine,Keys,PhysicsBody2D,Node2D,RectangleNode,ParticleEmitter2D
+from src.pyengine2D import Engine,Keys,PhysicsBody2D,Node2D,RectangleNode,ParticleEmitter2D
 
 # ------------------------------------------------------------------
 # Advanced Player Example

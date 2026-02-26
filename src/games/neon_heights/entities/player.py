@@ -1,10 +1,10 @@
 import math
-from src.engine.core.engine import Engine
-from src.engine.core.input import Keys
-from src.engine.physics.physics_body_2d import PhysicsBody2D
-from src.engine.scene.node2d import Node2D
-from src.engine.scene.rectangle_node import RectangleNode
-from src.engine.scene.particles import ParticleEmitter2D
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.core.input import Keys
+from src.pyengine2D.physics.physics_body_2d import PhysicsBody2D
+from src.pyengine2D.scene.node2d import Node2D
+from src.pyengine2D.scene.rectangle_node import RectangleNode
+from src.pyengine2D.scene.particles import ParticleEmitter2D
 
 class Player(PhysicsBody2D):
     def __init__(self, name, x, y, collider, collision_world):

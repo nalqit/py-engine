@@ -1,4 +1,4 @@
-from src.engine import Node, Engine
+from src.pyengine2D import Node, Engine
 
 class HUD(Node):
     def __init__(self, name="HUD"):

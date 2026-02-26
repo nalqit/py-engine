@@ -1,4 +1,4 @@
-from src.engine import Node2D,Collider2D,RectangleNode
+from src.pyengine2D import Node2D,Collider2D,RectangleNode
 
 class LevelManager(Node2D):
     def __init__(self, name, collision_world):

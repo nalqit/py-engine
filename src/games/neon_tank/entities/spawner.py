@@ -1,6 +1,6 @@
 import random
-from src.engine.scene.node2d import Node2D
-from src.engine.collision.collider2d import Collider2D
+from src.pyengine2D.scene.node2d import Node2D
+from src.pyengine2D.collision.collider2d import Collider2D
 from .enemy import Enemy
 
 class Spawner(Node2D):

@@ -1,6 +1,6 @@
-from src.engine.scene.node2d import Node2D
-from src.engine.scene.rectangle_node import RectangleNode
-from src.engine.collision.area2d import Area2D
+from src.pyengine2D.scene.node2d import Node2D
+from src.pyengine2D.scene.rectangle_node import RectangleNode
+from src.pyengine2D.collision.area2d import Area2D
 
 class RisingVoid(Area2D):
     def __init__(self, name, x, y):
@@ -15,7 +15,7 @@ class RisingVoid(Area2D):
         
         self.speed = 80.0 # Base speed
         
-        from src.engine.scene.particles import ParticleEmitter2D
+        from src.pyengine2D.scene.particles import ParticleEmitter2D
         self.particles = ParticleEmitter2D("VoidParticles")
         self.add_child(self.particles)
 

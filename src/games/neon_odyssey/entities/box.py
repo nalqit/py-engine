@@ -1,4 +1,4 @@
-from src.engine import PhysicsBody2D,RectangleNode
+from src.pyengine2D import PhysicsBody2D,RectangleNode
 
 class Box(PhysicsBody2D):
     def __init__(self, name, x, y, collider, collision_world):

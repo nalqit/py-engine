@@ -1,11 +1,11 @@
-from src.engine.core.engine import Engine
-from src.engine.scene.node2d import Node2D
-from src.engine.collision.collision_world import CollisionWorld
-from src.engine.collision.collider2d import Collider2D
-from src.engine.scene.camera2d import Camera2D
-from src.engine.scene.rectangle_node import RectangleNode
-from src.engine.ui.stats_hud import StatsHUD
-from src.engine.scene.sprite_node import SpriteNode
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.scene.node2d import Node2D
+from src.pyengine2D.collision.collision_world import CollisionWorld
+from src.pyengine2D.collision.collider2d import Collider2D
+from src.pyengine2D.scene.camera2d import Camera2D
+from src.pyengine2D.scene.rectangle_node import RectangleNode
+from src.pyengine2D.ui.stats_hud import StatsHUD
+from src.pyengine2D.scene.sprite_node import SpriteNode
 
 def main():
     # Initialize Engine (800x600 virtual resolution)

@@ -1,4 +1,4 @@
-from src.engine import PhysicsBody2D,RectangleNode
+from src.pyengine2D import PhysicsBody2D,RectangleNode
 
 class Enemy(PhysicsBody2D):
     def __init__(self, name, x, y, collider, collision_world, move_dist=200):
