@@ -3,7 +3,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.ui.data_binding import ObservableModel, DataBinding
+from src.pyengine2D.ui.data_binding import ObservableModel, DataBinding
 
 class MockNode:
     def __init__(self):

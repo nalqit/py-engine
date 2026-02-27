@@ -3,8 +3,8 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.core.signal import Signal
-from src.engine.scene.node import Node
+from src.pyengine2D.core.signal import Signal
+from src.pyengine2D.scene.node import Node
 
 def test_signal_basic():
     """Test connect, emit, and disconnect on a standalone Signal."""

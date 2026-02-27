@@ -5,10 +5,10 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.core.engine import Engine
-from src.engine.core.renderer import Renderer
-from src.engine.utils.object_pool import ObjectPool
-from src.engine.scene.node2d import Node2D
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.core.renderer import Renderer
+from src.pyengine2D.utils.object_pool import ObjectPool
+from src.pyengine2D.scene.node2d import Node2D
 
 
 def test_engine_accumulator_cap():

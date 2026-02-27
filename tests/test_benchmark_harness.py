@@ -4,8 +4,8 @@ import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.core.engine import Engine
-from src.engine.benchmark.harness import BenchmarkRunner, BenchmarkPhase
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.benchmark.harness import BenchmarkRunner, BenchmarkPhase
 
 class DummyBenchmark(BenchmarkPhase):
     def __init__(self, name):

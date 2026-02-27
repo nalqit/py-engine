@@ -9,8 +9,6 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 
 ## 🟢 System Status
 
-The engine is built using a **layered architecture**, with each level stabilized before the next is added.
-
 | Level | Layer                   | Status |
 | :---: | :---------------------- | :----: |
 |   0   | Runtime Core            |   ✅   |
@@ -21,6 +19,7 @@ The engine is built using a **layered architecture**, with each level stabilized
 |   5   | State Layer (FSM)       |   ✅   |
 |   6   | Juice & Animation Layer |   ✅   |
 |   7   | User Interface (UI)     |   ✅   |
+|   8   | Tilemap Level Editor    |   ✅   |
 
 ### Level 0 — Runtime Core
 
@@ -29,100 +28,94 @@ The engine is built using a **layered architecture**, with each level stabilized
 ### Level 1 — Scene System
 
 - Parent/child transform propagation, local vs global position, update lifecycle.
+- **`TilemapNode`**: Multi-layer tilemap with cached baked surfaces, auto-collision generation, viewport streaming, and parallax support.
 
 ### Level 2 — Collision System
 
-- **Collider2D**: Scale-aware AABB data — dimensions, layer/mask, static/trigger flags.
-- **CollisionResult**: Structured dataclass with collision normal and penetration depth.
-- **CollisionWorld**: Float-precision AABB overlap checks with MTV resolution. Layer/mask filtering, trigger support, and epsilon-inclusive edge detection.
+- **Collider2D**: Scale-aware AABB — dimensions, layer/mask, static/trigger flags, optional `visible` debug overlay.
+- **CircleCollider2D**: Circle-circle and circle-AABB colliders.
+- **CollisionWorld**: Float-precision AABB overlap checks with MTV resolution + layer/mask filtering.
 
 ### Level 3 — Physics Layer
 
-- **PhysicsBody2D**: Generic body with per-axis move-and-collide float-precision resolution.
-- **Gravity**: Engine-level `use_gravity` flag with configurable `gravity` constant.
-- **Impulses**: `apply_impulse(ix, iy)` for instantaneous velocity changes.
-- **Coordinate-Space Consistency**: Precise conversion between local and global spaces during resolution.
+- **PhysicsBody2D**: Per-axis move-and-collide with float precision.
+- **Gravity** and **Impulses**: `apply_impulse(ix, iy)` for instantaneous velocity changes.
 
 ### Level 4 — Gameplay Layer
 
-- **PlayerController**: Engine-agnostic controller that maps abstract input to physics intentions.
-- **Movement**: Acceleration-based horizontal movement with friction and max speed clamping.
-- **Ground Detection**: Non-invasive pure probe check (downward offset) via `CollisionWorld`.
+- **PlayerController**: Engine-agnostic input → physics bridge.
+- **Ground Detection**: Non-invasive downward probe check via `CollisionWorld`.
 
 ### Level 5 — State Layer (FSM)
 
-- **PlayerStateMachine**: Manages behavioral states (Idle, Run, Jump, Fall).
-- **Lightweight States**: Concrete state objects (`IdleState`, `RunState`, etc.).
+- **PlayerStateMachine** with concrete states (`IdleState`, `RunState`, `JumpState`, `FallState`).
 
 ### Level 6 — Juice & Animation Layer
 
-- **Tween System**: Powerful property interpolation with Easing functions for smooth "Juice."
-- **Particle System**: `ParticleEmitter2D` for visual effects like jump dust or sparks.
-- **Sprite Animation**: `SpriteNode` for static assets and `AnimatedSprite` for frame-based sheets.
-- **Parallax Backgrounds**: Multi-layered backgrounds for environmental depth.
-- **Unified Engine API**: Consolidated engine submodules into a single top-level entry point with explicit export management for zero-dependency style game development.
+- **TweenManager**, **ParticleEmitter2D**, **AnimatedSprite**, **SpriteNode**, parallax backgrounds.
 
 ### Level 7 — User Interface (UI)
 
-- **Control Nodes**: `UIControl`, containers (`VBoxContainer`, `HBoxContainer`), `Button`, and `Label` for HUDs and menus.
-- **Event System**: Propagates input events hierarchically with early-out consumption so clicks don't punch through menus into the game.
-- **Data Binding**: Reactive properties and two-way binding tying UI labels to underlying engine stats natively.
+- **UIControl**, containers (`VBoxContainer`, `HBoxContainer`), `Button`, `Label`.
+- Hierarchical event consumption + reactive data binding.
+
+### Level 8 — Tilemap Level Editor
+
+- **`draw2d.py`**: Standalone infinite-canvas 4-quadrant map editor.
+- Zoom (scroll wheel), Pan (Space+Click or Middle-click), Draw (Left-click), Erase (Right-click).
+- Press **[S]** to save JSON; **[L]** to load. Auto-tiling picks correct Left/Mid/Right/Underground edge tiles.
+- Output consumed directly by `TilemapNode.load_from_json()` in-game.
 
 ---
 
 ## ✨ Core Architecture
 
+### 🗺️ Tilemap & Level Design (Level 8)
+
+- **Infinite 4-Quadrant Canvas**: Draw geometry at any positive or negative coordinates.
+- **Engine Integration**: `TilemapNode` reads `offset_x`/`offset_y` to place tiles at exact world-space positions.
+
 ### 🍭 Juice & Feel (Level 6)
 
-- **Tweening Engine**: Smoothly animate any property (scale, position, alpha) using `TweenManager`.
-- **Scale-Aware Hitboxes**: Physics and Collisions automatically adapt when objects squash or stretch.
-- **Visual Polish**: Procedural effects (bobbing coins, landing dust) integrated directly into game logic.
+- **Scale-Aware Hitboxes**: Colliders adapt automatically when nodes are tweened.
 
 ### 🎮 Gameplay & Control (Levels 4-5)
 
-- **Engine-Agnostic Controllers**: The `PlayerController` does not import `pygame`, receiving an abstract `input_state` dictionary instead.
-- **Finite State Machine**: Decouples "what the player is doing" from "how the player moves."
+- **Engine-Agnostic Controllers**: `PlayerController` never imports `pygame`.
+- **FSM**: Decouples behavioral identity from physics movement.
 
 ### ⚙️ Physics & Collision (Levels 2-3)
 
-- **Axis-Separated Resolution**: X is resolved, then Y, with forced transform synchronization between steps.
-- **Coordinate Integrity**: Robust handling of local-to-global translations to prevent "teleportation" glitches.
-- **Float Precision**: Uses exact float boundaries and inclusive epsilon bounds for reliable contact detection (e.g., box pushing, springs).
+- **Axis-Separated Resolution** with float precision and inclusive epsilon bounds.
 
 ---
 
 ## 📂 Project Structure
 
-For a detailed breakdown of every file, see **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)**.
-
 ```text
 src/
-├── engine/                # Core engine (reusable)
-│   ├── benchmark/         # Performance benchmarking tools
-│   ├── collision/         # Collider2D, Area2D, CollisionWorld
-│   ├── core/              # Events, Input, Object Lifecycle
+├── pyengine2D/            # Core engine (reusable)
+│   ├── collision/         # Collider2D, CircleCollider2D, CollisionWorld
+│   ├── core/              # Engine, Events, Input
 │   ├── fsm/               # Finite State Machine base classes
 │   ├── physics/           # PhysicsBody2D
-│   ├── rendering/         # Renderer, PixelGrid
-│   ├── scene/             # Node system, Camera, Tween, Particles, Sprites
+│   ├── rendering/         # Renderer, SurfaceCache
+│   ├── scene/             # Node, Node2D, Camera2D, TilemapNode, AnimatedSprite
 │   ├── time/              # DeltaTime, Scheduling
-│   ├── ui/                # UI Nodes, Layout Containers, Widgets, Data Binding
+│   ├── ui/                # UIControl, Containers, Widgets, Data Binding
 │   └── utils/             # Helper structures
 │
-├── game/                  # Main Game Example ("The Great Adventure")
-│   ├── entities/          # Player, NPC, Box, Coin
-│   ├── ui/                # Game-specific HUD implementations
-│   ├── player_controller.py
-│   ├── player_fsm.py
-│   ├── player_states.py
-│   └── main.py
-│
-├── games/                 # Minimal Engine-Only Examples
-│   ├── neon_heights/      # Platformer focused on jumping and collisions
-│   ├── neon_odyssey/      # Advanced mechanics (moving platforms, combat)
-│   └── neon_tank/         # Top-down tank shooter example
-│
-├── tests/                 # Unit tests for all layers
+└── games/                 # Game examples
+    ├── frog_hop/          # Side-scrolling platformer (Ninja Frog + Fruits)
+    │   ├── entities/      # Player, Fruit
+    │   ├── maps/          # JSON tilemaps created with draw2d.py
+    │   ├── level.py       # Level builder (loads TilemapNode from maps/)
+    │   └── main.py
+    ├── neon_heights/
+    ├── neon_odyssey/
+    └── neon_tank/
+
+draw2d.py                  # Infinite 4-Quadrant Map Editor → JSON tilemaps
 ```
 
 ---
@@ -131,17 +124,15 @@ src/
 
 1. **Python**: 3.10+
 2. **Dependencies**: `pip install pygame`
-3. **Engine Import Strategy**: Games can now use `from src.engine import *` to access all engine systems from a single, consolidated entry point.
-4. **Run Main Game**: `python -m src.game.main`
-5. **Run Examples**:
+3. **Engine Import**: `from src.pyengine2D import *`
+4. **Run Frog Hop**: `python -m src.games.frog_hop.main`
+5. **Other examples**:
    - `python -m src.games.neon_heights.main`
    - `python -m src.games.neon_odyssey.main`
    - `python -m src.games.neon_tank.main`
-6. **Debug**: Press **F1** in-game to toggle collider visualization.
+6. **Level Editor**: `python draw2d.py` → draw → **[S]** → save to `src/games/frog_hop/maps/`
 
-## Engine Usage Guide
-
-See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed guide on using the engine and building games.
+See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed API guide.
 
 ---
 
@@ -149,27 +140,25 @@ See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed guide on using the engine 
 
 ### Completed
 
-- [x] Runtime Core & Scene Tree.
-- [x] AABB Collision System (Layer/Mask, Triggers).
-- [x] Generic PhysicsBody2D with axis-separation and float precision.
-- [x] Engine-level Gravity and Impulse support.
-- [x] Engine-Agnostic Player Controller (Level 4).
-- [x] Behavioral State Machine (Level 5).
-- [x] Tweening & Easing system (Level 6).
-- [x] Particle System & Sprite Rendering (Level 6).
-- [x] Scale-Aware Physics Sync.
-- [x] World Overhaul (Structured Map & Unified Background).
-- [x] **Engine-Only Examples**: Created minimal isolated games to prove engine independence.
-- [x] **Circular Collision Support**: Implemented `CircleCollider2D` with Circle-Circle and Circle-AABB narrow-phase resolution.
-- [x] **Main Game Refactor**: Rebuilt "The Great Adventure" to use clean architecture (FSM, Controllers, localized TweenManagers).
-- [x] **Unified Engine API**: Consolidated engine submodules into a single top-level entry point (`src/engine/__init__.py`) with explicit export management.
-- [x] **UI & Event Propagation Framework**: Fully featured UI layer including Containers, Widgets, and reactive Data Binding.
+- [x] Runtime Core & Scene Tree
+- [x] AABB Collision System (Layer/Mask, Triggers)
+- [x] CircleCollider2D (Circle-AABB & Circle-Circle narrow phase)
+- [x] PhysicsBody2D with axis-separation and float precision
+- [x] Engine-level Gravity and Impulse support
+- [x] Engine-Agnostic Player Controller (Level 4)
+- [x] Behavioral State Machine (Level 5)
+- [x] Tweening & Easing system (Level 6)
+- [x] Particle System & Sprite Rendering (Level 6)
+- [x] UI & Event Propagation Framework (Level 7)
+- [x] **TilemapNode**: Baked surfaces, auto-collision, streaming, parallax (Level 1)
+- [x] **draw2d.py**: Infinite 4-quadrant map editor with Zoom, Pan, Save/Load (Level 8)
+- [x] **Frog Hop**: Full side-scrolling platformer with JSON-driven tilemap levels
 
 ### Up Next
 
-- [ ] Sound & Music Layer.
-- [ ] Polygon collision support.
-- [ ] Tilemap level loader (JSON/TMX).
+- [ ] Sound & Music Layer
+- [ ] Polygon collision support
+- [ ] TMX format support in `TilemapNode`
 
 ---
 

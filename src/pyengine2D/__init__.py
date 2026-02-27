@@ -7,11 +7,11 @@ from .core import Engine, InputSystem, Renderer, Keys, Signal, SignalMixin, Blen
 from .scene import (
     Node, Node2D, SceneManager, TweenManager, Tween, Easing, AnimatedSprite, 
     SpriteNode, Camera2D, ParticleEmitter2D, ParallaxBackground, ParallaxLayer,
-    RectangleNode, CircleNode
+    RectangleNode, CircleNode, TilemapNode
 )
 
 # Collision & Physics API
-from .collision import Collider2D, CollisionWorld, Area2D, CircleCollider2D, CollisionResult
+from .collision import Collider2D, CollisionWorld, Area2D, CircleCollider2D, CollisionResult, UniformGrid
 from .physics import PhysicsBody2D
 
 # FSM API
@@ -22,6 +22,12 @@ from .ui import (
     StatsHUD, UINode, UIPanel, UILabel, UIButton, 
     VBoxContainer, HBoxContainer, ScrollContainer
 )
+
+# Rendering API
+from .rendering import SpriteBatch, TextureAtlas, SurfaceCache, DirtyRectTracker
+
+# Utils API
+from .utils import ObjectPool, AssetManager
 
 __all__ = [
     'Engine',
@@ -45,11 +51,13 @@ __all__ = [
     'ParallaxLayer',
     'RectangleNode',
     'CircleNode',
+    'TilemapNode',
     'Collider2D',
     'CollisionWorld',
     'Area2D',
     'CircleCollider2D',
     'CollisionResult',
+    'UniformGrid',
     'PhysicsBody2D',
     'StateMachine',
     'State',
@@ -60,5 +68,11 @@ __all__ = [
     'UIButton',
     'VBoxContainer',
     'HBoxContainer',
-    'ScrollContainer'
+    'ScrollContainer',
+    'SpriteBatch',
+    'TextureAtlas',
+    'SurfaceCache',
+    'DirtyRectTracker',
+    'ObjectPool',
+    'AssetManager',
 ]

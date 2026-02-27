@@ -3,8 +3,8 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.core.engine import Engine
-from src.engine.scene.scene_manager import SceneManager, Scene
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.scene.scene_manager import SceneManager, Scene
 
 class MockEngine:
     pass

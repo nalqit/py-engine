@@ -9,6 +9,7 @@ from .circle_node import CircleNode
 from .parallax import ParallaxBackground, ParallaxLayer
 from .particles import ParticleEmitter2D
 from .tween import TweenManager, Tween, Easing
+from .tilemap import TilemapNode
 
 __all__ = [
     'Node',
@@ -24,5 +25,6 @@ __all__ = [
     'ParticleEmitter2D',
     'TweenManager',
     'Tween',
-    'Easing'
+    'Easing',
+    'TilemapNode',
 ]

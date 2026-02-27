@@ -1,4 +1,4 @@
-from src.engine.scene.node import Node
+from src.pyengine2D.scene.node import Node
 
 class TestNode(Node):
     """Subclass of Node to verify update calls."""

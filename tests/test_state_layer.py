@@ -19,9 +19,9 @@ pygame.init()
 if not pygame.display.get_surface():
     pygame.display.set_mode((1, 1), pygame.NOFRAME | pygame.HIDDEN)
 
-from src.engine.collision.collider2d import Collider2D
-from src.engine.collision.collision_world import CollisionWorld
-from src.engine.scene.node2d import Node2D
+from src.pyengine2D.collision.collider2d import Collider2D
+from src.pyengine2D.collision.collision_world import CollisionWorld
+from src.pyengine2D.scene.node2d import Node2D
 from src.game.entities.player import Player
 
 

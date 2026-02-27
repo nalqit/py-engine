@@ -94,6 +94,35 @@ platform.add_child(vis)
 root.add_child(platform)
 ```
 
+### 5. Use the TileMap System
+
+Instead of placing platforms manually, you can use the **`TilemapNode`** to load JSON-driven levels:
+
+```python
+from src.pyengine2D.scene.tilemap import TilemapNode
+
+tilemap = TilemapNode("Level")
+tilemap.load_from_json("src/games/frog_hop/maps/map_data.json")
+root.add_child(tilemap)
+```
+
+The JSON map file is created using the **`draw2d.py`** map editor:
+
+```
+python draw2d.py
+```
+
+- **Left-click** to draw tiles, **Right-click** to erase.
+- Scroll wheel to **Zoom**, Space+Click or Middle-click to **Pan**.
+- Press **[S]** to save your map (File Explorer dialog opens to choose name/path).
+- Press **[L]** to load an existing `.json` map.
+
+The exported JSON automatically includes:
+
+- `offset_x` / `offset_y` for correct world-space positioning (supports negative coords).
+- Auto-tiled edges (Top-Left, Top-Mid, Top-Right, Underground dirt).
+- Tileset reference with `scale` factor for pixel-art upscaling.
+
 ### 5. Add a User Interface
 
 You can build HUDs and Menus using nested UI Container nodes:

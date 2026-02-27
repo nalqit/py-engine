@@ -3,9 +3,9 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.scene.node2d import Node2D
-from src.engine.ui.ui_node import UINode, Anchor, SizePolicy
-from src.engine.ui.containers import VBoxContainer, HBoxContainer, GridContainer
+from src.pyengine2D.scene.node2d import Node2D
+from src.pyengine2D.ui.ui_node import UINode, Anchor, SizePolicy
+from src.pyengine2D.ui.containers import VBoxContainer, HBoxContainer, GridContainer
 
 
 def test_ui_node_anchoring():

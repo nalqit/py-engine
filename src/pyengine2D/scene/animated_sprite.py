@@ -4,10 +4,22 @@ from .node2d import Node2D
 class AnimatedSprite(Node2D):
     """
     A 2D node that renders an animation from a sprite sheet.
+
+    Performance features:
+        - Optional AssetManager loading for shared sprite sheet cache.
+        - Frame surface cache to avoid repeated area blits from the sheet.
     """
-    def __init__(self, name, sprite_sheet_path, frame_width, frame_height):
+
+    def __init__(self, name, sprite_sheet_path, frame_width, frame_height,
+                 use_asset_manager=False):
         super().__init__(name, 0, 0)
-        self.sprite_sheet = pygame.image.load(sprite_sheet_path).convert_alpha()
+
+        if use_asset_manager:
+            from src.pyengine2D.utils.asset_manager import AssetManager
+            self.sprite_sheet = AssetManager.instance().load_image(sprite_sheet_path)
+        else:
+            self.sprite_sheet = pygame.image.load(sprite_sheet_path).convert_alpha()
+
         self.frame_width = frame_width
         self.frame_height = frame_height
         
@@ -23,6 +35,9 @@ class AnimatedSprite(Node2D):
         self.sheet_width, self.sheet_height = self.sprite_sheet.get_size()
         self.cols = self.sheet_width // frame_width
         self.rows = self.sheet_height // frame_height
+
+        # Frame surface cache: (col, row) -> subsurface
+        self._frame_cache = {}
 
     def add_animation(self, name, frames):
         """frames: list of (col, row) or list of index."""
@@ -62,6 +77,32 @@ class AnimatedSprite(Node2D):
 
         super().update(delta)
 
+    def _get_frame_surface(self, frame_idx):
+        """Return cached frame surface for the given frame index."""
+        if isinstance(frame_idx, tuple):
+            col, row = frame_idx
+        else:
+            col = frame_idx % self.cols
+            row = frame_idx // self.cols
+
+        key = (col, row)
+        if key not in self._frame_cache:
+            src_rect = pygame.Rect(
+                col * self.frame_width,
+                row * self.frame_height,
+                self.frame_width,
+                self.frame_height,
+            )
+            # Use subsurface for zero-copy when possible
+            try:
+                self._frame_cache[key] = self.sprite_sheet.subsurface(src_rect)
+            except ValueError:
+                # Fallback: blit to a new surface
+                surf = pygame.Surface((self.frame_width, self.frame_height), pygame.SRCALPHA)
+                surf.blit(self.sprite_sheet, (0, 0), src_rect)
+                self._frame_cache[key] = surf
+        return self._frame_cache[key]
+
     def render(self, surface: pygame.Surface):
         if not self.current_animation:
             super().render(surface)
@@ -69,28 +110,15 @@ class AnimatedSprite(Node2D):
 
         frames = self.animations[self.current_animation]
         frame_idx = frames[self.current_frame_index]
-        
-        # Calculate source rect on sprite sheet
-        if isinstance(frame_idx, tuple):
-            col, row = frame_idx
-        else:
-            col = frame_idx % self.cols
-            row = frame_idx // self.cols
-            
-        src_rect = pygame.Rect(
-            col * self.frame_width,
-            row * self.frame_height,
-            self.frame_width,
-            self.frame_height
-        )
-        
+        frame_surf = self._get_frame_surface(frame_idx)
+
         sx, sy = self.get_screen_position()
         dest_pos = (int(sx), int(sy))
         
         from src.pyengine2D.core.engine import Engine
         if Engine.instance:
-            Engine.instance.renderer.blit(surface, self.sprite_sheet, dest_pos, area=src_rect)
+            Engine.instance.renderer.blit(surface, frame_surf, dest_pos)
         else:
-            surface.blit(self.sprite_sheet, dest_pos, src_rect)
+            surface.blit(frame_surf, dest_pos)
         
         super().render(surface)

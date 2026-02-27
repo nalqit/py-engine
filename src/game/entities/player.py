@@ -18,10 +18,7 @@ class Player(PhysicsBody2D):
         self.controller = PlayerController()
         self.state_machine = PlayerStateMachine(self)
         
-        # Animations & tweens
-        self.tween_mgr = TweenManager("TweenMgr")
-        self.add_child(self.tween_mgr)
-        
+        # Visuals
         self.vis = RectangleNode("PlayerVis", -20, -20, 40, 40, (0, 255, 200))
         self.add_child(self.vis)
         
@@ -44,14 +41,8 @@ class Player(PhysicsBody2D):
         else:
             input_state = {}
             
-        was_grounded = self.controller.is_grounded
-        
         self.controller.update(self, delta, input_state)
         
-        if input_state.get("jump", False) and was_grounded and self.velocity_y < 0:
-            self.apply_juice(0.7, 1.3)
-            self.jump_effect()
-
         super().update(delta)
         
         self.state_machine.update(delta)
@@ -66,37 +57,6 @@ class Player(PhysicsBody2D):
                             speed_range=(20, 80), 
                             angle_range=(200, 340),
                             color=(150, 150, 150))
-
-    def apply_juice(self, sx, sy, duration=0.2):
-        if self.tween_mgr.is_tweening(self.vis, "scale_y"):
-            return
-            
-        def get_offsets(ts_x, ts_y):
-            ox = 40 * (1 - ts_x) / 2
-            oy = 40 * (1 - ts_y)
-            return ox, oy
-            
-        def reset_scale():
-            self.tween_mgr.interpolate(self.vis, "scale_x", self.vis.scale_x, 1.0, duration, Easing.quad_out)
-            self.tween_mgr.interpolate(self.vis, "scale_y", self.vis.scale_y, 1.0, duration, Easing.quad_out)
-            self.tween_mgr.interpolate(self.vis, "local_x", self.vis.local_x, -20.0, duration, Easing.quad_out)
-            self.tween_mgr.interpolate(self.vis, "local_y", self.vis.local_y, -20.0, duration, Easing.quad_out)
-            
-            self.tween_mgr.interpolate(self.collider, "scale_x", self.collider.scale_x, 1.0, duration, Easing.quad_out)
-            self.tween_mgr.interpolate(self.collider, "scale_y", self.collider.scale_y, 1.0, duration, Easing.quad_out)
-            self.tween_mgr.interpolate(self.collider, "local_x", self.collider.local_x, -20.0, duration, Easing.quad_out)
-            self.tween_mgr.interpolate(self.collider, "local_y", self.collider.local_y, -20.0, duration, Easing.quad_out)
-
-        ox, oy = get_offsets(sx, sy)
-        self.tween_mgr.interpolate(self.vis, "scale_x", 1.0, sx, duration/2, Easing.quad_out, on_complete=reset_scale)
-        self.tween_mgr.interpolate(self.vis, "scale_y", 1.0, sy, duration/2, Easing.quad_out)
-        self.tween_mgr.interpolate(self.vis, "local_x", -20.0, -20.0 + ox, duration/2, Easing.quad_out)
-        self.tween_mgr.interpolate(self.vis, "local_y", -20.0, -20.0 + oy, duration/2, Easing.quad_out)
-        
-        self.tween_mgr.interpolate(self.collider, "scale_x", 1.0, sx, duration/2, Easing.quad_out)
-        self.tween_mgr.interpolate(self.collider, "scale_y", 1.0, sy, duration/2, Easing.quad_out)
-        self.tween_mgr.interpolate(self.collider, "local_x", -20.0, -20.0 + ox, duration/2, Easing.quad_out)
-        self.tween_mgr.interpolate(self.collider, "local_y", -20.0, -20.0 + oy, duration/2, Easing.quad_out)
 
     def add_score(self, amount):
         self.score += amount

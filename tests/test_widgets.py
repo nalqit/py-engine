@@ -3,9 +3,9 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.ui.ui_node import UINode
-from src.engine.ui.widgets import UILabel, UIPanel, UIButton, UIProgressBar, UIListView
-from src.engine.ui.event_system import UIEvent, UIMouseEvent
+from src.pyengine2D.ui.ui_node import UINode
+from src.pyengine2D.ui.widgets import UILabel, UIPanel, UIButton, UIProgressBar, UIListView
+from src.pyengine2D.ui.event_system import UIEvent, UIMouseEvent
 
 
 def test_ui_label():

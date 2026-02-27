@@ -26,7 +26,7 @@ class CircleCollider2D(Collider2D):
         sx, sy = self.get_screen_position()
         r = self.radius * self.scale_x
 
-        if renderer:
+        if renderer and self.visible:
             color = (0, 0, 255, 128) if self.is_static else (255, 0, 0, 128)
             overlay = renderer.create_surface(int(r * 2 + 1), int(r * 2 + 1), alpha=True)
             renderer.draw_circle(overlay, color, int(r), int(r), int(r))

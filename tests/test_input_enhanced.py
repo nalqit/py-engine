@@ -3,8 +3,8 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.core.engine import Engine
-from src.engine.core.input import Keys
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.core.input import Keys
 
 def test_input_enhancement():
     # Setup dummy engine

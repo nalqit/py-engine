@@ -14,8 +14,8 @@ The engine is designed as a strict "cake" of responsibilities. Higher layers dep
 | **4. Gameplay**            | Translation of intent (Input/AI) into forces.             | `PlayerController`          |
 | **3. Physics**             | Accumulation of forces (Gravity, Velocity) into motion.   | `PhysicsBody2D`             |
 | **2. Collision**           | Geometric queries (Am I hitting something?).              | `CollisionWorld`            |
-| **1. Scene**               | Spatial hierarchy and transform propagation.              | `Node2D`                    |
-| **0. Runtime**             | The engine heartbeat (Game loop, Delta time).             | `main.py`                   |
+| **1. Scene**               | Spatial hierarchy, transforms, and tilemap rendering.     | `Node2D` / `TilemapNode`    |
+| **0. Runtime**             | The engine heartbeat (Game loop, Delta time).             | `Engine`                    |
 
 ---
 
@@ -109,3 +109,23 @@ We have recently implemented a **Performance & Consistency Patch** to address po
 **Solution**: By resolving X and Y independently and using a fixed timestep, we've eliminated "Ghost Collisions."
 
 - When hitting a ceiling or wall, the specific velocity component is zeroed immediately, preventing "vibration" or sticking against surfaces.
+
+---
+
+## 5. Tilemap Level Pipeline
+
+The `TilemapNode` + `draw2d.py` editor form a complete level design pipeline:
+
+```
+draw2d.py (Map Editor)
+  → Press [S] to save JSON to maps/map_data.json
+  → JSON contains tile grid + offset_x/offset_y + tileset reference
+
+TilemapNode.load_from_json()
+  → Reads offset → sets local_x, local_y for world-space placement
+  → Bakes all layers to cached surfaces (O(1) blit per frame)
+  → Auto-generates merged row Collider2D nodes for solid layers
+  → Streams only visible tiles during render (viewport culling)
+```
+
+This keeps `level.py` minimal — it just calls `tilemap.load_from_json(map_path)` and adds the node to the scene tree. Geometry is fully data-driven.

@@ -1,6 +1,7 @@
 from src.pyengine2D.scene.node2d import Node2D
 from src.pyengine2D.collision.collider2d import Collider2D
 from src.pyengine2D.collision.collision_result import CollisionResult
+from src.pyengine2D.collision.spatial_grid import UniformGrid
 
 
 class CollisionWorld(Node2D):
@@ -13,13 +14,18 @@ class CollisionWorld(Node2D):
           return a CollisionResult with penetration and normal
         - process_collisions(): broad-phase pair detection with
           enter/stay/exit event emission
+
+    Performance:
+        Uses a UniformGrid spatial partitioning structure so that
+        broad-phase pair detection is O(n·k) instead of O(n²).
     """
 
-    def __init__(self, name):
+    def __init__(self, name, cell_size=128):
         super().__init__(name)
         self._last_collisions = set()
         self._cached_colliders = []
         self._cached_rects = {}  # collider -> (l, t, r, b)
+        self._grid = UniformGrid(cell_size=cell_size)
 
     def update(self, delta):
         """Update cache before children update."""
@@ -37,20 +43,23 @@ class CollisionWorld(Node2D):
         ]
 
     def _refresh_rect_cache(self):
-        """Pre-calculate all world-space collider bounds, accounting for scale."""
+        """Pre-calculate all world-space collider bounds and populate spatial grid."""
         self._cached_rects = {}
+        self._grid.clear()
         for col in self._cached_colliders:
             if hasattr(col, 'get_rect'):
                 res = col.get_rect()
                 if isinstance(res, tuple):
-                    self._cached_rects[col] = res
+                    rect = res
                 else:
-                    self._cached_rects[col] = (res.left, res.top, res.right, res.bottom)
+                    rect = (res.left, res.top, res.right, res.bottom)
             else:
                 gx, gy = col.get_global_position()
                 sw = col.width * col.scale_x
                 sh = col.height * col.scale_y
-                self._cached_rects[col] = (gx, gy, gx + sw, gy + sh)
+                rect = (gx, gy, gx + sw, gy + sh)
+            self._cached_rects[col] = rect
+            self._grid.insert(col, rect[0], rect[1], rect[2], rect[3])
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -103,15 +112,13 @@ class CollisionWorld(Node2D):
         test_right = test_left + sw
         test_bottom = test_top + sh
 
-        root = self._get_root()
-
         best_result = CollisionResult.none()
         smallest_penetration = float('inf')
 
-        for other in self._cached_colliders:
-            if other is collider:
-                continue
+        # Use spatial grid to get candidates instead of scanning all colliders
+        candidates = self._grid.query(test_left, test_top, test_right, test_bottom, exclude=collider)
 
+        for other in candidates:
             # Layer/mask filtering
             if other.layer not in collider.mask:
                 continue
@@ -208,8 +215,11 @@ class CollisionWorld(Node2D):
 
         results = []
 
-        for other in self._cached_colliders:
-            if other is collider or other.layer not in collider.mask or other.is_trigger:
+        # Use spatial grid for candidates
+        candidates = self._grid.query(test_left, test_top, test_right, test_bottom, exclude=collider)
+
+        for other in candidates:
+            if other.layer not in collider.mask or other.is_trigger:
                 continue
 
             other_rect = self._cached_rects.get(other)
@@ -251,7 +261,11 @@ class CollisionWorld(Node2D):
     def query_rect(self, test_left, test_top, test_right, test_bottom, masks=None, exclude=None):
         """Public API: test if any cached collider overlaps the given float rect."""
         results = []
-        for col in self._cached_colliders:
+
+        # Use spatial grid for candidates
+        candidates = self._grid.query(test_left, test_top, test_right, test_bottom)
+
+        for col in candidates:
             if exclude and col is exclude:
                 continue
             if col.is_trigger:
@@ -270,69 +284,80 @@ class CollisionWorld(Node2D):
     def get_collider_count(self):
         """Returns the number of active colliders in the cache."""
         return len(self._cached_colliders)
+
     # ------------------------------------------------------------------
     # Broad-phase pair detection (enter / stay / exit events)
     # ------------------------------------------------------------------
 
     def process_collisions(self):
         """Call once per frame to emit collision enter/stay/exit events."""
-        all_colliders = self._cached_colliders
-
         current = set()
+        checked_pairs = set()
 
-        for i, a in enumerate(all_colliders):
-            for b in all_colliders[i + 1:]:
+        for a in self._cached_colliders:
+            rect_a = self._cached_rects.get(a)
+            if not rect_a:
+                continue
+
+            # Query spatial grid for potential partners near a
+            la, ta, ra, ba = rect_a
+            EPS = 0.5
+            nearby = self._grid.query(la - EPS, ta - EPS, ra + EPS, ba + EPS, exclude=a)
+
+            for b in nearby:
+                # Ensure each pair is checked only once
+                pair = tuple(sorted((a, b), key=id))
+                if pair in checked_pairs:
+                    continue
+                checked_pairs.add(pair)
+
                 a_sees_b = b.layer in a.mask
                 b_sees_a = a.layer in b.mask
 
                 if not a_sees_b and not b_sees_a:
                     continue
 
-                # Use float-precision rectangles from cache instead of integer pygame.Rects
-                rect_a = self._cached_rects.get(a)
                 rect_b = self._cached_rects.get(b)
+                if not rect_b:
+                    continue
 
-                if rect_a and rect_b:
-                    la, ta, ra, ba = rect_a
-                    lb, tb, rb, bb = rect_b
+                lb, tb, rb, bb = rect_b
 
-                    # Standard AABB broad-phase overlap check
-                    EPS = 0.5
-                    broadphase_hit = (la < rb + EPS and ra > lb - EPS and ta < bb + EPS and ba > tb - EPS)
+                # Standard AABB broad-phase overlap check
+                broadphase_hit = (la < rb + EPS and ra > lb - EPS and ta < bb + EPS and ba > tb - EPS)
+                
+                if broadphase_hit:
+                    # Narrow-phase circle collision
+                    is_a_circle = hasattr(a, 'radius')
+                    is_b_circle = hasattr(b, 'radius')
                     
-                    if broadphase_hit:
-                        # Narrow-phase circle collision
-                        is_a_circle = hasattr(a, 'radius')
-                        is_b_circle = hasattr(b, 'radius')
+                    narrow_hit = True
+                    if is_a_circle and is_b_circle:
+                        # Circle-Circle
+                        dx = a.get_global_position()[0] - b.get_global_position()[0]
+                        dy = a.get_global_position()[1] - b.get_global_position()[1]
+                        r = (a.radius * a.scale_x) + (b.radius * b.scale_x)
+                        narrow_hit = (dx*dx + dy*dy) <= (r*r)
+                    elif is_a_circle or is_b_circle:
+                        # Circle-AABB
+                        circle, rect_col = (a, b) if is_a_circle else (b, a)
+                        cx_pos, cy_pos = circle.get_global_position()
+                        r = circle.radius * circle.scale_x
+                        rl, rt, rr, rb_edge = (la, ta, ra, ba) if circle is b else (lb, tb, rb, bb)
                         
-                        narrow_hit = True
-                        if is_a_circle and is_b_circle:
-                            # Circle-Circle
-                            dx = a.get_global_position()[0] - b.get_global_position()[0]
-                            dy = a.get_global_position()[1] - b.get_global_position()[1]
-                            r = (a.radius * a.scale_x) + (b.radius * b.scale_x)
-                            narrow_hit = (dx*dx + dy*dy) <= (r*r)
-                        elif is_a_circle or is_b_circle:
-                            # Circle-AABB
-                            circle, rect_col = (a, b) if is_a_circle else (b, a)
-                            cx, cy = circle.get_global_position()
-                            r = circle.radius * circle.scale_x
-                            rl, rt, rr, rb_edge = (la, ta, ra, ba) if circle is b else (lb, tb, rb, bb)
-                            
-                            closest_x = max(rl, min(cx, rr))
-                            closest_y = max(rt, min(cy, rb_edge))
-                            dx = cx - closest_x
-                            dy = cy - closest_y
-                            narrow_hit = (dx*dx + dy*dy) <= (r*r)
+                        closest_x = max(rl, min(cx_pos, rr))
+                        closest_y = max(rt, min(cy_pos, rb_edge))
+                        dx = cx_pos - closest_x
+                        dy = cy_pos - closest_y
+                        narrow_hit = (dx*dx + dy*dy) <= (r*r)
 
-                        if narrow_hit:
-                            pair = tuple(sorted((a, b), key=id))
-                            current.add(pair)
+                    if narrow_hit:
+                        current.add(pair)
 
-                            if pair not in self._last_collisions:
-                                self._emit(a, b, "enter")
-                            else:
-                                self._emit(a, b, "stay")
+                        if pair not in self._last_collisions:
+                            self._emit(a, b, "enter")
+                        else:
+                            self._emit(a, b, "stay")
 
         # Exited pairs
         for pair in self._last_collisions - current:
@@ -367,10 +392,21 @@ class CollisionWorld(Node2D):
         hit_x = x2
         hit_y = y2
 
-        for col, rect in self._cached_rects.items():
+        # Build the ray AABB for spatial grid query
+        ray_l = min(x1, x2)
+        ray_t = min(y1, y2)
+        ray_r = max(x1, x2)
+        ray_b = max(y1, y2)
+        candidates = self._grid.query(ray_l, ray_t, ray_r, ray_b)
+
+        for col in candidates:
             if mask is not None and col.layer not in mask:
                 continue
             if col.is_trigger:
+                continue
+
+            rect = self._cached_rects.get(col)
+            if not rect:
                 continue
                 
             l, t, r, b = rect

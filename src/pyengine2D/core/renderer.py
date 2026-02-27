@@ -36,6 +36,37 @@ class Renderer:
     def scale_surface(self, surface, w, h):
         return pygame.transform.scale(surface, (int(w), int(h)))
 
+    def flip_surface(self, surface, flip_x=False, flip_y=False):
+        return pygame.transform.flip(surface, flip_x, flip_y)
+
+    def subsurface(self, surface, rect_tuple):
+        """Extract a sub-region from *surface*. rect_tuple = (x, y, w, h)."""
+        return surface.subsurface(pygame.Rect(*rect_tuple))
+
+    def scale_blit(self, dest, src, pos, src_area=None, dest_size=None,
+                   flip_x=False, flip_y=False):
+        """
+        Extract *src_area* from *src*, scale to *dest_size*, optionally flip,
+        then blit to *dest* at *pos*.  All pygame ops stay in the Renderer.
+        """
+        if src_area is not None:
+            region = src.subsurface(pygame.Rect(*src_area))
+        else:
+            region = src
+
+        if dest_size is not None:
+            region = pygame.transform.scale(region, (int(dest_size[0]), int(dest_size[1])))
+
+        if flip_x or flip_y:
+            region = pygame.transform.flip(region, flip_x, flip_y)
+
+        dest.blit(region, pos)
+
+    def load_image(self, path, alpha=True):
+        """Load an image file and return a surface (convert_alpha or convert)."""
+        img = pygame.image.load(path)
+        return img.convert_alpha() if alpha else img.convert()
+
     def get_surface_size(self, surface):
         return surface.get_size()
 

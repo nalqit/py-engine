@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.egg-info/
+*.egg
 
 # Virtual env
 .venv/
@@ -22,3 +24,18 @@ build/
 dist/
 
 PROJECT_OVERVIEW.md
+
+# Test outputs & scratch files
+test_output.txt
+test_failed.txt
+test_failed2.txt
+out.txt
+error.txt
+fuzzer.py
+final_benchmarks.json
+
+# Root-level temp map (use src/games/*/maps/ instead)
+map_data.json
+
+# Test suite
+tests/

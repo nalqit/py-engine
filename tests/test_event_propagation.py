@@ -3,10 +3,10 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.ui.ui_node import UINode
-from src.engine.ui.event_system import EventPropagationSystem, UIEvent, UIMouseEvent
-from src.engine.core.engine import Engine
-from src.engine.scene.node2d import Node2D
+from src.pyengine2D.ui.ui_node import UINode
+from src.pyengine2D.ui.event_system import EventPropagationSystem, UIEvent, UIMouseEvent
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.scene.node2d import Node2D
 
 
 class MockEngine:

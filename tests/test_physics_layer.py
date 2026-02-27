@@ -16,10 +16,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import pygame
 pygame.init()
 
-from src.engine.collision.collider2d import Collider2D
-from src.engine.collision.collision_world import CollisionWorld
-from src.engine.scene.node2d import Node2D
-from src.engine.physics.physics_body_2d import PhysicsBody2D
+from src.pyengine2D.collision.collider2d import Collider2D
+from src.pyengine2D.collision.collision_world import CollisionWorld
+from src.pyengine2D.scene.node2d import Node2D
+from src.pyengine2D.physics.physics_body_2d import PhysicsBody2D
 
 
 # ======================================================================

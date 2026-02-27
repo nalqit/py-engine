@@ -3,10 +3,10 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.engine.core.engine import Engine
-from src.engine.collision.collider2d import Collider2D
-from src.engine.collision.collision_world import CollisionWorld
-from src.engine.scene.node2d import Node2D
+from src.pyengine2D.core.engine import Engine
+from src.pyengine2D.collision.collider2d import Collider2D
+from src.pyengine2D.collision.collision_world import CollisionWorld
+from src.pyengine2D.scene.node2d import Node2D
 from src.game.entities.player import Player
 
 def setup_test_scene():

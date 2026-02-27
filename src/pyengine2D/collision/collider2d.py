@@ -10,12 +10,13 @@ class Collider2D(Node2D):
     and computes its world-space rect from the scene tree transform.
     """
 
-    def __init__(self, name, x, y, width, height, is_static=False, is_trigger=False):
+    def __init__(self, name, x, y, width, height, is_static=False, is_trigger=False, visible=False):
         super().__init__(name, x, y)
         self.width = width
         self.height = height
         self.is_static = is_static
         self.is_trigger = is_trigger
+        self.visible = visible
         self.layer = "default"
         self.mask = set()
 
@@ -36,7 +37,7 @@ class Collider2D(Node2D):
         sw = self.width * self.scale_x
         sh = self.height * self.scale_y
 
-        if r:
+        if r and self.visible:
             overlay = r.create_surface(int(sw), int(sh), alpha=True)
             color = (0, 0, 255, 128) if self.is_static else (255, 0, 0, 128)
             r.fill(overlay, color)
