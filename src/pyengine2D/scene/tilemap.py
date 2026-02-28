@@ -217,8 +217,9 @@ class TilemapNode(Node2D):
             from src.pyengine2D.core.engine import Engine
             half_w = Engine.instance.virtual_w // 2 if Engine.instance else screen_w // 2
             half_h = Engine.instance.virtual_h // 2 if Engine.instance else screen_h // 2
-            cam_x = Node2D.camera.local_x - half_w
-            cam_y = Node2D.camera.local_y - half_h
+            cx, cy = Node2D.camera.get_global_position()
+            cam_x = cx - half_w
+            cam_y = cy - half_h
 
         gx, gy = self.get_global_position()
 

@@ -23,6 +23,7 @@ class Player(PhysicsBody2D):
         self.facing_right = True
         self.score = 0
         self.lives = 3
+        self.spawn_point = (x, y)  # updated by level loader
 
         self.register_signal("on_score_changed")
         self.register_signal("on_lives_changed")
@@ -115,8 +116,8 @@ class Player(PhysicsBody2D):
         self.emit_signal("on_lives_changed", lives=self.lives)
         if self.lives <= 0:
             self.emit_signal("on_died")
-        self.local_x = 50
-        self.local_y = 200
+        self.local_x = self.spawn_point[0]
+        self.local_y = self.spawn_point[1]
         self.velocity_x = 0
         self.velocity_y = 0
         self.update_transforms()

@@ -17,5 +17,8 @@ class Camera2D(Node2D):
             t = min(1.0, smooth_speed * delta)
             self.local_x += (tx - self.local_x) * t
             self.local_y += (ty - self.local_y) * t
+            # Snap to integer to prevent subpixel jitter between entities and tilemap
+            self.local_x = round(self.local_x)
+            self.local_y = round(self.local_y)
 
         super().update(delta)

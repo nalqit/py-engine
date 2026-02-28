@@ -35,8 +35,9 @@ class Node2D(Node):
             screen_w = Engine.instance.virtual_w if Engine.instance else 800
             screen_h = Engine.instance.virtual_h if Engine.instance else 600
             cx, cy = Node2D.camera.get_global_position()
-            return gx - cx + screen_w//2, gy - cy + screen_h//2
-        return gx, gy
+            # Return as integers to prevent float rounding desync with TilemapNode
+            return int(gx - cx + screen_w//2), int(gy - cy + screen_h//2)
+        return int(gx), int(gy)
 
         
 

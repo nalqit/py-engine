@@ -1,53 +1,94 @@
 """
 Frog Hop — Level builder.
-Creates platforms from terrain tileset + places fruits.
+Loads per-level configs (map + fruits + traps).
 No direct pygame import — uses engine Renderer.
 """
 import os
-from src.pyengine2D import Node2D, Collider2D, RectangleNode, Engine
+from src.pyengine2D import Node2D, Engine
 from src.pyengine2D.scene.tilemap import TilemapNode
 
 _SRC = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-TERRAIN_PATH = os.path.join(_SRC, "Free", "Terrain", "Terrain (16x16).png")
 BG_PATH = os.path.join(_SRC, "Free", "Background", "Green.png")
+MAP_DIR = os.path.join(_SRC, "games", "frog_hop", "maps")
 
-# Each platform:  (x, y, width_tiles, height_tiles)
-PLATFORMS = [
-    (0,   500, 12, 1),
-    (250, 400, 4,  2),
-    (450, 320, 4,  2),
-    (650, 250, 5,  2),
-    (900, 200, 4,  5),
-    (1100, 350, 6, 1),
-    (1350, 280, 5, 1),
-    (1600, 200, 4, 1),
-    (1800, 400, 8, 1),
-    (500,  150, 3, 1),
+# ── Level configurations ────────────────────────────────────────────
+LEVELS = [
+    {
+        "map": "map_data_1.json",
+        "player_start": (50, 400),
+        "fruits": [
+            (280, 360, "Apple"),
+            (490, 280, "Cherries"),
+            (700, 210, "Orange"),
+            (520, 110, "Strawberry"),
+            (950, 160, "Bananas"),
+            (1150, 310, "Kiwi"),
+            (1400, 240, "Melon"),
+            (1650, 160, "Pineapple"),
+            (1900, 360, "Apple"),
+            (1950, 360, "Cherries"),
+        ],
+        "traps": [],  # Level 1 is the tutorial — no traps
+    },
+    {
+        "map": "map_data_2.json",
+        "player_start": (64, 400),
+        "fruits": [
+            (192, 416, "Apple"),
+            (176, 352, "Cherries"),
+            (320, 288, "Orange"),
+            (464, 224, "Strawberry"),
+            (624, 160, "Bananas"),
+            (784, 288, "Kiwi"),
+            (1072, 160, "Melon"),
+            (1316, 352, "Pineapple"),
+        ],
+        "traps": [
+            # (type, x, y, **kwargs)
+            ("spikes", 304, 304),
+            ("spikes", 336, 304),
+            ("fire",   928, 224),
+            ("saw",    580, 173, {"end_x": 680, "end_y": 173, "speed": 100}),
+            ("trampoline", 1250, 370),
+            ("fire",   1456, 352),
+            ("spikes", 1488, 368),
+        ],
+    },
+    {
+        "map": "map_data_3.json",
+        "player_start": (50, 484),
+        "fruits": [
+            (144, 448, "Apple"),
+            (272, 384, "Cherries"),
+            (400, 320, "Orange"),
+            (528, 256, "Strawberry"),
+            (656, 192, "Bananas"),
+            (976, 192, "Kiwi"),
+            (912, 128, "Melon"),
+            (1104, 64, "Pineapple"),
+            (1392, 320, "Apple"),
+            (1776, 512, "Cherries"),
+        ],
+        "traps": [
+            ("spikes", 464, 336),
+            ("fire",   688, 192),
+            ("saw",    780, 205, {"end_x": 840, "end_y": 205, "speed": 130}),
+            ("saw",    940, 205, {"end_x": 1000, "end_y": 205, "speed": 140}),
+            ("spikes", 1104, 208),
+            ("saw",    1200, 269, {"end_x": 1280, "end_y": 269, "speed": 150}),
+            ("fire",   1520, 384),
+            ("trampoline", 1680, 530),
+            ("spikes", 1840, 528),
+            ("spikes", 1872, 528),
+        ],
+    },
 ]
-
-# Fruit positions: (x, y, fruit_name)
-FRUIT_SPAWNS = [
-    (280, 360, "Apple"),
-    (490, 280, "Cherries"),
-    (700, 210, "Orange"),
-    (520, 110, "Strawberry"),
-    (950, 160, "Bananas"),
-    (1150, 310, "Kiwi"),
-    (1400, 240, "Melon"),
-    (1650, 160, "Pineapple"),
-    (1900, 360, "Apple"),
-    (1950, 360, "Cherries"),
-]
-
-TILE = 16
-SCALE = 2
-SCALED_TILE = TILE * SCALE   # 32
 
 
 class Background(Node2D):
     """Tiled background drawn behind everything."""
 
-    def __init__(self, name, bg_path, world_w, world_h):
+    def __init__(self, name, bg_path):
         super().__init__(name, 0, 0)
         r = Engine.instance.renderer
         bg_tile = r.load_image(bg_path, alpha=False)
@@ -61,8 +102,9 @@ class Background(Node2D):
         if Node2D.camera:
             hw = Engine.instance.virtual_w // 2 if Engine.instance else 400
             hh = Engine.instance.virtual_h // 2 if Engine.instance else 300
-            cam_x = Node2D.camera.local_x - hw
-            cam_y = Node2D.camera.local_y - hh
+            cx, cy = Node2D.camera.get_global_position()
+            cam_x = cx - hw
+            cam_y = cy - hh
 
         px = int(cam_x * 0.3)
         py = int(cam_y * 0.3)
@@ -79,29 +121,51 @@ class Background(Node2D):
         super().render(surface)
 
 
-def build_level(world_node, collision_world):
-    """Construct the full level inside *world_node*. Returns fruit list."""
-    bg = Background("BG", BG_PATH, 2500, 800)
+def build_level(world_node, collision_world, level_index=0):
+    """Construct level *level_index* inside *world_node*.
+
+    Returns ``(fruits, traps, player_start)``.
+    """
+    cfg = LEVELS[level_index]
+
+    # Background
+    bg = Background("BG", BG_PATH)
     world_node.add_child(bg)
 
-    # Convert PLATFORMS into a tilemap grid
-    # Now we simply load the map_data.json output by the draw2d.py map editor!
-    map_dir = os.path.join(_SRC, "games", "frog_hop", "maps")
-    map_path = os.path.join(map_dir, "map_data.json")
+    # Tilemap
+    map_path = os.path.join(MAP_DIR, cfg["map"])
     tilemap = TilemapNode("LevelMap")
-    
     if os.path.exists(map_path):
         tilemap.load_from_json(map_path)
     else:
-        print(f"WARNING: map.json not found at {map_path}! Please run python draw2d.py to create it.")
-        
+        print(f"WARNING: {cfg['map']} not found at {map_path}!")
     world_node.add_child(tilemap)
 
+    # Fruits
     from .entities.fruit import Fruit
     fruits = []
-    for i, (fx, fy, fname) in enumerate(FRUIT_SPAWNS):
+    for i, (fx, fy, fname) in enumerate(cfg["fruits"]):
         fruit = Fruit(f"Fruit_{i}", fx, fy, collision_world, fruit_name=fname)
         world_node.add_child(fruit)
         fruits.append(fruit)
 
-    return fruits
+    # Traps
+    from .entities.trap import Spikes, Saw, Fire, Trampoline
+    trap_classes = {
+        "spikes": Spikes,
+        "saw": Saw,
+        "fire": Fire,
+        "trampoline": Trampoline,
+    }
+    traps = []
+    for i, entry in enumerate(cfg.get("traps", [])):
+        ttype = entry[0]
+        tx, ty = entry[1], entry[2]
+        kwargs = entry[3] if len(entry) > 3 else {}
+        cls = trap_classes[ttype]
+        trap = cls(f"Trap_{ttype}_{i}", tx, ty, collision_world, **kwargs)
+        world_node.add_child(trap)
+        traps.append(trap)
+
+    player_start = cfg.get("player_start", (50, 400))
+    return fruits, traps, player_start
