@@ -43,7 +43,7 @@ class FrogHop:
         player_col = Collider2D("Player_Col", -23, -22, 45, 50)
         player_col.layer = "player"
         player_col.mask = {"wall", "pickup"}
-        player_col.visible = True
+        player_col.visible = False
 
         self.player = Player("Player", 50, 400, player_col, self.collision_world)
         self.player.add_child(player_col)
@@ -54,9 +54,8 @@ class FrogHop:
         self.root.add_child(self.camera)
         Node2D.camera = self.camera
 
-        # HUD
+        # HUD — created here, but added to root after _load_level to ensure it stays on top
         self.hud = StatsHUD("HUD")
-        self.root.add_child(self.hud)
 
         # Pipe signals — use **kw to safely absorb any extra kwargs from emit
         self.player.get_signal("on_score_changed").connect(
@@ -78,6 +77,9 @@ class FrogHop:
         self._level_complete = False
         self._load_level(self.current_level)
 
+        # Add HUD last so it renders on top of everything
+        self.root.add_child(self.hud)
+
     # ── level management ────────────────────────────────────────────
 
     def _load_level(self, index):
@@ -96,6 +98,11 @@ class FrogHop:
         self.fruits, self.traps, player_start = build_level(
             self.world, self.collision_world, index
         )
+
+        # Ensure HUD stays on top by re-adding it if it was already in the root
+        if hasattr(self, 'hud') and self.hud.parent == self.root:
+            self.root.remove_child(self.hud)
+            self.root.add_child(self.hud)
 
         # Position player at level start
         self.player.local_x, self.player.local_y = player_start
@@ -171,7 +178,7 @@ class FrogHop:
 
 def main():
     game = FrogHop()
-    # game.root.print_tree()
+    game.root.print_tree()
     game.run()
 
 
