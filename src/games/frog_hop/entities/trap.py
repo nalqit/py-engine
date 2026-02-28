@@ -20,14 +20,10 @@ class Trap(Node2D):
         super().__init__(name, x, y)
         self.collision_world = collision_world
         self.does_damage = damage
-        self._player_ref = None    # set by level builder
 
-    def set_player(self, player):
-        self._player_ref = player
-
-    def _hurt_player(self):
-        if self._player_ref and self.does_damage:
-            self._player_ref.die()
+    def _hurt_player(self, player):
+        if self.does_damage and hasattr(player, 'take_damage'):
+            player.take_damage(self.get_global_position()[0])
 
 
 class Spikes(Trap):
@@ -50,12 +46,12 @@ class Spikes(Trap):
         col.mask = {"player"}
         col.is_static = True
         col.is_trigger = True
-        col.visible = True
+        col.visible = False
         self.add_child(col)
         self._col = col
 
     def update(self, delta):
-        if self.collision_world and self._player_ref:
+        if self.collision_world:
             gx, gy = self.get_global_position()
             S = self.SCALE
             hw, hh = (self._fw * S) // 2, (self._fh * S) // 2
@@ -64,7 +60,7 @@ class Spikes(Trap):
             )
             for h in hits:
                 if h.layer == "player":
-                    self._hurt_player()
+                    self._hurt_player(h.parent)
                     break
         super().update(delta)
 
@@ -119,7 +115,7 @@ class Saw(Trap):
         col.mask = {"player"}
         col.is_static = True
         col.is_trigger = True
-        col.visible = True
+        col.visible = False
         self.add_child(col)
         self._col = col
 
@@ -145,7 +141,7 @@ class Saw(Trap):
         self.local_y = self._start_y + (self._end_y - self._start_y) * self._t
 
         # Check player collision
-        if self.collision_world and self._player_ref:
+        if self.collision_world:
             gx, gy = self.get_global_position()
             S = self.SCALE
             hw, hh = (self._fw * S) // 2, (self._fh * S) // 2
@@ -154,7 +150,7 @@ class Saw(Trap):
             )
             for h in hits:
                 if h.layer == "player":
-                    self._hurt_player()
+                    self._hurt_player(h.parent)
                     break
 
         super().update(delta)
@@ -194,7 +190,7 @@ class Fire(Trap):
         col.mask = {"player"}
         col.is_static = True
         col.is_trigger = True
-        col.visible = True
+        col.visible = False
         self.add_child(col)
         self._col = col
 
@@ -205,7 +201,7 @@ class Fire(Trap):
             self._timer -= spf
             self._frame = (self._frame + 1) % self._frame_count
 
-        if self.collision_world and self._player_ref:
+        if self.collision_world:
             gx, gy = self.get_global_position()
             S = self.SCALE
             hw, hh = (self._fw * S) // 2, (self._fh * S) // 2
@@ -214,7 +210,7 @@ class Fire(Trap):
             )
             for h in hits:
                 if h.layer == "player":
-                    self._hurt_player()
+                    self._hurt_player(h.parent)
                     break
         super().update(delta)
 
@@ -259,7 +255,7 @@ class Trampoline(Trap):
         self._bounce_fps = 14
 
         # User custom collider positioning to match bottom half of trampoline
-        col = Collider2D(f"{name}_Col", -(iw * self.SCALE) // 2, -(ih * self.SCALE) + 35, iw * self.SCALE, ih * self.SCALE // 2)
+        col = Collider2D(f"{name}_Col", -(iw * self.SCALE) // 2, 0, iw * self.SCALE, ih * self.SCALE // 2)
         col.layer = "trap"
         col.mask = {"player"}
         col.is_static = True
@@ -281,7 +277,7 @@ class Trampoline(Trap):
                     self._bounce_frame = 0
 
         # Check player overlap
-        if self.collision_world and self._player_ref:
+        if self.collision_world:
             gx, gy = self.get_global_position()
             S = self.SCALE
             hw, hh = (self._fw * S) // 2, (self._fh * S) // 2
@@ -290,10 +286,11 @@ class Trampoline(Trap):
             )
             for h in hits:
                 if h.layer == "player":
-                    self._player_ref.velocity_y = self.BOUNCE_FORCE
-                    self._bouncing = True
-                    self._bounce_frame = 0
-                    self._bounce_timer = 0.0
+                    if hasattr(h.parent, 'velocity_y'):
+                        h.parent.velocity_y = self.BOUNCE_FORCE
+                        self._bouncing = True
+                        self._bounce_frame = 0
+                        self._bounce_timer = 0.0
                     break
         super().update(delta)
 

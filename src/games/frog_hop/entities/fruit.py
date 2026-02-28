@@ -37,7 +37,7 @@ class Fruit(Node2D):
         self._col.mask = {"player"}
         self._col.is_static = False
         self._col.is_trigger = True
-        self._col.visible = True
+        self._col.visible = False
         self.add_child(self._col)
 
     def update(self, delta):

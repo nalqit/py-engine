@@ -1,0 +1,11 @@
+[
+    {
+        "name": "Test 1",
+        "passed": true,
+        "errors": [],
+        "avg_fps": 60.0,
+        "memory_diff_kb": 54.03125,
+        "max_update_ms": 0.03599999945436139,
+        "max_render_ms": 0.17870000010589138
+    }
+]

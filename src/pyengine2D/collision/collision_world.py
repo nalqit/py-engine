@@ -1,7 +1,9 @@
 from src.pyengine2D.scene.node2d import Node2D
 from src.pyengine2D.collision.collider2d import Collider2D
+from src.pyengine2D.collision.polygon_collider2d import PolygonCollider2D
 from src.pyengine2D.collision.collision_result import CollisionResult
 from src.pyengine2D.collision.spatial_grid import UniformGrid
+import math
 
 
 class CollisionWorld(Node2D):
@@ -286,6 +288,110 @@ class CollisionWorld(Node2D):
         return len(self._cached_colliders)
 
     # ------------------------------------------------------------------
+    # SAT Geometry Helpers
+    # ------------------------------------------------------------------
+
+    def _sat_poly_poly(self, pts_a, pts_b):
+        """Check SAT narrowphase between two convex polygons. Returns (collided, normal, depth)."""
+        overlap = float('inf')
+        smallest_axis = (0, 0)
+
+        edges = []
+        for i in range(len(pts_a)):
+            p1 = pts_a[i]
+            p2 = pts_a[(i + 1) % len(pts_a)]
+            edges.append((p2[0] - p1[0], p2[1] - p1[1]))
+            
+        for i in range(len(pts_b)):
+            p1 = pts_b[i]
+            p2 = pts_b[(i + 1) % len(pts_b)]
+            edges.append((p2[0] - p1[0], p2[1] - p1[1]))
+
+        for edge in edges:
+            axis = (-edge[1], edge[0])  # Perpendicular normal
+            l = math.sqrt(axis[0]**2 + axis[1]**2)
+            if l == 0: continue
+            axis = (axis[0]/l, axis[1]/l)
+
+            # Project poly A
+            min_a, max_a = float('inf'), float('-inf')
+            for p in pts_a:
+                proj = p[0]*axis[0] + p[1]*axis[1]
+                min_a = min(min_a, proj)
+                max_a = max(max_a, proj)
+                
+            # Project poly B
+            min_b, max_b = float('inf'), float('-inf')
+            for p in pts_b:
+                proj = p[0]*axis[0] + p[1]*axis[1]
+                min_b = min(min_b, proj)
+                max_b = max(max_b, proj)
+
+            # Check gap
+            if max_a < min_b or max_b < min_a:
+                return False, (0, 0), 0
+
+            # Calculate overlap depth
+            axis_depth = min(max_a - min_b, max_b - min_a)
+            if axis_depth < overlap:
+                overlap = axis_depth
+                smallest_axis = axis
+
+        return True, smallest_axis, overlap
+
+    def _sat_poly_circle(self, pts_poly, cx, cy, radius):
+        """Check SAT narrowphase between convex polygon and circle."""
+        overlap = float('inf')
+        smallest_axis = (0, 0)
+        
+        edges = []
+        closest_vertex = None
+        min_dist_sq = float('inf')
+        
+        for i in range(len(pts_poly)):
+            p1 = pts_poly[i]
+            p2 = pts_poly[(i + 1) % len(pts_poly)]
+            edges.append((p2[0] - p1[0], p2[1] - p1[1]))
+            
+            ds = (p1[0] - cx)**2 + (p1[1] - cy)**2
+            if ds < min_dist_sq:
+                min_dist_sq = ds
+                closest_vertex = p1
+                
+        # The axis connecting circle center to closest vertex is a potential separating axis
+        if closest_vertex:
+            v_axis = (closest_vertex[0] - cx, closest_vertex[1] - cy)
+            edges.append((-v_axis[1], v_axis[0])) # Convert back to edge format to be pushed to normal
+        
+        for edge in edges:
+            axis = (-edge[1], edge[0])
+            l = math.sqrt(axis[0]**2 + axis[1]**2)
+            if l == 0: continue
+            axis = (axis[0]/l, axis[1]/l)
+            
+            # Project Poly
+            min_a, max_a = float('inf'), float('-inf')
+            for p in pts_poly:
+                proj = p[0]*axis[0] + p[1]*axis[1]
+                min_a = min(min_a, proj)
+                max_a = max(max_a, proj)
+                
+            # Project Circle
+            proj_c = cx*axis[0] + cy*axis[1]
+            min_b = proj_c - radius
+            max_b = proj_c + radius
+            
+            if max_a < min_b or max_b < min_a:
+                return False, (0, 0), 0
+                
+            axis_depth = min(max_a - min_b, max_b - min_a)
+            if axis_depth < overlap:
+                overlap = axis_depth
+                smallest_axis = axis
+                
+        return True, smallest_axis, overlap
+
+    # ------------------------------------------------------------------
     # Broad-phase pair detection (enter / stay / exit events)
     # ------------------------------------------------------------------
 
@@ -330,9 +436,35 @@ class CollisionWorld(Node2D):
                     # Narrow-phase circle collision
                     is_a_circle = hasattr(a, 'radius')
                     is_b_circle = hasattr(b, 'radius')
+                    is_a_poly = isinstance(a, PolygonCollider2D)
+                    is_b_poly = isinstance(b, PolygonCollider2D)
                     
                     narrow_hit = True
-                    if is_a_circle and is_b_circle:
+                    
+                    if is_a_poly or is_b_poly:
+                        # Convert AABBs to polygons if needed for SAT verification
+                        def _get_pts(col, rect):
+                            if isinstance(col, PolygonCollider2D):
+                                return col.get_global_points()
+                            # AABB to pts
+                            l, t, r, b = rect
+                            return [(l, t), (r, t), (r, b), (l, b)]
+                            
+                        # Handle Poly vs Circle
+                        if is_a_circle or is_b_circle:
+                            circle = a if is_a_circle else b
+                            poly = b if is_a_circle else a
+                            cx, cy = circle.get_global_position()
+                            r = circle.radius * circle.scale_x
+                            pts = poly.get_global_points() if isinstance(poly, PolygonCollider2D) else _get_pts(poly, rect_a if poly is a else rect_b)
+                            narrow_hit, _, _ = self._sat_poly_circle(pts, cx, cy, r)
+                        else:
+                            # Poly vs Poly/AABB
+                            pts_a = _get_pts(a, rect_a)
+                            pts_b = _get_pts(b, rect_b)
+                            narrow_hit, _, _ = self._sat_poly_poly(pts_a, pts_b)
+
+                    elif is_a_circle and is_b_circle:
                         # Circle-Circle
                         dx = a.get_global_position()[0] - b.get_global_position()[0]
                         dy = a.get_global_position()[1] - b.get_global_position()[1]

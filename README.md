@@ -20,6 +20,7 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 |   6   | Juice & Animation Layer |   ✅   |
 |   7   | User Interface (UI)     |   ✅   |
 |   8   | Tilemap Level Editor    |   ✅   |
+|   9   | Audio Layer             |   ✅   |
 
 ### Level 0 — Runtime Core
 
@@ -28,13 +29,14 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 ### Level 1 — Scene System
 
 - Parent/child transform propagation, local vs global position, update lifecycle.
-- **`TilemapNode`**: Multi-layer tilemap with cached baked surfaces, auto-collision generation, viewport streaming, and parallax support.
+- **`TilemapNode`**: Multi-layer tilemap supporting JSON and **TMX** files, baked surfaces, auto-collision generation, viewport streaming, and parallax.
 
 ### Level 2 — Collision System
 
 - **Collider2D**: Scale-aware AABB — dimensions, layer/mask, static/trigger flags, optional `visible` debug overlay.
 - **CircleCollider2D**: Circle-circle and circle-AABB colliders.
-- **CollisionWorld**: Float-precision AABB overlap checks with MTV resolution + layer/mask filtering.
+- **PolygonCollider2D**: Convex polygon collisions resolved via SAT (Separating Axis Theorem).
+- **CollisionWorld**: Float-precision shape overlap checks with MTV resolution + layer/mask filtering.
 
 ### Level 3 — Physics Layer
 
@@ -65,6 +67,10 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 - Zoom (scroll wheel), Pan (Space+Click or Middle-click), Draw (Left-click), Erase (Right-click).
 - Press **[S]** to save JSON; **[L]** to load. Auto-tiling picks correct Left/Mid/Right/Underground edge tiles.
 - Output consumed directly by `TilemapNode.load_from_json()` in-game.
+
+### Level 9 — Audio Layer
+
+- **AudioManager**: Global `pygame.mixer` wrapper serving as a unified interface to load and play SFX (`play_sound`) and stream background music (`play_music`).
 
 ---
 
@@ -107,6 +113,7 @@ src/
 │
 └── games/                 # Game examples
     ├── frog_hop/          # Side-scrolling platformer (Ninja Frog + Fruits)
+    │   ├── explain/       # Architecture documentation
     │   ├── entities/      # Player, Fruit
     │   ├── maps/          # JSON tilemaps created with draw2d.py
     │   ├── level.py       # Level builder (loads TilemapNode from maps/)
@@ -153,12 +160,12 @@ See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed API guide.
 - [x] **TilemapNode**: Baked surfaces, auto-collision, streaming, parallax (Level 1)
 - [x] **draw2d.py**: Infinite 4-quadrant map editor with Zoom, Pan, Save/Load (Level 8)
 - [x] **Frog Hop**: Full side-scrolling platformer with JSON-driven tilemap levels
+- [x] Sound & Music Layer
+- [x] Polygon collision support
+- [x] TMX format support in `TilemapNode`
 
 ### Up Next
 
-- [ ] Sound & Music Layer
-- [ ] Polygon collision support
-- [ ] TMX format support in `TilemapNode`
 
 ---
 

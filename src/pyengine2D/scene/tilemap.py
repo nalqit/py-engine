@@ -7,6 +7,7 @@ Each layer is baked to a cached surface for fast rendering.
 """
 import json
 import os
+import xml.etree.ElementTree as ET
 
 import pygame
 
@@ -113,6 +114,73 @@ class TilemapNode(Node2D):
         base_path = os.path.dirname(json_path)
         with open(json_path, "r") as f:
             data = json.load(f)
+        self.load_from_dict(data, base_path=base_path)
+
+    def load_from_tmx(self, tmx_path):
+        """
+        Load map from a Tiled .tmx XML file (CSV layer data only).
+        Constructs an internal dictionary matching load_from_dict() format.
+        """
+        base_path = os.path.dirname(tmx_path)
+        tree = ET.parse(tmx_path)
+        root = tree.getroot()
+
+        data = {
+            "tile_width": int(root.attrib.get("tilewidth", 32)),
+            "tile_height": int(root.attrib.get("tileheight", 32)),
+            "layers": [],
+            "tilesets": []
+        }
+
+        # Parse tilesets
+        for ts_node in root.findall("tileset"):
+            firstgid = int(ts_node.attrib.get("firstgid", 1))
+            name = ts_node.attrib.get("name", "Tileset")
+            tw = int(ts_node.attrib.get("tilewidth", data["tile_width"]))
+            th = int(ts_node.attrib.get("tileheight", data["tile_height"]))
+            
+            # The image tag is generally a child of tileset in embedded sets
+            img_node = ts_node.find("image")
+            if img_node is not None:
+                source = img_node.attrib.get("source")
+                data["tilesets"].append({
+                    "image": source,
+                    "tile_width": tw,
+                    "tile_height": th
+                })
+
+        # Parse layers
+        for layer_node in root.findall("layer"):
+            layer_name = layer_node.attrib.get("name", "Layer")
+            width = int(layer_node.attrib.get("width", 0))
+            height = int(layer_node.attrib.get("height", 0))
+            
+            # Custom Tiled properties (like "solid": true/false)
+            is_solid = False
+            props = layer_node.find("properties")
+            if props is not None:
+                for p in props.findall("property"):
+                    if p.attrib.get("name") == "solid" and p.attrib.get("value") == "true":
+                        is_solid = True
+            
+            # Parse CSV data
+            data_node = layer_node.find("data")
+            if data_node is not None and data_node.attrib.get("encoding") == "csv":
+                raw_csv = data_node.text.strip()
+                raw_ints = [int(v.strip()) for v in raw_csv.replace("\n", "").split(",") if v.strip()]
+                
+                # Convert 1D CSV list to 2D row-major list
+                tiles_2d = []
+                for r in range(height):
+                    row_data = raw_ints[r * width : (r + 1) * width]
+                    tiles_2d.append(row_data)
+                    
+                data["layers"].append({
+                    "name": layer_name,
+                    "solid": is_solid,
+                    "tiles": tiles_2d
+                })
+
         self.load_from_dict(data, base_path=base_path)
 
     # ------------------------------------------------------------------

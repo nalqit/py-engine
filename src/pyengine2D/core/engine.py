@@ -7,6 +7,7 @@ from src.pyengine2D.utils.profiler import EngineProfiler
 from src.pyengine2D.time.master_clock import MasterClock
 from src.pyengine2D.ui.event_system import EventPropagationSystem
 from src.pyengine2D.scene.scene_manager import SceneManager
+from src.pyengine2D.core.audio_manager import AudioManager
 
 
 class EngineEvent:
@@ -27,6 +28,8 @@ class Engine:
     instance = None
 
     def __init__(self, title, virtual_w=800, virtual_h=600):
+        # We implicitly init mixer here too via pygame.init()
+        pygame.mixer.pre_init(44100, -16, 2, 512)
         pygame.init()
         Engine.instance = self
         self.virtual_w = virtual_w
@@ -46,6 +49,7 @@ class Engine:
         self.events = []
         self.ui_events = EventPropagationSystem(self)
         self.scene_manager = SceneManager(self)
+        self.audio = AudioManager()
 
     def begin_frame(self):
         """Call at the start of each frame. Returns raw dt."""
@@ -127,6 +131,8 @@ class Engine:
 
     def quit(self):
         self.profiler.print_summary()
+        if pygame.mixer.get_init():
+            pygame.mixer.quit()
         pygame.quit()
         if not getattr(self, "suppress_exit", False):
             sys.exit()

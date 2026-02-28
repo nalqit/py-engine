@@ -23,10 +23,14 @@ class Player(PhysicsBody2D):
         self.facing_right = True
         self.score = 0
         self.lives = 3
+        self.health = 3
+        self.max_health = 3
+        self.invulnerable_timer = 0.0
         self.spawn_point = (x, y)  # updated by level loader
 
         self.register_signal("on_score_changed")
         self.register_signal("on_lives_changed")
+        self.register_signal("on_health_changed")
         self.register_signal("on_died")
 
         # Load sprite sheets via AssetManager
@@ -64,6 +68,10 @@ class Player(PhysicsBody2D):
         if move != 0:
             self.facing_right = move > 0
 
+        # Decrease invulnerability timer
+        if self.invulnerable_timer > 0:
+            self.invulnerable_timer -= delta
+
         is_grounded = self._check_ground()
 
         if (inp.is_key_just_pressed(Keys.SPACE) or inp.is_key_just_pressed(Keys.W) or
@@ -93,6 +101,31 @@ class Player(PhysicsBody2D):
         if self.get_global_position()[1] > 1200:
             self.die()
 
+        # Check enemy collision
+        if self.collision_world:
+            gx, gy = self.get_global_position()
+            rect = self.collider.get_rect()
+            hw = 23  # derived from Player collider -23 to 22 -> 45 width roughly / 2 = 22.5
+            hh = 25  # height 50 / 2 = 25
+            hits = self.collision_world.query_rect(
+                gx - hw, gy - hh, gx + hw, gy + hh, exclude=self.collider
+            )
+            for h in hits:
+                if h.layer == "enemy":
+                    enemy = h.parent
+                    if getattr(enemy, 'is_dead', False): continue
+                    if self.invulnerable_timer > 0: continue
+
+                    ey = enemy.get_global_position()[1]
+                    # Check if stomping (falling & above enemy center)
+                    if self.velocity_y > 0 and gy < ey - 10:
+                        enemy.on_stomp()
+                        self.velocity_y = -600  # Stomp bounce
+                        self.score += 50
+                        self.emit_signal("on_score_changed", score=self.score)
+                    else:
+                        self.take_damage(enemy.get_global_position()[0])
+
     def _check_ground(self):
         if not self.collision_world:
             return False
@@ -111,15 +144,38 @@ class Player(PhysicsBody2D):
         self.score += value
         self.emit_signal("on_score_changed", score=self.score)
 
+    def take_damage(self, source_x):
+        if self.invulnerable_timer > 0:
+            return  # i-frames active
+
+        self.health -= 1
+        self.emit_signal("on_health_changed", health=self.health)
+        
+        # Determine knockback direction
+        dir_x = 1 if self.get_global_position()[0] > source_x else -1
+        
+        # Apply physics impulse (knockback)
+        self.velocity_x = dir_x * 400
+        self.velocity_y = -400
+        
+        # Set i-frames
+        self.invulnerable_timer = 1.0
+
+        if self.health <= 0:
+            self.die()
+
     def die(self):
         self.lives -= 1
+        self.health = self.max_health  # Reset health
         self.emit_signal("on_lives_changed", lives=self.lives)
+        self.emit_signal("on_health_changed", health=self.health)
         if self.lives <= 0:
             self.emit_signal("on_died")
         self.local_x = self.spawn_point[0]
         self.local_y = self.spawn_point[1]
         self.velocity_x = 0
         self.velocity_y = 0
+        self.invulnerable_timer = 2.0  # Safety window after respawn
         self.update_transforms()
         if hasattr(self, '_refresh_collider_cache'):
             self._refresh_collider_cache(self)
@@ -140,6 +196,13 @@ class Player(PhysicsBody2D):
         S = self.SCALE
         draw_x = int(sx) - (frame_w * S) // 2
         draw_y = int(sy) - (frame_h * S) // 2
+
+        # Flicker effect during invulnerability
+        if self.invulnerable_timer > 0:
+            # Flicker based on remaining time (e.g. blink every 0.1s)
+            if int(self.invulnerable_timer * 10) % 2 == 0:
+                super().render(surface)
+                return
 
         # Use renderer's scale_blit helper
         r.scale_blit(surface, sheet, (draw_x, draw_y),

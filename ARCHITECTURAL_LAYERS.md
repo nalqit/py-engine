@@ -8,6 +8,7 @@ The engine is designed as a strict "cake" of responsibilities. Higher layers dep
 
 | Layer                      | Responsibility                                            | Component                   |
 | :------------------------- | :-------------------------------------------------------- | :-------------------------- |
+| **8. Audio**               | SFX and music playback globally.                          | `AudioManager`              |
 | **7. User Interface (UI)** | Menus, HUDs, Event Propagation, Data binding.             | `UIControl` / `EventSystem` |
 | **6. Juice & Animation**   | Visual polish, tweening, effects.                         | `TweenManager`              |
 | **5. State (FSM)**         | High-level "Behavioral" identity (Idle, Run, Jump, Fall). | `PlayerStateMachine`        |
@@ -97,11 +98,12 @@ We have recently implemented a **Performance & Consistency Patch** to address po
 - Physics now always advances in precise `1/60` second increments.
 - This ensures that jumping results in the exact same trajectory regardless of the rendering framerate.
 
-### ✅ Optimized Performance (Collider Caching)
+### ✅ Optimized Performance (Collider Caching & SAT)
 
-**Solution**: We implemented **O(N) Collider Caching** in `CollisionWorld`.
+**Solution**: We implemented **O(N) Collider Caching** and a Spatial Grid in `CollisionWorld`.
 
 - Instead of recursively walking the entire scene graph for every collision check, the world flattens the collider list and pre-calculates their world-space bounding boxes once per step.
+- Convex Polygons invoke the **Separating Axis Theorem (SAT)** narrow-phase algorithm only after a successful broad-phase AABB hit.
 - This eliminates "Frame Falls" caused by expensive scene traversals.
 
 ### ✅ Stable Snapping (Zero-Velocity Resolution)

@@ -11,8 +11,9 @@ The PyEngine 2D engine provides a layered architecture for building 2D games in 
 - **Engine** – The main entry point. Handles the game loop, timing, and systems.
 - **Node2D** – Base class for all 2D objects. Handles transform propagation (position, scale).
 - **PhysicsBody2D** – Level 3 physics body with gravity, impulses, and automatic collision resolution.
-- **CollisionWorld** – Manages colliders and performs AABB checks.
+- **CollisionWorld** – Manages colliders and performs AABB/SAT shape checks.
 - **InputSystem** – Accessible via `Engine.instance.input`. Handles keyboard signals.
+- **AudioManager** – Accessible via `Engine.instance.audio`. Controls SFX and Music.
 - **TweenManager** – Component for property interpolation (juice).
 - **ParticleEmitter2D** – Component for visual effects like dust or sparks.
 - **UIControl** – Base class for UI elements (`Label`, `Button`, `Containers`).
@@ -103,6 +104,8 @@ from src.pyengine2D.scene.tilemap import TilemapNode
 
 tilemap = TilemapNode("Level")
 tilemap.load_from_json("src/games/frog_hop/maps/map_data.json")
+# Or load a Tiled TMX file directly:
+# tilemap.load_from_tmx("src/games/frog_hop/maps/map_data.tmx")
 root.add_child(tilemap)
 ```
 
@@ -162,6 +165,23 @@ player_sprite = SpriteNode("PlayerSprite", "assets/player.png", centered=True)
 anim_sprite = AnimatedSprite("PlayerAnim", "assets/player_sheet.png", 64, 64)
 anim_sprite.add_animation("idle", [0, 1, 2, 3], frame_duration=0.2)
 anim_sprite.play("idle")
+```
+
+---
+
+## Audio and Music
+
+Play sound effects or stream background music seamlessly using the Engine's `audio` manager:
+
+```python
+# Load once during setup
+Engine.instance.audio.load_sound("jump", "assets/jump.wav")
+
+# Play anywhere
+Engine.instance.audio.play_sound("jump")
+
+# Stream background music globally
+Engine.instance.audio.play_music("assets/bgm.ogg", loops=-1)
 ```
 
 ---

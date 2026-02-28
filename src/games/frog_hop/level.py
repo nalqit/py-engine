@@ -20,7 +20,7 @@ LEVELS = [
             (280, 360, "Apple"),
             (490, 280, "Cherries"),
             (700, 210, "Orange"),
-            (520, 110, "Strawberry"),
+            (520, 224, "Strawberry"),
             (950, 160, "Bananas"),
             (1150, 310, "Kiwi"),
             (1400, 240, "Melon"),
@@ -29,6 +29,9 @@ LEVELS = [
             (1950, 360, "Cherries"),
         ],
         "traps": [],  # Level 1 is the tutorial — no traps
+        "enemies": [
+            ("Mask Dude", 500, 350, {"speed": 60})
+        ],
     },
     {
         "map": "map_data_2.json",
@@ -53,6 +56,10 @@ LEVELS = [
             ("fire",   1456, 352),
             ("spikes", 1488, 368),
         ],
+        "enemies": [
+            ("Pink Man", 500, 350, {"speed": 80}),
+            ("Pink Man", 1100, 350, {"speed": 80})
+        ],
     },
     {
         "map": "map_data_3.json",
@@ -65,7 +72,7 @@ LEVELS = [
             (656, 192, "Bananas"),
             (976, 192, "Kiwi"),
             (912, 128, "Melon"),
-            (1104, 64, "Pineapple"),
+            (1104, 128, "Pineapple"),
             (1392, 320, "Apple"),
             (1776, 512, "Cherries"),
         ],
@@ -81,18 +88,22 @@ LEVELS = [
             ("spikes", 1840, 528),
             ("spikes", 1872, 528),
         ],
+        "enemies": [
+            ("Virtual Guy", 600, 400, {"speed": 120}),
+            ("Ninja Frog", 1400, 400, {"speed": 120}) # Using ninja frog sprite as enemy for fun
+        ],
     },
 ]
 
 
-class Background(Node2D):
-    """Tiled background drawn behind everything."""
+class BackgroundLayer(Node2D):
+    """Tiled background drawn behind everything with varying scroll speeds."""
 
-    def __init__(self, name, bg_path):
+    def __init__(self, name, bg_path, scroll_factor=0.3, tile_size=128):
         super().__init__(name, 0, 0)
+        self.scroll_factor = scroll_factor
         r = Engine.instance.renderer
-        bg_tile = r.load_image(bg_path, alpha=False)
-        tile_size = 128
+        bg_tile = r.load_image(bg_path, alpha=True) # allow alpha for dust
         self._tile = r.scale_surface(bg_tile, tile_size, tile_size)
         self._tile_size = tile_size
 
@@ -106,8 +117,8 @@ class Background(Node2D):
             cam_x = cx - hw
             cam_y = cy - hh
 
-        px = int(cam_x * 0.3)
-        py = int(cam_y * 0.3)
+        px = int(cam_x * self.scroll_factor)
+        py = int(cam_y * self.scroll_factor)
         ts = self._tile_size
 
         start_x = -(px % ts)
@@ -128,9 +139,17 @@ def build_level(world_node, collision_world, level_index=0):
     """
     cfg = LEVELS[level_index]
 
-    # Background
-    bg = Background("BG", BG_PATH)
-    world_node.add_child(bg)
+    # Multiple Background Layers
+    colors = ["Green.png", "Blue.png", "Brown.png"]
+    bg_color = colors[level_index % len(colors)]
+    bg_path = os.path.join(_SRC, "Free", "Background", bg_color)
+    dust_path = os.path.join(_SRC, "Free", "Other", "Dust Particle.png")
+    
+    bg0 = BackgroundLayer("BG_Back", bg_path, scroll_factor=0.2, tile_size=128)
+    bg1 = BackgroundLayer("BG_Dust", dust_path, scroll_factor=0.5, tile_size=128)
+    
+    world_node.add_child(bg0)
+    world_node.add_child(bg1)
 
     # Tilemap
     map_path = os.path.join(MAP_DIR, cfg["map"])
@@ -166,6 +185,15 @@ def build_level(world_node, collision_world, level_index=0):
         trap = cls(f"Trap_{ttype}_{i}", tx, ty, collision_world, **kwargs)
         world_node.add_child(trap)
         traps.append(trap)
+
+    # Enemies
+    from .entities.enemy import Enemy
+    for i, entry in enumerate(cfg.get("enemies", [])):
+        etype = entry[0]
+        ex, ey = entry[1], entry[2]
+        kwargs = entry[3] if len(entry) > 3 else {}
+        enemy = Enemy(f"Enemy_{i}", ex, ey, collision_world, enemy_type=etype, **kwargs)
+        world_node.add_child(enemy)
 
     player_start = cfg.get("player_start", (50, 400))
     return fruits, traps, player_start

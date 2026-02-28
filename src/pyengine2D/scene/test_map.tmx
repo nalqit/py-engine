@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" width="4" height="4" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+ <tileset firstgid="1" name="Dummy" tilewidth="32" tileheight="32" tilecount="1" columns="1">
+  <image source="dummy.png" width="32" height="32"/>
+ </tileset>
+ <layer id="1" name="BaseLayer" width="4" height="4">
+  <data encoding="csv">
+1,1,1,1,
+1,0,0,1,
+1,0,0,1,
+1,1,1,1
+</data>
+ </layer>
+ <layer id="2" name="CollisionLayer" width="4" height="4">
+  <properties>
+   <property name="solid" type="bool" value="true"/>
+  </properties>
+  <data encoding="csv">
+1,1,1,1,
+1,0,0,1,
+1,0,0,1,
+1,1,1,1
+</data>
+ </layer>
+</map>
