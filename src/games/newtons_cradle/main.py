@@ -1,11 +1,5 @@
 import math
-from src.pyengine2D.scene.node2d import Node2D
-from src.pyengine2D.core.engine import Engine
-from src.pyengine2D.physics.rigid_body_2d import RigidBody2D
-from src.pyengine2D.physics.physics_world_2d import PhysicsWorld2D
-from src.pyengine2D.physics.distance_constraint import DistanceConstraint
-from src.pyengine2D.collision.collision_world import CollisionWorld
-from src.pyengine2D.collision.circle_collider2d import CircleCollider2D
+from src.pyengine2D import Node2D,Engine,RigidBody2D,PhysicsWorld2D,DistanceConstraint,CollisionWorld,CircleCollider2D
 
 class Ball(RigidBody2D):
     """
