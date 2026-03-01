@@ -6,17 +6,17 @@ This document explains how the different layers of **PyEngine 2D** work together
 
 The engine is designed as a strict "cake" of responsibilities. Higher layers depend on lower layers, but lower layers NEVER know about higher ones.
 
-| Layer                      | Responsibility                                            | Component                   |
-| :------------------------- | :-------------------------------------------------------- | :-------------------------- |
-| **8. Audio**               | SFX and music playback globally.                          | `AudioManager`              |
-| **7. User Interface (UI)** | Menus, HUDs, Event Propagation, Data binding.             | `UIControl` / `EventSystem` |
-| **6. Juice & Animation**   | Visual polish, tweening, effects.                         | `TweenManager`              |
-| **5. State (FSM)**         | High-level "Behavioral" identity (Idle, Run, Jump, Fall). | `PlayerStateMachine`        |
-| **4. Gameplay**            | Translation of intent (Input/AI) into forces.             | `PlayerController`          |
-| **3. Physics**             | Accumulation of forces (Gravity, Velocity) into motion.   | `PhysicsBody2D`             |
-| **2. Collision**           | Geometric queries (Am I hitting something?).              | `CollisionWorld`            |
-| **1. Scene**               | Spatial hierarchy, transforms, and tilemap rendering.     | `Node2D` / `TilemapNode`    |
-| **0. Runtime**             | The engine heartbeat (Game loop, Delta time).             | `Engine`                    |
+| Layer                      | Responsibility                                                   | Component                                          |
+| :------------------------- | :--------------------------------------------------------------- | :------------------------------------------------- |
+| **8. Audio**               | SFX and music playback globally.                                 | `AudioManager`                                     |
+| **7. User Interface (UI)** | Menus, HUDs, Event Propagation, Data binding.                    | `UIControl` / `EventSystem`                        |
+| **6. Juice & Animation**   | Visual polish, tweening, effects.                                | `TweenManager`                                     |
+| **5. State (FSM)**         | High-level "Behavioral" identity (Idle, Run, Jump, Fall).        | `PlayerStateMachine`                               |
+| **4. Gameplay**            | Translation of intent (Input/AI) into forces.                    | `PlayerController`                                 |
+| **3. Physics**             | Accumulation of forces, Multi-pass constraints, Rigid responses. | `PhysicsBody2D` / `RigidBody2D` / `PhysicsWorld2D` |
+| **2. Collision**           | Geometric queries, Penetration normals, AABB + SAT overlaps.     | `CollisionWorld`                                   |
+| **1. Scene**               | Spatial hierarchy, transforms, and tilemap rendering.            | `Node2D` / `TilemapNode`                           |
+| **0. Runtime**             | The engine heartbeat (Game loop, Delta time).                    | `Engine`                                           |
 
 ---
 
@@ -39,9 +39,22 @@ In every frame, the `Player.update(delta)` method manages the handoff between th
 
 ### Step C: Physics Integration (The "How")
 
-- **Layer 3 (`PhysicsBody2D`)** adds gravity to `velocity_y`.
+There are two parallel approaches available in PyEngine 2D:
+
+**Approach 1: Kinematic / Traditional (`PhysicsBody2D`)**
+
+- Layer 3 adds gravity to `velocity_y`.
 - It calculates displacement: `dx = velocity_x * delta`.
-- It calls `move_and_collide()`.
+- It dynamically loops `move_and_collide()` along individual axes.
+
+**Approach 2: Pure Simulation (`PhysicsWorld2D` + `RigidBody2D`)**
+
+- `PhysicsWorld2D` creates an isolated engine sub-loop (e.g. `sub_steps=10`) breaking `delta` into micro-fractions.
+- Within each loop:
+  1. Gravity is continuously integrated.
+  2. `DistanceConstraint`s calculate their exact circle-arc tangent overlaps to ensure strictly rigid anchors.
+  3. All `RigidBody2D`s are accumulated: Elastic overlapping checks extract normals and distribute 1:1 mass momentum forces back through the objects perfectly simultaneously.
+- No inputs or behaviors dictate how these bodies behave; their paths are 100% determined by collision normal math and inverse mass.
 
 ### Step D: Collision Resolution (The "Where")
 

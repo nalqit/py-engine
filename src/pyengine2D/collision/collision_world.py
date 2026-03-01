@@ -109,8 +109,16 @@ class CollisionWorld(Node2D):
         # Float-precision test bounds (scaled)
         sw = collider.width * collider.scale_x
         sh = collider.height * collider.scale_y
-        test_left = current_parent_gx + move_dx + collider.local_x
-        test_top = current_parent_gy + move_dy + collider.local_y
+        
+        if hasattr(collider, 'radius'):
+            rx = collider.radius * collider.scale_x
+            ry = collider.radius * collider.scale_y
+            test_left = current_parent_gx + move_dx + collider.local_x - rx
+            test_top = current_parent_gy + move_dy + collider.local_y - ry
+        else:
+            test_left = current_parent_gx + move_dx + collider.local_x
+            test_top = current_parent_gy + move_dy + collider.local_y
+            
         test_right = test_left + sw
         test_bottom = test_top + sh
 
@@ -210,8 +218,16 @@ class CollisionWorld(Node2D):
 
         sw = collider.width * collider.scale_x
         sh = collider.height * collider.scale_y
-        test_left = current_parent_gx + move_dx + collider.local_x
-        test_top = current_parent_gy + move_dy + collider.local_y
+        
+        if hasattr(collider, 'radius'):
+            rx = collider.radius * collider.scale_x
+            ry = collider.radius * collider.scale_y
+            test_left = current_parent_gx + move_dx + collider.local_x - rx
+            test_top = current_parent_gy + move_dy + collider.local_y - ry
+        else:
+            test_left = current_parent_gx + move_dx + collider.local_x
+            test_top = current_parent_gy + move_dy + collider.local_y
+            
         test_right = test_left + sw
         test_bottom = test_top + sh
 
@@ -234,25 +250,56 @@ class CollisionWorld(Node2D):
                     test_top >= other_bottom or test_bottom <= other_top):
                 continue
 
-            overlap_left = test_right - other_left
-            overlap_right = other_right - test_left
-            overlap_top = test_bottom - other_top
-            overlap_bottom = other_bottom - test_top
-
-            if overlap_left < overlap_right:
-                pen_x, normal_x = overlap_left, -1.0
+            # Determine narrow-phase
+            is_self_circle = hasattr(collider, 'radius')
+            is_other_circle = hasattr(other, 'radius')
+            
+            pen = 0.0
+            nx, ny = 0.0, 0.0
+            
+            if is_self_circle and is_other_circle:
+                # Circle vs Circle exact overlap
+                cx1 = test_left + (sw / 2.0)
+                cy1 = test_top + (sh / 2.0)
+                
+                other_w = other.width * other.scale_x
+                other_h = other.height * other.scale_y
+                cx2 = other_left + (other_w / 2.0)
+                cy2 = other_top + (other_h / 2.0)
+                
+                dx = cx1 - cx2
+                dy = cy1 - cy2
+                dist = math.hypot(dx, dy)
+                r = (collider.radius * collider.scale_x) + (other.radius * other.scale_x)
+                
+                if dist >= r or dist == 0.0:
+                    continue
+                    
+                pen = r - dist
+                nx = dx / dist
+                ny = dy / dist
+                
             else:
-                pen_x, normal_x = overlap_right, 1.0
-
-            if overlap_top < overlap_bottom:
-                pen_y, normal_y = overlap_top, -1.0
-            else:
-                pen_y, normal_y = overlap_bottom, 1.0
-
-            if pen_x < pen_y:
-                pen, nx, ny = pen_x, normal_x, 0.0
-            else:
-                pen, nx, ny = pen_y, 0.0, normal_y
+                # Standard AABB MTV
+                overlap_left = test_right - other_left
+                overlap_right = other_right - test_left
+                overlap_top = test_bottom - other_top
+                overlap_bottom = other_bottom - test_top
+    
+                if overlap_left < overlap_right:
+                    pen_x, normal_x = overlap_left, -1.0
+                else:
+                    pen_x, normal_x = overlap_right, 1.0
+    
+                if overlap_top < overlap_bottom:
+                    pen_y, normal_y = overlap_top, -1.0
+                else:
+                    pen_y, normal_y = overlap_bottom, 1.0
+    
+                if pen_x < pen_y:
+                    pen, nx, ny = pen_x, normal_x, 0.0
+                else:
+                    pen, nx, ny = pen_y, 0.0, normal_y
 
             results.append(CollisionResult(
                 collided=True, collider=other, normal_x=nx, normal_y=ny, penetration=pen

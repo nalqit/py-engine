@@ -12,14 +12,14 @@ from .scene import (
 
 # Collision & Physics API
 from .collision import Collider2D, CollisionWorld, Area2D, CircleCollider2D, CollisionResult, UniformGrid
-from .physics import PhysicsBody2D
+from .physics import PhysicsBody2D, RigidBody2D, DistanceConstraint, PhysicsWorld2D
 
 # FSM API
 from .fsm import StateMachine, State
 
 # UI API
 from .ui import (
-    StatsHUD, UINode, UIPanel, UILabel, UIButton, 
+    UINode, UIPanel, UILabel, UIButton, 
     VBoxContainer, HBoxContainer, ScrollContainer
 )
 
@@ -59,9 +59,11 @@ __all__ = [
     'CollisionResult',
     'UniformGrid',
     'PhysicsBody2D',
+    'RigidBody2D',
+    'DistanceConstraint',
+    'PhysicsWorld2D',
     'StateMachine',
     'State',
-    'StatsHUD',
     'UINode',
     'UIPanel',
     'UILabel',

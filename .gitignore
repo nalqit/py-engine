@@ -33,6 +33,11 @@ out.txt
 error.txt
 fuzzer.py
 final_benchmarks.json
+error.log
+err.txt
+test_out.txt
+test_out.json
+test.py
 
 # Root-level temp map (use src/games/*/maps/ instead)
 map_data.json

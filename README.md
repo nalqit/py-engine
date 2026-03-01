@@ -40,8 +40,11 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 
 ### Level 3 — Physics Layer
 
-- **PhysicsBody2D**: Per-axis move-and-collide with float precision.
-- **Gravity** and **Impulses**: `apply_impulse(ix, iy)` for instantaneous velocity changes.
+- **PhysicsBody2D**: Per-axis move-and-collide with float precision (ideal for platformers).
+- **RigidBody2D**: Advanced dynamic physics body with mass, coefficient of restitution (bounciness), and true elastic momentum transfer.
+- **PhysicsWorld2D**: Independent solver node providing localized simulation **sub-stepping** (e.g., 10 passes per frame) to prevent constraint and tunneling jitters.
+- **DistanceConstraint**: Perfect springless rope/anchor simulation utilizing 2D circular tangent projection.
+- **Gravity** and **Impulses**: Configurable forces including overlapping mass exchange.
 
 ### Level 4 — Gameplay Layer
 
@@ -104,7 +107,7 @@ src/
 │   ├── collision/         # Collider2D, CircleCollider2D, CollisionWorld
 │   ├── core/              # Engine, Events, Input
 │   ├── fsm/               # Finite State Machine base classes
-│   ├── physics/           # PhysicsBody2D
+│   ├── physics/           # PhysicsBody2D, RigidBody2D, PhysicsWorld2D, DistanceConstraint
 │   ├── rendering/         # Renderer, SurfaceCache
 │   ├── scene/             # Node, Node2D, Camera2D, TilemapNode, AnimatedSprite
 │   ├── time/              # DeltaTime, Scheduling
@@ -120,7 +123,8 @@ src/
     │   └── main.py
     ├── neon_heights/
     ├── neon_odyssey/
-    └── neon_tank/
+    ├── neon_tank/
+    └── newtons_cradle/    # Multi-body rigid constraint and elastic collision simulation
 
 draw2d.py                  # Infinite 4-Quadrant Map Editor → JSON tilemaps
 ```
@@ -134,9 +138,10 @@ draw2d.py                  # Infinite 4-Quadrant Map Editor → JSON tilemaps
 3. **Engine Import**: `from src.pyengine2D import *`
 4. **Run Frog Hop**: `python -m src.games.frog_hop.main`
 5. **Other examples**:
-   - `python -m src.games.neon_heights.main`
-   - `python -m src.games.neon_odyssey.main`
-   - `python -m src.games.neon_tank.main`
+   - `python -m src.pyengine2D.games.neon_heights.main`
+   - `python -m src.pyengine2D.games.neon_odyssey.main`
+   - `python -m src.pyengine2D.games.neon_tank.main`
+   - `python -m src.pyengine2D.games.newtons_cradle.main`
 6. **Level Editor**: `python draw2d.py` → draw → **[S]** → save to `src/games/frog_hop/maps/`
 
 See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed API guide.
@@ -165,7 +170,6 @@ See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed API guide.
 - [x] TMX format support in `TilemapNode`
 
 ### Up Next
-
 
 ---
 

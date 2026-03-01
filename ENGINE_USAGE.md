@@ -10,7 +10,8 @@ The PyEngine 2D engine provides a layered architecture for building 2D games in 
 
 - **Engine** – The main entry point. Handles the game loop, timing, and systems.
 - **Node2D** – Base class for all 2D objects. Handles transform propagation (position, scale).
-- **PhysicsBody2D** – Level 3 physics body with gravity, impulses, and automatic collision resolution.
+- **PhysicsBody2D** – Level 3 physics body designed for dynamic character controllers (e.g. platformers).
+- **PhysicsWorld2D & RigidBody2D** – Advanced sub-stepped physics simulation components for elastic momentum, mass, and rigid constraints (pendulums).
 - **CollisionWorld** – Manages colliders and performs AABB/SAT shape checks.
 - **InputSystem** – Accessible via `Engine.instance.input`. Handles keyboard signals.
 - **AudioManager** – Accessible via `Engine.instance.audio`. Controls SFX and Music.
@@ -126,7 +127,30 @@ The exported JSON automatically includes:
 - Auto-tiled edges (Top-Left, Top-Mid, Top-Right, Underground dirt).
 - Tileset reference with `scale` factor for pixel-art upscaling.
 
-### 5. Add a User Interface
+### 6. Advanced Simulation (Elastic Physics)
+
+If you aren't building a traditional game and want native Rigid Body simulations (like a Newton's Cradle):
+
+```python
+from src.pyengine2D.physics.physics_world_2d import PhysicsWorld2D
+from src.pyengine2D.physics.rigid_body_2d import RigidBody2D
+from src.pyengine2D.physics.distance_constraint import DistanceConstraint
+
+# 1. Provide an isolated Physics solver set to divide updates into 10 rapid sub-steps for extreme constraint stability
+sim_world = PhysicsWorld2D("SimulationWorld", gravity_y=800.0, sub_steps=10)
+root.add_child(sim_world)
+
+# 2. Add an anchor point and a hanging pendulum ball
+anchor_x, anchor_y = 500, 100
+ball_col = CircleCollider2D("BallCol", 0, 0, radius=20)
+ball = RigidBody2D("Pendulum", anchor_x, anchor_y + 200, collider=ball_col, collision_world=collision_world, mass=1.0)
+rope = DistanceConstraint("Rope", anchor_x, anchor_y, ball, length=200)
+
+sim_world.add_child(ball)
+sim_world.add_child(rope)
+```
+
+### 7. Add a User Interface
 
 You can build HUDs and Menus using nested UI Container nodes:
 
