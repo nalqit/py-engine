@@ -20,7 +20,8 @@ from .fsm import StateMachine, State
 # UI API
 from .ui import (
     UINode, UIPanel, UILabel, UIButton, 
-    VBoxContainer, HBoxContainer, ScrollContainer
+    VBoxContainer, HBoxContainer, ScrollContainer,
+    StatsHUD
 )
 
 # Rendering API
@@ -77,4 +78,5 @@ __all__ = [
     'DirtyRectTracker',
     'ObjectPool',
     'AssetManager',
+    'StatsHUD',
 ]

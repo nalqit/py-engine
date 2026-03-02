@@ -138,10 +138,10 @@ draw2d.py                  # Infinite 4-Quadrant Map Editor → JSON tilemaps
 3. **Engine Import**: `from src.pyengine2D import *`
 4. **Run Frog Hop**: `python -m src.games.frog_hop.main`
 5. **Other examples**:
-   - `python -m src.pyengine2D.games.neon_heights.main`
-   - `python -m src.pyengine2D.games.neon_odyssey.main`
-   - `python -m src.pyengine2D.games.neon_tank.main`
-   - `python -m src.pyengine2D.games.newtons_cradle.main`
+   - `python -m src.games.neon_heights.main`
+   - `python -m src.games.neon_odyssey.main`
+   - `python -m src.games.neon_tank.main`
+   - `python -m src.games.newtons_cradle.main`
 6. **Level Editor**: `python draw2d.py` → draw → **[S]** → save to `src/games/frog_hop/maps/`
 
 See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed API guide.
