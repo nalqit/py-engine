@@ -37,10 +37,11 @@ class RigidBody2D(Node2D):
         self.force_x = 0.0
         self.force_y = 0.0
 
-    def solve_collisions(self, sdt, processed_pairs):
+    def solve_collisions(self, sdt, processed_pairs, spatial_hash_candidates=None):
         """
         Queries the central CollisionWorld for overlaps and applies elastic 
-        momentum transfer or positional hard-stops against other colliders.
+        momentum transfer or positional hard-stops against other colliders. 
+        spatial_hash_candidates provides body-to-body quick lookups.
         """
         if not self.collider or not self.collision_world:
             return

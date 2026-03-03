@@ -188,8 +188,9 @@ class TilemapNode(Node2D):
     # ------------------------------------------------------------------
 
     def _bake_layers(self):
-        """Pre-render each layer to a surface for fast blitting."""
+        """Pre-render each layer to chunked surfaces for fast, culled blitting."""
         self._surface_cache.invalidate()
+        self.chunk_size = 32
 
         for layer_idx, layer in enumerate(self.layers):
             tiles = layer.get("tiles", [])
@@ -198,21 +199,37 @@ class TilemapNode(Node2D):
 
             rows = len(tiles)
             cols = len(tiles[0]) if rows else 0
-            layer_w = cols * self.tile_width
-            layer_h = rows * self.tile_height
+            
+            chunks_x = (cols + self.chunk_size - 1) // self.chunk_size
+            chunks_y = (rows + self.chunk_size - 1) // self.chunk_size
 
-            surf = pygame.Surface((layer_w, layer_h), pygame.SRCALPHA)
-            surf.fill((0, 0, 0, 0))
-
-            for r in range(rows):
-                for c in range(cols):
-                    tile_id = tiles[r][c]
-                    if tile_id <= 0:
+            for cy in range(chunks_y):
+                for cx in range(chunks_x):
+                    c_cols = min(self.chunk_size, cols - cx * self.chunk_size)
+                    c_rows = min(self.chunk_size, rows - cy * self.chunk_size)
+                    c_w = c_cols * self.tile_width
+                    c_h = c_rows * self.tile_height
+                    
+                    if c_w <= 0 or c_h <= 0:
                         continue
-                    self._draw_tile(surf, tile_id, c, r)
 
-            cache_key = f"layer_{layer_idx}_{layer.get('name', '')}"
-            self._surface_cache.store(cache_key, surf)
+                    surf = pygame.Surface((c_w, c_h), pygame.SRCALPHA)
+                    surf.fill((0, 0, 0, 0))
+
+                    has_tiles = False
+                    for r in range(c_rows):
+                        for c in range(c_cols):
+                            global_r = cy * self.chunk_size + r
+                            global_c = cx * self.chunk_size + c
+                            tile_id = tiles[global_r][global_c]
+                            if tile_id <= 0:
+                                continue
+                            has_tiles = True
+                            self._draw_tile(surf, tile_id, c, r)
+
+                    if has_tiles:
+                        cache_key = f"chunk_{layer_idx}_{cx}_{cy}"
+                        self._surface_cache.store(cache_key, surf)
 
     def _draw_tile(self, target, tile_id, col, row):
         """Blit a single tile from the first tileset onto *target*."""
@@ -276,8 +293,7 @@ class TilemapNode(Node2D):
     # ------------------------------------------------------------------
 
     def render(self, surface):
-        """Render visible portion of each layer, using cached surfaces."""
-        # Determine camera viewport
+        """Render visible portion of each layer, using cached chunks."""
         cam_x, cam_y = 0.0, 0.0
         screen_w, screen_h = surface.get_size()
 
@@ -290,39 +306,45 @@ class TilemapNode(Node2D):
             cam_y = cy - half_h
 
         gx, gy = self.get_global_position()
+        screen_rect = pygame.Rect(-128, -128, screen_w + 256, screen_h + 256)
+        chunk_size = getattr(self, 'chunk_size', 32)
+        from src.pyengine2D.core.engine import Engine
+        engine_instance = Engine.instance
 
         for layer_idx, layer in enumerate(self.layers):
-            cache_key = f"layer_{layer_idx}_{layer.get('name', '')}"
-            layer_surf = self._surface_cache.get(cache_key)
-            if layer_surf is None:
-                continue
+            tiles = layer.get("tiles", [])
+            if not tiles: continue
+            
+            rows = len(tiles)
+            cols = len(tiles[0]) if rows else 0
+            chunks_x = (cols + chunk_size - 1) // chunk_size
+            chunks_y = (rows + chunk_size - 1) // chunk_size
 
             # Parallax factor (optional)
             pfx = layer.get("parallax_factor", [1.0, 1.0])[0]
             pfy = layer.get("parallax_factor", [1.0, 1.0])[1]
 
-            # Layer world position
-            draw_x = gx - cam_x * pfx
-            draw_y = gy - cam_y * pfy
+            for cy_idx in range(chunks_y):
+                for cx_idx in range(chunks_x):
+                    cache_key = f"chunk_{layer_idx}_{cx_idx}_{cy_idx}"
+                    chunk_surf = self._surface_cache.get(cache_key)
+                    if chunk_surf is None:
+                        continue
 
-            # Viewport clipping — only blit the visible portion
-            src_left = max(0, int(cam_x * pfx - gx))
-            src_top = max(0, int(cam_y * pfy - gy))
-            src_right = min(layer_surf.get_width(), src_left + screen_w)
-            src_bottom = min(layer_surf.get_height(), src_top + screen_h)
+                    chunk_local_x = cx_idx * chunk_size * self.tile_width
+                    chunk_local_y = cy_idx * chunk_size * self.tile_height
 
-            if src_right <= src_left or src_bottom <= src_top:
-                continue
-
-            src_rect = pygame.Rect(src_left, src_top, src_right - src_left, src_bottom - src_top)
-            dest_x = max(0, int(draw_x))
-            dest_y = max(0, int(draw_y))
-
-            from src.pyengine2D.core.engine import Engine
-            if Engine.instance:
-                Engine.instance.renderer.blit(surface, layer_surf, (dest_x, dest_y), area=src_rect)
-            else:
-                surface.blit(layer_surf, (dest_x, dest_y), src_rect)
+                    draw_x = gx + chunk_local_x - cam_x * pfx
+                    draw_y = gy + chunk_local_y - cam_y * pfy
+                    
+                    c_w, c_h = chunk_surf.get_size()
+                    chunk_rect = pygame.Rect(draw_x, draw_y, c_w, c_h)
+                    
+                    if screen_rect.colliderect(chunk_rect):
+                        if engine_instance:
+                            engine_instance.renderer.blit(surface, chunk_surf, (int(draw_x), int(draw_y)))
+                        else:
+                            surface.blit(chunk_surf, (int(draw_x), int(draw_y)))
 
         # Debug overlay
         if self.show_debug:

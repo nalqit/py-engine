@@ -14,6 +14,9 @@ class PhysicsWorld2D(Node2D):
         
         self.bodies = []
         self.constraints = []
+        
+        from src.pyengine2D.physics.spatial_hash import SpatialHash
+        self.spatial_hash = SpatialHash(cell_size=128)
 
     def update(self, delta):
         self.bodies.clear()
@@ -22,6 +25,7 @@ class PhysicsWorld2D(Node2D):
         for child in self.children:
             if isinstance(child, RigidBody2D):
                 self.bodies.append(child)
+                self.spatial_hash.register(child)
             elif isinstance(child, DistanceConstraint):
                 self.constraints.append(child)
         
@@ -44,16 +48,19 @@ class PhysicsWorld2D(Node2D):
                 
                 b.clear_forces()
                 b.update_transforms() # Important for CollisionWorld sync
+                self.spatial_hash.register(b) # Update its Spatial Hash cell incrementally
                 
             # 2. Constraints (Ropes, Springs, Joints)
             for c in self.constraints:
                 c.solve()
 
-            # 2. Native Collision Solving using engine CollisionWorld
+            # 2. Native Collision Solving using engine CollisionWorld + Spatial Hash
             processed_pairs = set()
             for b in self.bodies:
                 if not b.is_kinematic:
-                    b.solve_collisions(sdt, processed_pairs)
+                    # Provide spatial hash candidates for body-to-body collisions
+                    candidates = self.spatial_hash.query_nearby(b)
+                    b.solve_collisions(sdt, processed_pairs, spatial_hash_candidates=candidates)
 
             for b in self.bodies:
                 b.update_transforms()

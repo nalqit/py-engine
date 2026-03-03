@@ -17,6 +17,8 @@ class Node(SignalMixin):
             child.parent.remove_child(child)
         child.parent = self
         self.children.append(child)
+        if hasattr(child, 'set_dirty'):
+            child.set_dirty()
 
     def remove_child(self, child: 'Node') -> None:
         """Removes a child node from this node."""

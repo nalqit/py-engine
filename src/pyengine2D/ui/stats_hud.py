@@ -13,7 +13,7 @@ class StatsHUD(Node2D):
 
     def render(self, surface):
         from src.pyengine2D.core.engine import Engine
-        if not Engine.instance:
+        if not Engine.instance or not getattr(Engine.instance, 'debug_mode', False):
             return
             
         renderer = Engine.instance.renderer

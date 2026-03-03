@@ -7,6 +7,10 @@ class DebugDraw:
         self.surface = surface
 
     def draw(self):
+        from src.pyengine2D.core.engine import Engine
+        if not Engine.instance or not Engine.instance.debug_mode:
+            return
+            
         # Recursively draw debug info for all PhysicsBodies under parent
         for node in self._walk(self.parent):
             if hasattr(node, "collider") and node.collider:

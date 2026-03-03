@@ -40,6 +40,21 @@ class SpriteNode(Node2D):
             super().render(surface)
             return
 
+        # Frustum culling
+        if Node2D.camera:
+            viewport = Node2D.camera.get_viewport_rect()
+            gx, gy = self.get_global_position()
+            
+            rect_x, rect_y = gx, gy
+            if self.centered:
+                rect_x -= sw / 2
+                rect_y -= sh / 2
+                
+            sprite_rect = pygame.Rect(rect_x, rect_y, sw, sh)
+            if not viewport.colliderect(sprite_rect):
+                super().render(surface)  # Still need to render children
+                return
+
         # Use cached scaled image when possible
         if self.scale_x != 1.0 or self.scale_y != 1.0:
             cache_key = (self.scale_x, self.scale_y)

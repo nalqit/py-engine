@@ -22,3 +22,17 @@ class Camera2D(Node2D):
             self.local_y = round(self.local_y)
 
         super().update(delta)
+
+    def get_viewport_rect(self):
+        """Returns a pygame.Rect representing the world space bounds seen by the camera, plus padding."""
+        import pygame
+        from src.pyengine2D.core.engine import Engine
+        engine = Engine.instance
+        if not engine:
+            return pygame.Rect(0, 0, 0, 0)
+            
+        gx, gy = self.get_global_position()
+        w, h = engine.virtual_w, engine.virtual_h
+        padding = 128  # Padding to avoid snapping objects on screen edges out of existence
+        
+        return pygame.Rect(gx - w // 2 - padding, gy - h // 2 - padding, w + padding * 2, h + padding * 2)

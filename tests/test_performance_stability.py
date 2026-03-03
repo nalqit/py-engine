@@ -30,6 +30,9 @@ def setup_test_scene():
 
 def test_consistent_jump_height():
     """Verify that jumping results in the same peak height regardless of delta."""
+    if not Engine.instance:
+        Engine("Test", 1, 1)
+        
     # 1. Simulate at 60Hz (fixed_dt should match)
     root1, cw1, player1 = setup_test_scene()
     player1.use_gravity = True
@@ -70,20 +73,20 @@ def test_consistent_jump_height():
     print("[PASS] test_consistent_jump_height")
 
 def test_global_position_cache():
-    """Ensure cached global positions are correct."""
+    """Ensure cached global positions are correct (lazy evaluation)."""
     root = Node2D("Root", 10, 10)
     child = Node2D("Child", 20, 20)
     root.add_child(child)
     
-    # Before update_transforms, cache should be default (local)
-    assert child.get_global_position() == (20, 20)
+    # With Dirty Transforms, it calculates on-the-fly
+    assert child.get_global_position() == (30, 30)
     
     root.update_transforms()
     assert child.get_global_position() == (30, 30)
     
     child.local_x = 50
-    # Still 30, 30 because not refreshed
-    assert child.get_global_position() == (30, 30)
+    # Dirty transform evaluates lazily instantly
+    assert child.get_global_position() == (60, 30)
     
     root.update_transforms()
     assert child.get_global_position() == (60, 30)

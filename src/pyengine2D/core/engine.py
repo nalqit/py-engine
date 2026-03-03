@@ -42,6 +42,7 @@ class Engine:
         self.fixed_dt = 1.0 / 60.0
         self.dt = 0.0
         self.fps = 0.0
+        self.debug_mode = False
         self.input = InputSystem(self)
         self.renderer = Renderer()
         self.profiler = EngineProfiler()

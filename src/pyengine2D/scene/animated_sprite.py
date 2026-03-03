@@ -108,6 +108,15 @@ class AnimatedSprite(Node2D):
             super().render(surface)
             return
 
+        # Frustum Culling
+        if Node2D.camera:
+            viewport = Node2D.camera.get_viewport_rect()
+            gx, gy = self.get_global_position()
+            sprite_rect = pygame.Rect(gx, gy, self.frame_width, self.frame_height)
+            if not viewport.colliderect(sprite_rect):
+                super().render(surface)
+                return
+
         frames = self.animations[self.current_animation]
         frame_idx = frames[self.current_frame_index]
         frame_surf = self._get_frame_surface(frame_idx)

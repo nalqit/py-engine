@@ -1,0 +1,43 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.11.0, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\dell\AppData\Local\Programs\Python\Python311\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\dell\Desktop\try3(gpt prompts)
+collecting ... collected 2 items
+
+tests/test_performance_stability.py::test_consistent_jump_height FAILED  [ 50%]
+tests/test_performance_stability.py::test_global_position_cache PASSED   [100%]
+
+================================== FAILURES ===================================
+_________________________ test_consistent_jump_height _________________________
+
+    def test_consistent_jump_height():
+        """Verify that jumping results in the same peak height regardless of delta."""
+        # 1. Simulate at 60Hz (fixed_dt should match)
+        root1, cw1, player1 = setup_test_scene()
+        player1.use_gravity = True
+        player1.apply_impulse(0, -400) # Initial jump
+    
+        peak_y_60 = player1.local_y
+        # Simulate for 1 second at 60fps
+        for _ in range(60):
+            dt = 1/60.0
+            root1.update_transforms()
+>           root1.update(dt)
+
+tests\test_performance_stability.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\pyengine2D\scene\node.py:55: in update
+    child.update(delta)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Node(Player), delta = 0.016666666666666666
+
+    def update(self, delta):
+>       inp = Engine.instance.input
+              ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'input'
+
+src\game\entities\player.py:34: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/test_performance_stability.py::test_consistent_jump_height - Att...
+========================= 1 failed, 1 passed in 0.67s =========================
