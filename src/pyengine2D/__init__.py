@@ -25,7 +25,7 @@ from .ui import (
 )
 
 # Rendering API
-from .rendering import SpriteBatch, TextureAtlas, SurfaceCache, DirtyRectTracker
+from .rendering import SpriteBatch, TextureAtlas, SurfaceCache, DirtyRectTracker, Renderer2D
 
 # Utils API
 from .utils import ObjectPool, AssetManager
@@ -76,6 +76,7 @@ __all__ = [
     'TextureAtlas',
     'SurfaceCache',
     'DirtyRectTracker',
+    'Renderer2D',
     'ObjectPool',
     'AssetManager',
     'StatsHUD',

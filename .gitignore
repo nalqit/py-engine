@@ -26,6 +26,7 @@ dist/
 PROJECT_OVERVIEW.md
 
 # Test outputs & scratch files
+*.txt
 test_output.txt
 test_failed.txt
 test_failed2.txt
