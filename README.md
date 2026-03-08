@@ -21,6 +21,7 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 |   7   | User Interface (UI)     |   ✅   |
 |   8   | Tilemap Level Editor    |   ✅   |
 |   9   | Audio Layer             |   ✅   |
+|  10   | Scene Editor (GUI)      |   ✅   |
 
 ### Level 0 — Runtime Core
 
@@ -75,6 +76,14 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 
 - **AudioManager**: Global `pygame.mixer` wrapper serving as a unified interface to load and play SFX (`play_sound`) and stream background music (`play_music`).
 
+### Level 10 — Scene Editor (GUI)
+
+- **Standalone PyQt5 Editor** (`tools/editor/editor.py`): Godot-inspired 2D scene editor.
+- Dockable panels: Scene Tree, Viewport, Inspector, Toolbar.
+- Full Undo/Redo support (Ctrl+Z / Ctrl+Y).
+- `.scene` JSON file format for saving/loading scene trees.
+- See [EDITOR_GUIDE.md](EDITOR_GUIDE.md) for full documentation.
+
 ---
 
 ## ✨ Core Architecture
@@ -127,6 +136,16 @@ src/
     └── newtons_cradle/    # Multi-body rigid constraint and elastic collision simulation
 
 draw2d.py                  # Infinite 4-Quadrant Map Editor → JSON tilemaps
+
+tools/
+└── editor/                # Standalone PyEngine2D Scene Editor (PyQt5)
+    ├── editor.py          # Entry point + main window
+    ├── editor_model.py    # State management + undo/redo
+    ├── viewport_widget.py # Pygame-in-Qt scene viewport
+    ├── scene_tree_panel.py# Hierarchical node tree
+    ├── inspector_panel.py # Property inspector
+    ├── toolbar.py         # Toolbar actions
+    └── scene_io.py        # Scene serialization (.scene JSON)
 ```
 
 ---
@@ -143,6 +162,7 @@ draw2d.py                  # Infinite 4-Quadrant Map Editor → JSON tilemaps
    - `python -m src.games.neon_tank.main`
    - `python -m src.games.newtons_cradle.main`
 6. **Level Editor**: `python draw2d.py` → draw → **[S]** → save to `src/games/frog_hop/maps/`
+7. **Scene Editor**: `pip install PyQt5` then `python tools/editor/editor.py` — see [EDITOR_GUIDE.md](EDITOR_GUIDE.md)
 
 See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed API guide.
 

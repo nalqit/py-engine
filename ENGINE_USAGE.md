@@ -224,6 +224,42 @@ Engine.instance.audio.play_music("assets/bgm.ogg", loops=-1)
 
 ---
 
+## Scene Editor (GUI)
+
+PyEngine2D includes a **standalone scene editor** built with PyQt5, inspired by Godot's 2D editor.
+
+### Launch
+
+```bash
+pip install PyQt5       # one-time dependency
+python tools/editor/editor.py
+```
+
+### Features
+
+- **Scene Tree** (left) — hierarchical view of all nodes. Right-click for Add/Delete/Rename.
+- **Viewport** (center) — visual 2D canvas with pan (middle-drag), zoom (scroll), node picking and dragging.
+- **Inspector** (right) — real-time property editing for the selected node.
+- **Toolbar** (top) — New/Open/Save scene, Add/Delete node, Undo (Ctrl+Z) / Redo (Ctrl+Y), Grid toggle.
+
+### .scene File Format
+
+Scenes are saved as `.scene` JSON files — human-readable, version-control friendly:
+
+```json
+{
+  "type": "Node2D",
+  "name": "Root",
+  "x": 0,
+  "y": 0,
+  "children": [{ "type": "Camera2D", "name": "MainCam", "x": 400, "y": 300 }]
+}
+```
+
+For the complete Editor reference, see [EDITOR_GUIDE.md](EDITOR_GUIDE.md).
+
+---
+
 ## FAQ
 
 **Q:** My collisions aren't working?
