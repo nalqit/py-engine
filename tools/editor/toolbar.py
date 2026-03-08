@@ -265,47 +265,97 @@ class EditorToolbar(QToolBar):
         Safely extract root node from a game .py file.
 
         Strategy:
-            1. Import the module with Engine.run patched to no-op.
-            2. Scan for a class with a 'root' attribute.
-            3. Try calling build_scene() if it exists.
+            1. Intercept Engine.run and invoke main() (if present) to capture the root node directly.
+            2. Run build_scene() if present.
+            3. Instantiate module classes: return the instance if it's a Node (Newton's Cradle) 
+               or returning instance.root (Neon Heights).
+            4. Scanning module variables for a Node.
 
         Safety: Engine.run is replaced with a no-op before import,
-        preventing any game loop execution.
+        preventing any game loop execution while capturing the exact root.
         """
-        import importlib.util
+        import os
+        import importlib
         from src.pyengine2D.scene.node import Node
         from src.pyengine2D.core.engine import Engine
 
-        # Patch Engine.run to prevent game loop execution
+        # Dynamically compute the module name to support relative imports
+        try:
+            rel = os.path.relpath(path, _PROJECT_ROOT)
+            module_name = os.path.splitext(rel)[0].replace(os.sep, '.')
+        except ValueError:
+            module_name = "_imported_game"
+
+        # Patch Engine.run to intercept the root node
         _original_run = Engine.run
-        Engine.run = lambda self, *a, **kw: None
+        captured_root = None
+
+        def fake_run(self, root, *a, **kw):
+            nonlocal captured_root
+            captured_root = root
+
+        Engine.run = fake_run
 
         try:
-            spec = importlib.util.spec_from_file_location("_imported_game", path)
-            if spec is None or spec.loader is None:
-                return None
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            # Default to Python's proper package importer for relative imports
+            # Fallback to direct spec load if this fails
+            try:
+                if module_name in sys.modules:
+                    module = importlib.reload(sys.modules[module_name])
+                else:
+                    module = importlib.import_module(module_name)
+            except Exception:
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(module_name, path)
+                if spec is None or spec.loader is None:
+                    return None
+                module = importlib.util.module_from_spec(spec)
+                try:
+                    spec.loader.exec_module(module)
+                except Exception:
+                    pass  # Keep going, definition might be mostly loaded
 
-            # Strategy 1: Look for build_scene()
+            # Strategy 0: Captued during exec_module
+            if isinstance(captured_root, Node):
+                return captured_root
+
+            # Strategy 1: Run main() to capture the scene passed to Engine.run()
+            if hasattr(module, "main"):
+                try:
+                    module.main()
+                    if isinstance(captured_root, Node):
+                        return captured_root
+                except Exception:
+                    pass
+
+            # Strategy 2: Look for build_scene()
             if hasattr(module, "build_scene"):
-                result = module.build_scene()
-                if isinstance(result, Node):
-                    return result
+                try:
+                    result = module.build_scene()
+                    if isinstance(result, Node):
+                        return result
+                except Exception:
+                    pass
 
-            # Strategy 2: Look for a game class with .root
+            # Strategy 3: Look for a class matching our expected patterns
             for attr_name in dir(module):
                 obj = getattr(module, attr_name, None)
-                if isinstance(obj, type):
+                if isinstance(obj, type) and obj.__module__ == module.__name__:
                     try:
                         instance = obj()
+                        
+                        # Case A: Instance itself is a Node (e.g. NewtonCradle custom class)
+                        if isinstance(instance, Node):
+                            return instance
+                            
+                        # Case B: Engine initialization with self.root (e.g. NeonHeights)
                         root = getattr(instance, "root", None)
                         if isinstance(root, Node):
                             return root
                     except Exception:
                         pass
 
-            # Strategy 3: Look for module-level Node variables
+            # Strategy 4: Look for module-level Node variables
             for attr_name in dir(module):
                 obj = getattr(module, attr_name, None)
                 if isinstance(obj, Node) and obj.name:
