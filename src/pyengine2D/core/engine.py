@@ -45,6 +45,10 @@ class Engine:
         self.debug_mode = False
         self.input = InputSystem(self)
         self.renderer = Renderer()
+        
+        from src.pyengine2D.rendering.renderer2d import Renderer2D
+        self.scene_renderer = Renderer2D(None)
+        
         self.profiler = EngineProfiler()
         self.master_clock = MasterClock()
         self.events = []
@@ -115,7 +119,10 @@ class Engine:
             self.profiler.begin("Render")
             self.renderer.fill(self.game_surface, (0, 0, 0))
             if active_root:
-                active_root.render(self.game_surface)
+                from src.pyengine2D.scene.node2d import Node2D
+                self.scene_renderer.camera = Node2D.camera
+                self.scene_renderer.debug_mode = self.debug_mode
+                self.scene_renderer.draw(active_root, self.game_surface, self)
             if on_render and active_root:
                 on_render(self, active_root, self.game_surface)
             self.profiler.end("Render")

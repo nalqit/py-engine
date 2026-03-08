@@ -9,7 +9,9 @@ The PyEngine 2D engine provides a layered architecture for building 2D games in 
 ## Core Engine Components
 
 - **Engine** – The main entry point. Handles the game loop, timing, and systems.
+- **Renderer2D** – Scene-aware renderer supporting frustum culling, z-index sorting, and debug overlays. Used automatically by the `Engine`.
 - **Node2D** – Base class for all 2D objects. Handles transform propagation (position, scale).
+- **Camera2D** – Viewport controller. Set `Node2D.camera = my_camera` to enable culling.
 - **PhysicsBody2D** – Level 3 physics body designed for dynamic character controllers (e.g. platformers).
 - **PhysicsWorld2D & RigidBody2D** – Advanced sub-stepped physics simulation components for elastic momentum, mass, and rigid constraints (pendulums).
 - **CollisionWorld** – Manages colliders and performs AABB/SAT shape checks.
