@@ -40,6 +40,12 @@ _TYPE_ICONS = {
     "RectangleNode": "⬛",
     "CircleNode": "⚫",
     "TilemapNode": "🗺",
+    "AnimatedSprite": "🎞",
+    "Collider2D": "⬡",
+    "Area2D": "⬡",
+    "PhysicsBody2D": "⚡",
+    "RigidBody2D": "⚡",
+    "Player": "🎮",
 }
 
 
@@ -92,10 +98,12 @@ class SceneTreePanel(QDockWidget):
 
     def _build_item(self, node: Node) -> QTreeWidgetItem:
         type_name = type(node).__name__
-        icon_str = _TYPE_ICONS.get(type_name, "📦")
+        # Show _original_type for imported nodes (e.g. "Player" cloned as Node2D)
+        display_type = getattr(node, "_original_type", None) or type_name
+        icon_str = _TYPE_ICONS.get(display_type, _TYPE_ICONS.get(type_name, "📦"))
         item = QTreeWidgetItem([f"{icon_str} {node.name}"])
         item.setData(0, Qt.UserRole, id(node))
-        item.setToolTip(0, f"Type: {type_name}")
+        item.setToolTip(0, f"Type: {display_type}")
         # Store reference for quick lookup
         item._node_ref = node  # type: ignore[attr-defined]
         for child in node.children:

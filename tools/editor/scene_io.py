@@ -6,7 +6,9 @@ that is saved as `.scene` files. This module does NOT modify any engine
 classes; it reads node attributes and reconstructs nodes from saved data.
 
 Supported node types:
-    Node, Node2D, SpriteNode, Camera2D, RectangleNode, CircleNode, TilemapNode
+    Node, Node2D, SpriteNode, Camera2D, RectangleNode, CircleNode,
+    TilemapNode, AnimatedSprite, Collider2D, Area2D,
+    PhysicsBody2D, RigidBody2D (+ _original_type fallback for unknown)
 """
 
 import json
@@ -46,6 +48,31 @@ try:
 except ImportError:
     TilemapNode = None
 
+try:
+    from src.pyengine2D.scene.animated_sprite import AnimatedSprite
+except ImportError:
+    AnimatedSprite = None
+
+try:
+    from src.pyengine2D.collision.collider2d import Collider2D
+except ImportError:
+    Collider2D = None
+
+try:
+    from src.pyengine2D.collision.area2d import Area2D
+except ImportError:
+    Area2D = None
+
+try:
+    from src.pyengine2D.physics.physics_body_2d import PhysicsBody2D
+except ImportError:
+    PhysicsBody2D = None
+
+try:
+    from src.pyengine2D.physics.rigid_body_2d import RigidBody2D
+except ImportError:
+    RigidBody2D = None
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Type registry — maps type-name strings to classes and back
@@ -67,6 +94,11 @@ _register(SpriteNode)
 _register(RectangleNode)
 _register(CircleNode)
 _register(TilemapNode)
+_register(AnimatedSprite)
+_register(Collider2D)
+_register(Area2D)
+_register(PhysicsBody2D)
+_register(RigidBody2D)
 
 
 def get_registered_types():
@@ -122,6 +154,22 @@ def _node_to_dict(node) -> dict:
         data["radius"] = getattr(node, "radius", 0)
         data["color"] = list(getattr(node, "color", (255, 255, 255)))
 
+    # ── AnimatedSprite extras ──
+    if AnimatedSprite and isinstance(node, AnimatedSprite):
+        data["frame_width"] = getattr(node, "frame_width", 32)
+        data["frame_height"] = getattr(node, "frame_height", 32)
+
+    # ── Collider2D extras ──
+    if Collider2D and isinstance(node, Collider2D):
+        data["width"] = getattr(node, "width", 0)
+        data["height"] = getattr(node, "height", 0)
+        data["is_static"] = getattr(node, "is_static", False)
+
+    # ── _original_type hint for imported nodes of unknown type ──
+    orig = getattr(node, "_original_type", None)
+    if orig and orig != type_name:
+        data["_original_type"] = orig
+
     # ── Children (recursive) ──
     if node.children:
         data["children"] = [_node_to_dict(child) for child in node.children]
@@ -159,10 +207,29 @@ def _dict_to_node(data: dict):
         node = Camera2D(name)
         node.local_x = data.get("x", 0)
         node.local_y = data.get("y", 0)
+    elif RectangleNode and cls is RectangleNode:
+        x, y = data.get("x", 0), data.get("y", 0)
+        w = data.get("width", 32)
+        h = data.get("height", 32)
+        color = data.get("color", [255, 255, 255])
+        node = RectangleNode(name, x, y, w, h, tuple(color) if isinstance(color, list) else color)
+    elif CircleNode and cls is CircleNode:
+        x, y = data.get("x", 0), data.get("y", 0)
+        radius = data.get("radius", 16)
+        color = data.get("color", [255, 255, 255])
+        node = CircleNode(name, x, y, radius, tuple(color) if isinstance(color, list) else color)
     elif issubclass(cls, Node2D):
         x = data.get("x", 0)
         y = data.get("y", 0)
-        node = cls(name, x, y) if cls is not Node2D else Node2D(name, x, y)
+        try:
+            node = cls(name, x, y)
+        except TypeError:
+            try:
+                node = cls(name)
+                node.local_x = x
+                node.local_y = y
+            except Exception:
+                node = Node2D(name, x, y)
     elif cls is Node:
         node = Node(name)
     else:
@@ -176,17 +243,35 @@ def _dict_to_node(data: dict):
         node.visible = data.get("visible", True)
         node.z_index = data.get("z_index", 0)
 
-    # ── Apply type-specific extras ──
+    # ── Apply type-specific extras (for Node2D fallbacks) ──
     if RectangleNode and isinstance(node, RectangleNode):
-        node.width = data.get("width", 0)
-        node.height = data.get("height", 0)
-        color = data.get("color", [255, 255, 255])
-        node.color = tuple(color) if isinstance(color, list) else color
+        node.width = data.get("width", node.width)
+        node.height = data.get("height", node.height)
+        color = data.get("color", None)
+        if color:
+            node.color = tuple(color) if isinstance(color, list) else color
 
     if CircleNode and isinstance(node, CircleNode):
-        node.radius = data.get("radius", 0)
-        color = data.get("color", [255, 255, 255])
-        node.color = tuple(color) if isinstance(color, list) else color
+        node.radius = data.get("radius", node.radius)
+        color = data.get("color", None)
+        if color:
+            node.color = tuple(color) if isinstance(color, list) else color
+
+    # AnimatedSprite frame dimensions
+    if AnimatedSprite and isinstance(node, AnimatedSprite):
+        node.frame_width = data.get("frame_width", getattr(node, "frame_width", 32))
+        node.frame_height = data.get("frame_height", getattr(node, "frame_height", 32))
+
+    # Collider2D extras
+    if Collider2D and isinstance(node, Collider2D):
+        node.width = data.get("width", getattr(node, "width", 0))
+        node.height = data.get("height", getattr(node, "height", 0))
+        node.is_static = data.get("is_static", getattr(node, "is_static", False))
+
+    # Restore _original_type hint
+    orig = data.get("_original_type", None)
+    if orig:
+        node._original_type = orig
 
     # ── Children (recursive) ──
     for child_data in data.get("children", []):

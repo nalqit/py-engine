@@ -3,6 +3,7 @@ toolbar.py — Editor Toolbar
 
 Provides:
     - New / Open / Save scene
+    - Import from Game Code (safe introspection, no execution)
     - Add Node (drop-down: Node2D, SpriteNode, Camera2D, RectangleNode, CircleNode)
     - Delete selected node
     - Undo / Redo
@@ -67,42 +68,48 @@ class EditorToolbar(QToolBar):
         """)
 
         # ── New Scene ──
-        self._act_new = QAction("📄 New", self)
+        self._act_new = QAction("New", self)
         self._act_new.setShortcut(QKeySequence("Ctrl+N"))
         self._act_new.setToolTip("New Scene (Ctrl+N)")
         self._act_new.triggered.connect(self._on_new)
         self.addAction(self._act_new)
 
         # ── Open Scene ──
-        self._act_open = QAction("📂 Open", self)
+        self._act_open = QAction("Open", self)
         self._act_open.setShortcut(QKeySequence("Ctrl+O"))
         self._act_open.setToolTip("Open Scene (Ctrl+O)")
         self._act_open.triggered.connect(self._on_open)
         self.addAction(self._act_open)
 
         # ── Save Scene ──
-        self._act_save = QAction("💾 Save", self)
+        self._act_save = QAction("Save", self)
         self._act_save.setShortcut(QKeySequence("Ctrl+S"))
         self._act_save.setToolTip("Save Scene (Ctrl+S)")
         self._act_save.triggered.connect(self._on_save)
         self.addAction(self._act_save)
 
+        # ── Import from Game Code ──
+        self._act_import = QAction("Import", self)
+        self._act_import.setShortcut(QKeySequence("Ctrl+I"))
+        self._act_import.setToolTip("Import scene tree from game Python file (Ctrl+I)")
+        self._act_import.triggered.connect(self._on_import)
+        self.addAction(self._act_import)
+
         self.addSeparator()
 
         # ── Add Node (drop-down) ──
-        self._act_add = QAction("➕ Add Node", self)
+        self._act_add = QAction("+ Add Node", self)
         self._act_add.setToolTip("Add a child node to the selected node")
         add_menu = QMenu(self)
         for type_name in ["Node2D", "SpriteNode", "Camera2D", "RectangleNode", "CircleNode"]:
             action = add_menu.addAction(type_name)
             action.triggered.connect(lambda checked, tn=type_name: self._on_add_node(tn))
         self._act_add.setMenu(add_menu)
-        # Clicking the button itself adds a Node2D (most common)
         self._act_add.triggered.connect(lambda: self._on_add_node("Node2D"))
         self.addAction(self._act_add)
 
         # ── Delete ──
-        self._act_delete = QAction("🗑 Delete", self)
+        self._act_delete = QAction("Delete", self)
         self._act_delete.setShortcut(QKeySequence("Delete"))
         self._act_delete.setToolTip("Delete selected node (Delete)")
         self._act_delete.triggered.connect(self._on_delete)
@@ -111,13 +118,13 @@ class EditorToolbar(QToolBar):
         self.addSeparator()
 
         # ── Undo / Redo ──
-        self._act_undo = QAction("↩ Undo", self)
+        self._act_undo = QAction("Undo", self)
         self._act_undo.setShortcut(QKeySequence("Ctrl+Z"))
         self._act_undo.setToolTip("Undo (Ctrl+Z)")
         self._act_undo.triggered.connect(self._on_undo)
         self.addAction(self._act_undo)
 
-        self._act_redo = QAction("↪ Redo", self)
+        self._act_redo = QAction("Redo", self)
         self._act_redo.setShortcut(QKeySequence("Ctrl+Y"))
         self._act_redo.setToolTip("Redo (Ctrl+Y)")
         self._act_redo.triggered.connect(self._on_redo)
@@ -217,6 +224,96 @@ class EditorToolbar(QToolBar):
 
     def _on_redo(self):
         self.model.redo()
+
+    def _on_import(self):
+        """Safely import a scene tree from a game Python file."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import Game Scene", "",
+            "Python Files (*.py);;All Files (*)"
+        )
+        if not path:
+            return
+
+        try:
+            root = self._extract_root_from_py(path)
+            if root is None:
+                QMessageBox.warning(
+                    self, "Import Failed",
+                    "Could not find a root node in the selected file.\n\n"
+                    "The file should contain a class with a 'self.root' attribute "
+                    "or a 'build_scene()' function that returns a Node."
+                )
+                return
+
+            from tools.editor.scene_importer import SceneImporter
+            SceneImporter.from_node(root, self.model)
+
+            # Show import summary
+            info = SceneImporter.validate_tree(self.model.scene_root)
+            types_str = ", ".join(f"{k}: {v}" for k, v in info["node_types"].items())
+            msg = (f"Imported {info['total_nodes']} nodes\n\n"
+                   f"Types: {types_str}")
+            if info["warnings"]:
+                msg += "\n\nWarnings:\n" + "\n".join(info["warnings"])
+            QMessageBox.information(self, "Import Successful", msg)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Import Error", f"Failed to import:\n{e}")
+
+    def _extract_root_from_py(self, path: str):
+        """
+        Safely extract root node from a game .py file.
+
+        Strategy:
+            1. Import the module with Engine.run patched to no-op.
+            2. Scan for a class with a 'root' attribute.
+            3. Try calling build_scene() if it exists.
+
+        Safety: Engine.run is replaced with a no-op before import,
+        preventing any game loop execution.
+        """
+        import importlib.util
+        from src.pyengine2D.scene.node import Node
+        from src.pyengine2D.core.engine import Engine
+
+        # Patch Engine.run to prevent game loop execution
+        _original_run = Engine.run
+        Engine.run = lambda self, *a, **kw: None
+
+        try:
+            spec = importlib.util.spec_from_file_location("_imported_game", path)
+            if spec is None or spec.loader is None:
+                return None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            # Strategy 1: Look for build_scene()
+            if hasattr(module, "build_scene"):
+                result = module.build_scene()
+                if isinstance(result, Node):
+                    return result
+
+            # Strategy 2: Look for a game class with .root
+            for attr_name in dir(module):
+                obj = getattr(module, attr_name, None)
+                if isinstance(obj, type):
+                    try:
+                        instance = obj()
+                        root = getattr(instance, "root", None)
+                        if isinstance(root, Node):
+                            return root
+                    except Exception:
+                        pass
+
+            # Strategy 3: Look for module-level Node variables
+            for attr_name in dir(module):
+                obj = getattr(module, attr_name, None)
+                if isinstance(obj, Node) and obj.name:
+                    return obj
+
+            return None
+        finally:
+            Engine.run = _original_run
 
     def _collect_names(self, node, names: set):
         if node:
