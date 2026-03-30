@@ -6,18 +6,20 @@ class RisingVoid(Area2D):
     def __init__(self, name, x, y):
         # A very wide Area2D to catch the player
         super().__init__(name, x, y, 2000, 150)
+
+    def ready(self):
+        """Called automatically after instantiation to setup loaded graphics."""
         self.layer = "hazard"
         self.mask = {"player"}
-        
-        # Visual representation: Purple glowing void
-        self.vis = RectangleNode(name + "_Vis", 0, 0, 2000, 150, (150, 0, 255))
-        self.add_child(self.vis)
-        
         self.speed = 80.0 # Base speed
         
+        # Grab visuals from the loaded node tree instead of creating new ones
         from src.pyengine2D.scene.particles import ParticleEmitter2D
-        self.particles = ParticleEmitter2D("VoidParticles")
-        self.add_child(self.particles)
+        self.particles = None
+        for child in self.children:
+            if isinstance(child, ParticleEmitter2D):
+                self.particles = child
+                break
 
     def update(self, delta):
         # Move upwards
@@ -25,11 +27,12 @@ class RisingVoid(Area2D):
         
         # Emit bubbles
         import random
-        gx, gy = self.get_global_position()
-        if random.random() < 0.3:
-            self.particles.emit(gx + random.randint(-400, 400), gy - 40, count=1, 
-                                speed_range=(20, 50), angle_range=(250, 290), 
-                                color=(120, 0, 220))
+        if self.particles:
+            gx, gy = self.get_global_position()
+            if random.random() < 0.3:
+                self.particles.emit(gx + random.randint(-400, 400), gy - 40, count=1, 
+                                    speed_range=(20, 50), angle_range=(250, 290), 
+                                    color=(120, 0, 220))
         
         super().update(delta)
 

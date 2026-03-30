@@ -12,47 +12,48 @@ from .entities.player import Player
 class NeonHeights:
     def __init__(self):
         self.engine = Engine("Neon Heights", 800, 600)
-        self.root = Node2D("Root")
         
-        self.collision_world = CollisionWorld("CollisionWorld")
-        self.root.add_child(self.collision_world)
+        # 1. Provide custom types so SceneSerializer deserializes the correct subclasses
+        from src.pyengine2D.scene.scene_serializer import SceneSerializer
+        from src.pyengine2D.ui.stats_hud import StatsHUD
+        from .entities.hazard import RisingVoid
         
-        self.world = Node2D("World")
-        self.root.add_child(self.world)
+        custom_types = {
+            "Player": Player,
+            "RisingVoid": RisingVoid,
+            "StatsHUD": StatsHUD
+        }
         
-        # Player
-        p_col = Collider2D("PlayerCol", -15, -15, 30, 30)
-        p_col.layer = "player"
-        p_col.mask = {"wall"}
-        self.player = Player("Player", 400, 500, p_col, self.collision_world)
-        self.player.add_child(p_col)
-        self.world.add_child(self.player)
+        # 2. Load the scene!
+        import os
+        scene_path = os.path.join(os.path.dirname(__file__), "neon_heights.scene")
+        self.root = SceneSerializer.load(scene_path, custom_types)
         
-        # Camera
-        self.camera = Camera2D("Camera")
-        self.camera.follow(self.player)
-        self.root.add_child(self.camera)
+        # 3. Reference nodes by name to hook up logic
+        self.world = self.root.get_node("World")
+        self.collision_world = self.root.get_node("CollisionWorld")
+        self.camera = self.root.get_node("Camera")
+        self.hud = self.root.get_node("HUD")
+        self.void = self.root.get_node("Void")
+        self.player = self.root.get_node("Player")
+        
         Node2D.camera = self.camera
+        if self.camera and self.player:
+            self.camera.follow(self.player)
+            
+        # Hook up player dependencies that were bypassed by __new__
+        if self.player:
+            self.player.collider = self.player.get_node("PlayerCol")
+            self.player.collision_world = self.collision_world
         
-        # Platforms
+        # Gather statically loaded platforms
         self.platforms = []
+        for child in self.world.children:
+            if child.name.startswith("Plat_") or child.name in ("Floor", "LeftWall", "RightWall"):
+                self.platforms.append(child)
+                
         self.next_spawn_y = 400
         self.spawn_interval = 120
-        
-        # Base floor
-        self.create_platform("Floor", 400, 580, 800, 40)
-        # Static boundaries
-        self.create_platform("LeftWall", 10, 300, 20, 2000)
-        self.create_platform("RightWall", 790, 300, 20, 2000)
-        
-        # HUD
-        self.hud = StatsHUD("HUD")
-        self.root.add_child(self.hud)
-        
-        # Hazard: Rising Void
-        from .entities.hazard import RisingVoid
-        self.void = RisingVoid("Void", -400, 700)
-        self.world.add_child(self.void)
         
         self.max_height = 0
         self.game_over = False

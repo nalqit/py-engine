@@ -7,8 +7,11 @@ from src.pyengine2D.scene.rectangle_node import RectangleNode
 from src.pyengine2D.scene.particles import ParticleEmitter2D
 
 class Player(PhysicsBody2D):
-    def __init__(self, name, x, y, collider, collision_world):
+    def __init__(self, name, x, y, collider=None, collision_world=None):
         super().__init__(name, x, y, collider, collision_world)
+
+    def ready(self):
+        """Called after scene load to initialize state."""
         self.use_gravity = True
         self.gravity = 1200.0  # Snappy gravity
         self.move_speed = 250.0
@@ -21,12 +24,15 @@ class Player(PhysicsBody2D):
         self.wall_side = 0 # -1 for left wall, 1 for right wall
         self.last_jump_wall_side = 0 # To prevent same-wall infinite jump
         
-        # Visuals
-        self.vis = RectangleNode("PlayerVis", -15, -15, 30, 30, (0, 255, 255)) # Cyan
-        self.add_child(self.vis)
+        # Visuals (expected to be loaded from .scene)
+        self.vis = self._get_node_by_type(RectangleNode)
+        self.particles = self._get_node_by_type(ParticleEmitter2D)
         
-        self.particles = ParticleEmitter2D("Particles")
-        self.add_child(self.particles)
+    def _get_node_by_type(self, cls):
+        for c in self.children:
+            if isinstance(c, cls):
+                return c
+        return None
 
     def update(self, delta):
         inp = Engine.instance.input
@@ -85,8 +91,9 @@ class Player(PhysicsBody2D):
             self.reset_position()
 
     def _emit_jump_particles(self):
-        gx, gy = self.get_global_position()
-        self.particles.emit(gx, gy + 15, count=10, speed_range=(50, 100), color=(100, 255, 255))
+        if self.particles:
+            gx, gy = self.get_global_position()
+            self.particles.emit(gx, gy + 15, count=10, speed_range=(50, 100), color=(100, 255, 255))
 
     def reset_position(self):
         self.local_x = 400

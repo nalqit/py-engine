@@ -31,40 +31,50 @@ class NewtonCradle(Node2D):
     def __init__(self):
         super().__init__("NewtonCradle")
         
-        # 1. Provide the universal collision engine 
-        self.collision_world = CollisionWorld("GlobalCollisionWorld", cell_size=128)
-        self.add_child(self.collision_world)
+        from src.pyengine2D.scene.scene_serializer import SceneSerializer
+        import os
         
-        # 2. Instantiate the physics solver node (handles constraints and substepping)
-        self.physics_world = PhysicsWorld2D("SimulationWorld", gravity_y=800.0, sub_steps=10)
-        self.add_child(self.physics_world)
+        custom_types = {"NewtonCradle": NewtonCradle, "Ball": Ball}
+        scene_path = os.path.join(os.path.dirname(__file__), "newtons_cradle.scene")
+        
+        # We load the entire scene as the master tree
+        loaded_scene = SceneSerializer.load(scene_path, custom_types)
+        
+        # Adopt children into self so 'NewtonCradle' maintains its game loop
+        for child in list(loaded_scene.children):
+            self.add_child(child)
+        
+        self.collision_world = self.get_node("GlobalCollisionWorld")
+        self.physics_world = self.get_node("SimulationWorld")
         
         self.balls = []
         self.dragged_ball = None
         
-        start_x = 400 - 40 * 2
+        # Link up the loaded balls and constraints since SceneSerializer bypassed __init__
         for i in range(5):
-            pivot_x = start_x + 40 * i
-            pivot_y = 100
-            ball_x = pivot_x
-            ball_y = pivot_y + 250
+            ball = self.get_node(f"Ball_{i}")
+            if getattr(ball, "collider", None) is None:
+                # Fallback link
+                ball.collider = ball.get_node(f"Collider_{i}")
+                ball.collision_world = self.collision_world
             
-            # The collider is now an engine native CircleCollider2D!
-            collider = CircleCollider2D(f"Collider_{i}", 0, 0, radius=20)
-            collider.visible = False
-            collider.layer = "balls"
-            collider.mask.add("balls")
+            # ── Crucial Physics Setup for Newton's Cradle ──
+            # 1. Newton's cradle requires 100% elastic collisions to transfer full energy
+            ball.restitution = 1.0
             
-            ball = Ball(f"Ball_{i}", ball_x, ball_y, collider=collider, collision_world=self.collision_world, radius=20)
-            rope = DistanceConstraint(f"Rope_{i}", pivot_x, pivot_y, ball, length=250)
-            
-            # Parent the collider to the RigidBody2D so it follows its transform
-            ball.add_child(collider)
-            
-            self.physics_world.add_child(rope)
-            self.physics_world.add_child(ball)
-            
+            # 2. Collider mask must include "default" layer, else balls pass through each other completely 
+            if "default" not in ball.collider.mask:
+                ball.collider.mask.add("default")
+                
+            if getattr(ball, "radius", None) is None:
+                ball.radius = 20
+                
             self.balls.append(ball)
+            
+            # DistanceConstraints might need their `body_a` re-linked
+            rope = self.get_node(f"Rope_{i}")
+            if rope and getattr(rope, "_body_name", "") == ball.name:
+                rope.body_a = ball
 
     def update(self, dt):
         inp = Engine.instance.input
