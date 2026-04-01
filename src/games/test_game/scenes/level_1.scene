@@ -1,0 +1,39 @@
+{
+  "name": "Root",
+  "type": "Node2D",
+  "properties": {
+    "x": 0,
+    "y": 0,
+    "scale_x": 1.0,
+    "scale_y": 1.0,
+    "rotation": 0.0
+  },
+  "children": [
+    {
+      "name": "Player",
+      "type": "SpriteNode",
+      "properties": {
+        "x": 400,
+        "y": 300,
+        "scale_x": 1.0,
+        "scale_y": 1.0,
+        "rotation": 0.0,
+        "resource": "resources/player.png"
+      },
+      "script": "entities/player.py",
+      "children": []
+    },
+    {
+      "name": "Ground",
+      "type": "RectangleNode",
+      "properties": {
+        "x": 0,
+        "y": 550,
+        "scale_x": 800,
+        "scale_y": 50,
+        "rotation": 0.0
+      },
+      "children": []
+    }
+  ]
+}
