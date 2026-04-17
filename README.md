@@ -128,6 +128,7 @@ src/
     │   ├── maps/          # JSON tilemaps
     │   ├── level.py       # Level builder
     │   └── main.py
+    ├── breakout/          # Brick-breaking game (paddle + ball)
     ├── neon_heights/
     ├── neon_odyssey/
     ├── neon_tank/
@@ -157,6 +158,7 @@ lib/
 3. **Engine Import**: `from src.pyengine2D import *`
 4. **Run Frog Hop**: `python -m src.games.frog_hop.main`
 5. **Other examples**:
+   - `python -m src.games.breakout.main`
    - `python -m src.games.neon_heights.main`
    - `python -m src.games.neon_odyssey.main`
    - `python -m src.games.neon_tank.main`
