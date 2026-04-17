@@ -1,3 +1,12 @@
+import warnings
+
+
+_DEPRECATION_MESSAGE = (
+    "pyengine2D.utils.ObjectPool is deprecated and will be removed in a future release. "
+    "Prefer explicit lifecycle management in gameplay systems."
+)
+
+
 class ObjectPool:
     """
     Engine utility for pooling objects to avoid reallocation overhead.
@@ -19,6 +28,7 @@ class ObjectPool:
             max_size: Optional maximum number of objects to keep in the pool.
                       Excess released objects are discarded when pool is full.
         """
+        warnings.warn(_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
         self._factory = factory_func
         self._reset_func = reset_func
         self._max_size = max_size

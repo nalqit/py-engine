@@ -45,3 +45,26 @@ map_data.json
 
 # Test suite
 tests/
+!tests/headless_verify.py
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Development Environment (ECC / OpenCode)
+.opencode/
+.claude-code/
+skills/
+everything-claude-code/
+QUICKSTART-ECC.md
+AGENTS.md
+AGENT_REFERENCE.md
+
+# Local configuration & Logs
+.env
+*.log
+
+# Engine temporary tests
+tests/manual_scripts/

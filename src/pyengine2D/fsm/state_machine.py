@@ -1,5 +1,15 @@
+import warnings
+
+
+_DEPRECATION_MESSAGE = (
+    "pyengine2D.fsm.StateMachine is deprecated and will be removed in a future release. "
+    "Prefer game-local FSM implementations."
+)
+
+
 class StateMachine:
     def __init__(self, body):
+        warnings.warn(_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
         self.body = body
         self.current_state = None
 

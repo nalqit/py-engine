@@ -51,15 +51,15 @@ def main():
     player_col = Collider2D("Player_Col", -20, -20, 40, 40)
     player_col.layer = "player"
     player_col.mask = {"wall", "enemy"}
-    spirit = SpriteNode("Spirit",  "src/games/neon_tank/spaceship1.jpg",-20, -20,)
+    # spirit = SpriteNode("Spirit",-20, -20,)
     
     from .entities.tank import PlayerTank
     player = PlayerTank("Player", 0, 0, player_col, collision_world)
     player.add_child(player_col)
     arena.add_child(player)
-    spirit.width = 40
-    spirit.height = 40
-    player.add_child(spirit)
+    # spirit.width = 40
+    # spirit.height = 40
+    # player.add_child(spirit)
     # Spawner
     from .entities.spawner import Spawner
     spawner = Spawner("Spawner", collision_world)

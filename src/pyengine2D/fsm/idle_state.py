@@ -1,8 +1,19 @@
 from src.pyengine2D.fsm.state import State
+import warnings
+
+
+_DEPRECATION_MESSAGE = (
+    "pyengine2D.fsm.IdleState is deprecated and will be removed in a future release. "
+    "Prefer game-local state implementations."
+)
 
 
 class IdleState(State):
     name="idle"
+    def __init__(self, body):
+        warnings.warn(_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
+        super().__init__(body)
+
     def enter(self):
         # State is descriptive, do not force physics
         pass

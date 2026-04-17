@@ -1,3 +1,12 @@
+import warnings
+
+
+_DEPRECATION_MESSAGE = (
+    "pyengine2D.fsm.State is deprecated and will be removed in a future release. "
+    "Prefer game-local FSM base classes."
+)
+
+
 class State:
     """
     Base class for all states.
@@ -5,6 +14,7 @@ class State:
     """
 
     def __init__(self, body):
+        warnings.warn(_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
         self.body = body  # PhysicsBody2D owner
 
     def enter(self):

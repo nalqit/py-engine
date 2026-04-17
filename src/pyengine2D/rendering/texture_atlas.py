@@ -5,6 +5,13 @@ Uses a simple shelf-packing algorithm.  The atlas minimises blit() call
 overhead because all sprites share one source surface.
 """
 import pygame
+import warnings
+
+
+_DEPRECATION_MESSAGE = (
+    "pyengine2D.rendering.TextureAtlas is deprecated and will be removed in a future release. "
+    "Use direct surfaces or Renderer2D/SurfaceCache-based workflows instead."
+)
 
 
 class TextureAtlas:
@@ -21,6 +28,7 @@ class TextureAtlas:
     """
 
     def __init__(self, width=2048, height=2048, padding=1):
+        warnings.warn(_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
         self._width = width
         self._height = height
         self._padding = padding

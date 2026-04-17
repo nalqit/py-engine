@@ -6,6 +6,18 @@ switches are minimised.  DirtyRectTracker records changed pixel regions
 for optional partial-display updates.
 """
 import pygame
+import warnings
+
+
+_SPRITE_BATCH_DEPRECATION_MESSAGE = (
+    "pyengine2D.rendering.SpriteBatch is deprecated and will be removed in a future release. "
+    "Prefer Renderer2D-driven rendering paths."
+)
+
+_DIRTY_RECT_DEPRECATION_MESSAGE = (
+    "pyengine2D.rendering.DirtyRectTracker is deprecated and will be removed in a future release. "
+    "Prefer full-frame presentation or renderer-managed invalidation."
+)
 
 
 class SpriteBatch:
@@ -22,6 +34,7 @@ class SpriteBatch:
     """
 
     def __init__(self):
+        warnings.warn(_SPRITE_BATCH_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
         self._items = []          # list of (src_surface, src_rect, dest)
 
     def add(self, source_surface, src_rect, dest_pos):
@@ -69,6 +82,7 @@ class DirtyRectTracker:
     """
 
     def __init__(self):
+        warnings.warn(_DIRTY_RECT_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
         self._rects = []
 
     def mark_dirty(self, rect):

@@ -19,7 +19,7 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 |   5   | State Layer (FSM)       |   ✅   |
 |   6   | Juice & Animation Layer |   ✅   |
 |   7   | User Interface (UI)     |   ✅   |
-|   8   | Tilemap Level Editor    |   ✅   |
+|   8   | Tilemap Level           |   ✅   |
 |   9   | Audio Layer             |   ✅   |
 |  10   | Scene Editor (GUI)      |   ✅   |
 
@@ -78,11 +78,9 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 
 ### Level 10 — Scene Editor (GUI)
 
-- **Standalone PyQt5 Editor** (`tools/editor/editor.py`): Godot-inspired 2D scene editor.
-- Dockable panels: Scene Tree, Viewport, Inspector, Toolbar.
-- Full Undo/Redo support (Ctrl+Z / Ctrl+Y).
+- **The Editor** (`src/the_editor/`): Flutter-based 2D scene editor.
+- Dockable panels: Scene Tree, Viewport, Inspector, Bottom Panel.
 - `.scene` JSON file format for saving/loading scene trees.
-- See [EDITOR_GUIDE.md](EDITOR_GUIDE.md) for full documentation.
 
 ---
 
@@ -113,39 +111,41 @@ PyEngine 2D is a lightweight, purely Python-based 2D game engine built with **Py
 ```text
 src/
 ├── pyengine2D/            # Core engine (reusable)
-│   ├── collision/         # Collider2D, CircleCollider2D, CollisionWorld
-│   ├── core/              # Engine, Events, Input
-│   ├── fsm/               # Finite State Machine base classes
+│   ├── benchmark/         # Performance testing harness
+│   ├── collision/         # Collider2D, CircleCollider2D, PolygonCollider2D, CollisionWorld
+│   ├── core/              # Engine, Input, Renderer, Audio, Signals
+│   ├── fsm/               # State, StateMachine, IdleState, WalkState, FallState
 │   ├── physics/           # PhysicsBody2D, RigidBody2D, PhysicsWorld2D, DistanceConstraint
-│   ├── rendering/         # Renderer, SurfaceCache
-│   ├── scene/             # Node, Node2D, Camera2D, TilemapNode, AnimatedSprite
-│   ├── time/              # DeltaTime, Scheduling
-│   ├── ui/                # UIControl, Containers, Widgets, Data Binding
-│   └── utils/             # Helper structures
+│   ├── rendering/          # Renderer2D, BatchRenderer, TextureAtlas, SurfaceCache, PixelGrid
+│   ├── scene/             # Node, Node2D, Camera2D, TilemapNode, AnimatedSprite, Particles
+│   ├── time/              # MasterClock (fixed timestep scheduling)
+│   ├── ui/                # UIControl, Containers, Widgets, EventSystem, DataBinding
+│   └── utils/             # Profiler, ObjectPool, AssetManager, Pathfinding
 │
 └── games/                 # Game examples
     ├── frog_hop/          # Side-scrolling platformer (Ninja Frog + Fruits)
-    │   ├── explain/       # Architecture documentation
-    │   ├── entities/      # Player, Fruit
-    │   ├── maps/          # JSON tilemaps created with draw2d.py
-    │   ├── level.py       # Level builder (loads TilemapNode from maps/)
+    │   ├── entities/      # Player, Fruit, Enemy, Trap
+    │   ├── maps/          # JSON tilemaps
+    │   ├── level.py       # Level builder
     │   └── main.py
     ├── neon_heights/
     ├── neon_odyssey/
     ├── neon_tank/
-    └── newtons_cradle/    # Multi-body rigid constraint and elastic collision simulation
+    └── newtons_cradle/    # Rigid body simulation
 
 draw2d.py                  # Infinite 4-Quadrant Map Editor → JSON tilemaps
+tests/
+└── headless_verify.py     # Headless engine verification test
 
-tools/
-└── editor/                # Standalone PyEngine2D Scene Editor (PyQt5)
-    ├── editor.py          # Entry point + main window
-    ├── editor_model.py    # State management + undo/redo
-    ├── viewport_widget.py # Pygame-in-Qt scene viewport
-    ├── scene_tree_panel.py# Hierarchical node tree
-    ├── inspector_panel.py # Property inspector
-    ├── toolbar.py         # Toolbar actions
-    └── scene_io.py        # Scene serialization (.scene JSON)
+src/the_editor/            # Flutter-based Scene Editor
+lib/
+├── main.dart              # Entry point
+├── main_layout.dart       # Main editor layout
+├── viewport_widget.dart   # Scene viewport
+├── scene_tree_widget.dart # Scene tree panel
+├── inspector_widget.dart  # Property inspector
+├── bottom_panel_widget.dart
+└── engine_node.dart       # Engine node definitions
 ```
 
 ---
@@ -161,10 +161,53 @@ tools/
    - `python -m src.games.neon_odyssey.main`
    - `python -m src.games.neon_tank.main`
    - `python -m src.games.newtons_cradle.main`
-6. **Level Editor**: `python draw2d.py` → draw → **[S]** → save to `src/games/frog_hop/maps/`
-7. **Scene Editor**: `pip install PyQt5` then `python tools/editor/editor.py` — see [EDITOR_GUIDE.md](EDITOR_GUIDE.md)
+6. **Run Tests**: `python tests/headless_verify.py`
+7. **Level Editor**: `python draw2d.py` → draw → **[S]** → save to `src/games/frog_hop/maps/`
+8. **Scene Editor**: `flutter run -d windows` in `src/the_editor/`
 
 See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed API guide.
+
+---
+
+## 🧪 Testing
+
+Run the headless verification test to verify the engine and games initialize correctly without a display:
+
+```bash
+pip install pygame
+python tests/headless_verify.py
+```
+
+This test:
+1. Sets `SDL_VIDEODUMMY=1` for headless operation
+2. Imports and initializes the engine core modules
+3. Runs both `frog_hop` and `neon_tank` games for 60 frames
+4. Reports pass/fail for each component
+
+Expected output:
+```
+============================================================
+Testing engine core imports...
+============================================================
+[PASS] All core engine modules imported successfully
+============================================================
+Testing frog_hop...
+============================================================
+[PASS] frog_hop initialized successfully
+[PASS] frog_hop ran 60 frames without errors
+============================================================
+Testing neon_tank...
+============================================================
+[PASS] neon_tank initialized successfully
+[PASS] neon_tank ran 60 frames without errors
+
+FINAL RESULTS
+============================================================
+  Engine Core Imports: PASS
+  Frog Hop: PASS
+  Neon Tank: PASS
+============================================================
+```
 
 ---
 
@@ -183,7 +226,6 @@ See [ENGINE_USAGE.md](ENGINE_USAGE.md) for a detailed API guide.
 - [x] Particle System & Sprite Rendering (Level 6)
 - [x] UI & Event Propagation Framework (Level 7)
 - [x] **TilemapNode**: Baked surfaces, auto-collision, streaming, parallax (Level 1)
-- [x] **draw2d.py**: Infinite 4-quadrant map editor with Zoom, Pan, Save/Load (Level 8)
 - [x] **Frog Hop**: Full side-scrolling platformer with JSON-driven tilemap levels
 - [x] Sound & Music Layer
 - [x] Polygon collision support
