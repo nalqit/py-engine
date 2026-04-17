@@ -8,29 +8,11 @@ import 'engine_node.dart';
 // ─────────────────────────────────────────────
 
 double _baseSizeForType(String type) {
-  return switch (type) {
-    'Node2D'         => 24,
-    'Camera2D'       => 60,
-    'SpriteNode'     => 48,
-    'PhysicsBody2D'  => 56,
-    'Collider2D'     => 36,
-    'TilemapNode'    => 120,
-    'RectangleNode'  => 32,
-    _                => 32,
-  };
+  return EngineNode.defaultSizes[type] ?? 32;
 }
 
 Color _colorForType(String type) {
-  return switch (type) {
-    'Node2D'         => const Color(0xFF8BC34A),
-    'Camera2D'       => const Color(0xFF64B5F6),
-    'SpriteNode'     => const Color(0xFFBA68C8),
-    'PhysicsBody2D'  => const Color(0xFFFF8A65),
-    'Collider2D'     => const Color(0xFF4DD0E1),
-    'TilemapNode'    => const Color(0xFFFFD54F),
-    'RectangleNode'  => const Color(0xFF90A4AE),
-    _                => const Color(0xFF999999),
-  };
+  return Color(EngineNode.nodeColors[type] ?? 0xFF999999);
 }
 
 /// Canvas origin — (0,0) in world space maps to this point on the

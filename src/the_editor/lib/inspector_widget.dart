@@ -188,10 +188,128 @@ class _InspectorBodyState extends State<_InspectorBody> {
                 });
                 widget.repaintNotifier.value++;
               }),
-              const SizedBox(height: 6),
-              _buildColorRow('Modulate', Colors.white),
             ],
           ),
+          if (_node.type == 'SpriteNode' || _node.type == 'AnimatedSprite') ...[
+            const _Separator(),
+            _buildSection(
+              title: 'Sprite',
+              icon: Icons.image_outlined,
+              initiallyExpanded: true,
+              children: [
+                _buildPropertyRow('Texture', Expanded(child: _compactField(
+                  TextEditingController(text: _node.texturePath ?? ''),
+                ))),
+                const SizedBox(height: 4),
+                _buildSwitchRow('Flip X', _node.flipX ?? false, (v) {
+                  _node.flipX = v;
+                  widget.repaintNotifier.value++;
+                }),
+                _buildSwitchRow('Flip Y', _node.flipY ?? false, (v) {
+                  _node.flipY = v;
+                  widget.repaintNotifier.value++;
+                }),
+              ],
+            ),
+          ],
+          if (_node.type == 'LabelNode') ...[
+            const _Separator(),
+            _buildSection(
+              title: 'Text',
+              icon: Icons.text_fields,
+              initiallyExpanded: true,
+              children: [
+                _buildPropertyRow('Text', Expanded(child: _compactField(
+                  TextEditingController(text: _node.text ?? ''),
+                ))),
+                const SizedBox(height: 4),
+                _buildPropertyRow('Font Size', Expanded(child: _compactField(
+                  TextEditingController(text: (_node.fontSize ?? 16).toString()),
+                ))),
+              ],
+            ),
+          ],
+          if (_node.type == 'PhysicsBody2D') ...[
+            const _Separator(),
+            _buildSection(
+              title: 'Physics',
+              icon: Icons.fitness_center,
+              initiallyExpanded: true,
+              children: [
+                _buildSwitchRow('Static', _node.isStatic ?? false, (v) {
+                  _node.isStatic = v;
+                  widget.repaintNotifier.value++;
+                }),
+                const SizedBox(height: 4),
+                _buildPropertyRow('Gravity', Expanded(child: _compactField(
+                  TextEditingController(text: (_node.gravity ?? 980).toString()),
+                ))),
+                const SizedBox(height: 4),
+                _buildPropertyRow('Restitution', Expanded(child: _compactField(
+                  TextEditingController(text: (_node.restitution ?? 0.5).toString()),
+                ))),
+              ],
+            ),
+          ],
+          if (_node.type == 'Collider2D') ...[
+            const _Separator(),
+            _buildSection(
+              title: 'Collider',
+              icon: Icons.crop_square,
+              initiallyExpanded: true,
+              children: [
+                _buildPropertyRow('Layer', Expanded(child: _compactField(
+                  TextEditingController(text: _node.layer ?? ''),
+                ))),
+                const SizedBox(height: 4),
+                _buildPropertyRow('Mask', Expanded(child: _compactField(
+                  TextEditingController(text: _node.mask ?? ''),
+                ))),
+                const SizedBox(height: 4),
+                _buildPropertyRow('Width', Expanded(child: _compactField(
+                  TextEditingController(text: (_node.width ?? 32).toString()),
+                ))),
+                const SizedBox(height: 4),
+                _buildPropertyRow('Height', Expanded(child: _compactField(
+                  TextEditingController(text: (_node.height ?? 32).toString()),
+                ))),
+              ],
+            ),
+          ],
+          if (_node.type == 'TilemapNode') ...[
+            const _Separator(),
+            _buildSection(
+              title: 'Tilemap',
+              icon: Icons.grid_view,
+              initiallyExpanded: true,
+              children: [
+                _buildPropertyRow('Resource', Expanded(child: _compactField(
+                  TextEditingController(text: _node.resource ?? ''),
+                ))),
+              ],
+            ),
+          ],
+          if (_node.type == 'Particles') ...[
+            const _Separator(),
+            _buildSection(
+              title: 'Particles',
+              icon: Icons.blur_on,
+              initiallyExpanded: true,
+              children: [
+                _buildPropertyRow('Emission', Expanded(child: _compactField(
+                  TextEditingController(text: (_node.emission ?? 10).toString()),
+                ))),
+                const SizedBox(height: 4),
+                _buildPropertyRow('Lifetime', Expanded(child: _compactField(
+                  TextEditingController(text: (_node.lifetime ?? 1.0).toString()),
+                ))),
+                const SizedBox(height: 4),
+                _buildPropertyRow('Rate', Expanded(child: _compactField(
+                  TextEditingController(text: (_node.rate ?? 60).toString()),
+                ))),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -474,25 +592,35 @@ class _InspectorBodyState extends State<_InspectorBody> {
 
   IconData _iconForType(String type) {
     return switch (type) {
-      'Node2D'        => Icons.account_tree_outlined,
-      'Camera2D'      => Icons.videocam_outlined,
-      'SpriteNode'    => Icons.image_outlined,
-      'PhysicsBody2D' => Icons.fitness_center,
-      'Collider2D'    => Icons.crop_square_outlined,
-      'TilemapNode'   => Icons.grid_view_outlined,
-      _               => Icons.circle_outlined,
+      'Node2D'         => Icons.account_tree_outlined,
+      'Camera2D'       => Icons.videocam_outlined,
+      'SpriteNode'     => Icons.image_outlined,
+      'AnimatedSprite'=> Icons.animation,
+      'RectangleNode' => Icons.crop_square,
+      'CircleNode'     => Icons.circle_outlined,
+      'Collider2D'     => Icons.crop_square_outlined,
+      'PhysicsBody2D'  => Icons.fitness_center,
+      'TilemapNode'    => Icons.grid_view_outlined,
+      'Particles'      => Icons.blur_on,
+      'LabelNode'      => Icons.text_fields,
+      _                => Icons.circle_outlined,
     };
   }
 
   Color _iconColorForType(String type) {
     return switch (type) {
-      'Node2D'        => const Color(0xFF8BC34A),
-      'Camera2D'      => const Color(0xFF64B5F6),
+      'Node2D'         => const Color(0xFF8BC34A),
+      'Camera2D'       => const Color(0xFF64B5F6),
       'SpriteNode'    => const Color(0xFFBA68C8),
+      'AnimatedSprite'=> const Color(0xFFE91E63),
+      'RectangleNode'  => const Color(0xFF90A4AE),
+      'CircleNode'     => const Color(0xFF4DB6AC),
+      'Collider2D'      => const Color(0xFF4DD0E1),
       'PhysicsBody2D' => const Color(0xFFFF8A65),
-      'Collider2D'    => const Color(0xFF4DD0E1),
-      'TilemapNode'   => const Color(0xFFFFD54F),
-      _               => const Color(0xFF999999),
+      'TilemapNode'    => const Color(0xFFFFD54F),
+      'Particles'     => const Color(0xFF00BCD4),
+      'LabelNode'     => const Color(0xFFCDDC39),
+      _                => const Color(0xFF999999),
     };
   }
 }
