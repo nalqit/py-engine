@@ -11,10 +11,12 @@ class InspectorWidget extends StatelessWidget {
     super.key,
     required this.selectedNodeNotifier,
     required this.repaintNotifier,
+    this.onNodePatched,
   });
 
   final ValueNotifier<EngineNode?> selectedNodeNotifier;
   final ValueNotifier<int> repaintNotifier;
+  final void Function(EngineNode node, Map<String, dynamic> properties)? onNodePatched;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +40,7 @@ class InspectorWidget extends StatelessWidget {
           node: node,
           notifier: selectedNodeNotifier,
           repaintNotifier: repaintNotifier,
+          onNodePatched: onNodePatched,
         );
       },
     );
@@ -54,11 +57,13 @@ class _InspectorBody extends StatefulWidget {
     required this.node,
     required this.notifier,
     required this.repaintNotifier,
+    this.onNodePatched,
   });
 
   final EngineNode node;
   final ValueNotifier<EngineNode?> notifier;
   final ValueNotifier<int> repaintNotifier;
+  final void Function(EngineNode node, Map<String, dynamic> properties)? onNodePatched;
 
   @override
   State<_InspectorBody> createState() => _InspectorBodyState();
@@ -136,7 +141,18 @@ class _InspectorBodyState extends State<_InspectorBody> {
     _node.scaleX   = double.tryParse(_scaleXCtrl.text) ?? _node.scaleX;
     _node.scaleY   = double.tryParse(_scaleYCtrl.text) ?? _node.scaleY;
     _node.rotation = double.tryParse(_rotCtrl.text) ?? _node.rotation;
+    _emitPatch({
+      'x': _node.x,
+      'y': _node.y,
+      'scale_x': _node.scaleX,
+      'scale_y': _node.scaleY,
+      'rotation': _node.rotation,
+    });
     widget.repaintNotifier.value++;
+  }
+
+  void _emitPatch(Map<String, dynamic> properties) {
+    widget.onNodePatched?.call(_node, properties);
   }
 
   @override
@@ -186,6 +202,7 @@ class _InspectorBodyState extends State<_InspectorBody> {
                   _visible = v;
                   _node.visible = v;
                 });
+                _emitPatch({'visible': v});
                 widget.repaintNotifier.value++;
               }),
             ],
@@ -203,10 +220,12 @@ class _InspectorBodyState extends State<_InspectorBody> {
                 const SizedBox(height: 4),
                 _buildSwitchRow('Flip X', _node.flipX ?? false, (v) {
                   _node.flipX = v;
+                  _emitPatch({'flip_x': v});
                   widget.repaintNotifier.value++;
                 }),
                 _buildSwitchRow('Flip Y', _node.flipY ?? false, (v) {
                   _node.flipY = v;
+                  _emitPatch({'flip_y': v});
                   widget.repaintNotifier.value++;
                 }),
               ],
@@ -238,6 +257,7 @@ class _InspectorBodyState extends State<_InspectorBody> {
               children: [
                 _buildSwitchRow('Static', _node.isStatic ?? false, (v) {
                   _node.isStatic = v;
+                  _emitPatch({'is_static': v});
                   widget.repaintNotifier.value++;
                 }),
                 const SizedBox(height: 4),

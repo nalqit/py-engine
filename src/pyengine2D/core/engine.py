@@ -39,6 +39,7 @@ class Engine:
         pygame.display.set_caption(title)
         self._clock = pygame.time.Clock()
         self.running = True
+        self.paused = False
         self.fixed_dt = 1.0 / 60.0
         self.dt = 0.0
         self.fps = 0.0
@@ -107,11 +108,12 @@ class Engine:
 
             self.profiler.begin("Logic")
             while accumulator >= self.fixed_dt:
-                self.master_clock.update(self.fixed_dt)
-                if active_root:
-                    active_root.update_transforms()
-                    active_root.update(self.fixed_dt)
-                if on_fixed_update and active_root:
+                if not self.paused:
+                    self.master_clock.update(self.fixed_dt)
+                    if active_root:
+                        active_root.update_transforms()
+                        active_root.update(self.fixed_dt)
+                if on_fixed_update:
                     on_fixed_update(self, active_root, self.fixed_dt)
                 accumulator -= self.fixed_dt
             self.profiler.end("Logic")

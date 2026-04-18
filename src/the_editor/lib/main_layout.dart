@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'engine_node.dart';
@@ -7,6 +8,7 @@ import 'scene_tree_widget.dart';
 import 'inspector_widget.dart';
 import 'viewport_widget.dart';
 import 'bottom_panel_widget.dart';
+import 'live_preview.dart';
 
 /// The root IDE skeleton layout with resizable dock panels.
 ///
@@ -39,9 +41,11 @@ class _MainLayoutState extends State<MainLayout> {
   final ValueNotifier<EngineNode?> rootNodeNotifier = ValueNotifier(null);
   final ValueNotifier<EngineNode?> selectedNodeNotifier = ValueNotifier(null);
   final ValueNotifier<int> repaintNotifier = ValueNotifier(0);
+  final LivePreviewController previewController = LivePreviewController();
 
   // ── Toolbar path input ──
   final TextEditingController _pathCtrl = TextEditingController();
+  Timer? _scenePushDebounce;
 
   // ── Constraints ──
   static const double _minSideDockWidth = 100.0;
@@ -53,7 +57,9 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   void dispose() {
+    _scenePushDebounce?.cancel();
     _pathCtrl.dispose();
+    previewController.dispose();
     super.dispose();
   }
 
@@ -125,6 +131,7 @@ class _MainLayoutState extends State<MainLayout> {
       selectedNodeNotifier.value = null;
       rootNodeNotifier.value = root;
       repaintNotifier.value++;
+      _scheduleScenePush();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -275,6 +282,40 @@ class _MainLayoutState extends State<MainLayout> {
               ),
             ),
           ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 28,
+            child: ElevatedButton.icon(
+              onPressed: _startPreview,
+              icon: const Icon(Icons.play_circle_outline, size: 15),
+              label: const Text('Start Preview', style: TextStyle(fontSize: 11)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1565C0),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          SizedBox(
+            height: 28,
+            child: ElevatedButton.icon(
+              onPressed: _stopPreview,
+              icon: const Icon(Icons.stop_circle_outlined, size: 15),
+              label: const Text('Stop', style: TextStyle(fontSize: 11)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6D4C41),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
 
           const Spacer(),
 
@@ -323,6 +364,7 @@ class _MainLayoutState extends State<MainLayout> {
           rootNodeNotifier: rootNodeNotifier,
           selectedNodeNotifier: selectedNodeNotifier,
           repaintNotifier: repaintNotifier,
+          onNodePatched: _onNodePatched,
         ),
       ),
     );
@@ -340,12 +382,61 @@ class _MainLayoutState extends State<MainLayout> {
               child: InspectorWidget(
                 selectedNodeNotifier: selectedNodeNotifier,
                 repaintNotifier: repaintNotifier,
+                onNodePatched: _onNodePatched,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _startPreview() async {
+    final engineScript = File(
+      'C:/Users/dell/Desktop/try3(gpt prompts)/src/pyengine2D/editor_preview.py',
+    );
+
+    if (!engineScript.existsSync()) {
+      _showError('Preview host script not found:\n${engineScript.path}');
+      return;
+    }
+
+    final started = await previewController.startEngine(
+      pythonPath: 'python',
+      mainScriptPath: engineScript.path,
+      workingDirectory: 'C:/Users/dell/Desktop/try3(gpt prompts)',
+    );
+
+    if (!started) {
+      _showError(previewController.errorMessage ?? 'Failed to start preview process.');
+      return;
+    }
+
+    final root = rootNodeNotifier.value;
+    if (root != null) {
+      previewController.sendSceneJson(root.toJson());
+    }
+  }
+
+  Future<void> _stopPreview() async {
+    await previewController.stopEngine();
+  }
+
+  void _onNodePatched(EngineNode node, Map<String, dynamic> properties) {
+    if (previewController.isConnected) {
+      previewController.sendPatch(nodeId: node.id, properties: properties);
+      return;
+    }
+    _scheduleScenePush();
+  }
+
+  void _scheduleScenePush() {
+    _scenePushDebounce?.cancel();
+    _scenePushDebounce = Timer(const Duration(milliseconds: 120), () {
+      final root = rootNodeNotifier.value;
+      if (root == null) return;
+      previewController.sendSceneJson(root.toJson());
+    });
   }
 
   Widget _buildBottomPanel() {

@@ -13,6 +13,7 @@ Supported node types:
 import json
 import os
 import sys
+import uuid
 
 # ---------------------------------------------------------------------------
 # Engine imports
@@ -148,98 +149,107 @@ def _node_to_dict(node) -> dict:
         - Custom properties (any attribute not starting with '_')
         - children (recursive)
     """
+    props = {}
     data = {
+        "id": getattr(node, "_editor_id", str(uuid.uuid4())),
         "type": type(node).__name__,
         "name": node.name,
+        "properties": props,
     }
+    node._editor_id = data["id"]
 
     # ── Node2D properties ──
     if isinstance(node, Node2D):
-        data["x"] = node.local_x
-        data["y"] = node.local_y
-        data["scale_x"] = node.scale_x
-        data["scale_y"] = node.scale_y
-        data["rotation"] = node.rotation
-        data["visible"] = getattr(node, "visible", True)
-        data["z_index"] = getattr(node, "z_index", 0)
+        props["x"] = node.local_x
+        props["y"] = node.local_y
+        props["scale_x"] = node.scale_x
+        props["scale_y"] = node.scale_y
+        props["rotation"] = node.rotation
+        props["visible"] = getattr(node, "visible", True)
+        props["z_index"] = getattr(node, "z_index", 0)
 
     # ── SpriteNode extras ──
     if SpriteNode and isinstance(node, SpriteNode):
-        data["image_path"] = getattr(node, "_image_path", "")
-        data["centered"] = getattr(node, "centered", False)
+        props["image_path"] = getattr(node, "_image_path", "")
+        props["centered"] = getattr(node, "centered", False)
 
     # ── RectangleNode extras ──
     if RectangleNode and isinstance(node, RectangleNode):
-        data["width"] = getattr(node, "width", 0)
-        data["height"] = getattr(node, "height", 0)
-        data["color"] = list(getattr(node, "color", (255, 255, 255)))
+        props["width"] = getattr(node, "width", 0)
+        props["height"] = getattr(node, "height", 0)
+        props["color"] = list(getattr(node, "color", (255, 255, 255)))
 
     # ── CircleNode extras ──
     if CircleNode and isinstance(node, CircleNode):
-        data["radius"] = getattr(node, "radius", 0)
-        data["color"] = list(getattr(node, "color", (255, 255, 255)))
+        props["radius"] = getattr(node, "radius", 0)
+        props["color"] = list(getattr(node, "color", (255, 255, 255)))
 
     # ── AnimatedSprite extras ──
     if AnimatedSprite and isinstance(node, AnimatedSprite):
-        data["frame_width"] = getattr(node, "frame_width", 32)
-        data["frame_height"] = getattr(node, "frame_height", 32)
+        props["frame_width"] = getattr(node, "frame_width", 32)
+        props["frame_height"] = getattr(node, "frame_height", 32)
 
     # ── Collider2D extras ──
     if Collider2D and isinstance(node, Collider2D):
-        data["width"] = getattr(node, "width", 0)
-        data["height"] = getattr(node, "height", 0)
-        data["is_static"] = getattr(node, "is_static", False)
-        data["is_trigger"] = getattr(node, "is_trigger", False)
-        data["layer"] = getattr(node, "layer", "default")
-        data["mask"] = list(getattr(node, "mask", []))
+        props["width"] = getattr(node, "width", 0)
+        props["height"] = getattr(node, "height", 0)
+        props["is_static"] = getattr(node, "is_static", False)
+        props["is_trigger"] = getattr(node, "is_trigger", False)
+        props["layer"] = getattr(node, "layer", "default")
+        props["mask"] = list(getattr(node, "mask", []))
 
     # ── PhysicsBody2D extras ──
     if PhysicsBody2D and isinstance(node, PhysicsBody2D):
-        data["vx"] = getattr(node, "vx", 0.0)
-        data["vy"] = getattr(node, "vy", 0.0)
-        data["use_gravity"] = getattr(node, "use_gravity", True)
+        props["vx"] = getattr(node, "vx", 0.0)
+        props["vy"] = getattr(node, "vy", 0.0)
+        props["use_gravity"] = getattr(node, "use_gravity", True)
         
     if RigidBody2D and isinstance(node, RigidBody2D):
-        data["vx"] = getattr(node, "vx", 0.0)
-        data["vy"] = getattr(node, "vy", 0.0)
-        data["use_gravity"] = getattr(node, "use_gravity", True)
-        data["gravity_scale"] = getattr(node, "gravity_scale", 1.0)
-        data["mass"] = getattr(node, "mass", 1.0)
-        data["is_kinematic"] = getattr(node, "is_kinematic", False)
-        data["friction"] = getattr(node, "friction", 0.2)
-        data["restitution"] = getattr(node, "restitution", 0.5)
+        props["vx"] = getattr(node, "vx", 0.0)
+        props["vy"] = getattr(node, "vy", 0.0)
+        props["use_gravity"] = getattr(node, "use_gravity", True)
+        props["gravity_scale"] = getattr(node, "gravity_scale", 1.0)
+        props["mass"] = getattr(node, "mass", 1.0)
+        props["is_kinematic"] = getattr(node, "is_kinematic", False)
+        props["friction"] = getattr(node, "friction", 0.2)
+        props["restitution"] = getattr(node, "restitution", 0.5)
 
     # ── CollisionWorld extras ──
     if CollisionWorld and isinstance(node, CollisionWorld):
-        data["cell_size"] = getattr(node._grid, "cell_size", 128) if hasattr(node, "_grid") else 128
+        props["cell_size"] = getattr(node._grid, "cell_size", 128) if hasattr(node, "_grid") else 128
 
     # ── PhysicsWorld2D extras ──
     if PhysicsWorld2D and isinstance(node, PhysicsWorld2D):
-        data["gravity_y"] = getattr(node, "gravity_y", 800.0)
-        data["sub_steps"] = getattr(node, "sub_steps", 1)
+        props["gravity_y"] = getattr(node, "gravity_y", 800.0)
+        props["sub_steps"] = getattr(node, "sub_steps", 1)
 
     # ── Constraints ──
     if DistanceConstraint and isinstance(node, DistanceConstraint):
-        data["pivot_x"] = getattr(node, "local_x", 0)  # constraint position is anchor x/y
-        data["pivot_y"] = getattr(node, "local_y", 0)
-        data["length"] = getattr(node, "length", 100)
-        data["body_name"] = node.body_a.name if getattr(node, "body_a", None) else ""
+        props["pivot_x"] = getattr(node, "local_x", 0)  # constraint position is anchor x/y
+        props["pivot_y"] = getattr(node, "local_y", 0)
+        props["length"] = getattr(node, "length", 100)
+        props["body_name"] = node.body_a.name if getattr(node, "body_a", None) else ""
         
     # ── Ball (Newton's Cradle) ──
     from src.games.newtons_cradle.main import Ball
     if Ball and isinstance(node, Ball):
-        data["radius"] = getattr(node, "radius", 20)
+        props["radius"] = getattr(node, "radius", 20)
 
     # ── CircleCollider2D extras ──
     if CircleCollider2D and isinstance(node, CircleCollider2D):
-        data["radius"] = getattr(node, "radius", 16)
+        props["radius"] = getattr(node, "radius", 16)
 
     # ── PolygonCollider2D extras ──
     if PolygonCollider2D and isinstance(node, PolygonCollider2D):
-        data["points"] = [list(p) for p in getattr(node, "local_points", [])]
+        props["points"] = [list(p) for p in getattr(node, "local_points", [])]
+
+    script_value = getattr(node, "script", None)
+    if script_value:
+        data["script"] = script_value
 
     # ── _original_type hint for imported nodes of unknown type ──
     orig = getattr(node, "_original_type", None)
+    type_name = type(node).__name__
     if orig and orig != type_name:
         data["_original_type"] = orig
 
@@ -259,6 +269,16 @@ def _dict_to_node(data: dict, custom_types: dict = None):
     """
     custom_types = custom_types or {}
     type_name = data.get("type", "Node2D")
+    node_id = data.get("id")
+    properties = data.get("properties")
+    if isinstance(properties, dict):
+        payload = dict(properties)
+    else:
+        payload = {}
+        for key, value in data.items():
+            if key in {"id", "type", "name", "children", "script", "_original_type"}:
+                continue
+            payload[key] = value
     
     # Check original type for custom subclass injection
     orig_type = data.get("_original_type", None)
@@ -277,10 +297,10 @@ def _dict_to_node(data: dict, custom_types: dict = None):
     # ── Construct the node ──
     if cls is SpriteNode and SpriteNode is not None:
         # SpriteNode requires image_path at construction
-        image_path = data.get("image_path", "")
-        x = data.get("x", 0)
-        y = data.get("y", 0)
-        centered = data.get("centered", False)
+        image_path = payload.get("image_path", "")
+        x = payload.get("x", 0)
+        y = payload.get("y", 0)
+        centered = payload.get("centered", False)
         # Only construct with image if the file exists
         if image_path and os.path.exists(image_path):
             node = SpriteNode(name, image_path, x, y, centered=centered)
@@ -290,55 +310,55 @@ def _dict_to_node(data: dict, custom_types: dict = None):
             node._image_path = image_path  # preserve for re-serialization
     elif cls is Camera2D:
         node = Camera2D(name)
-        node.local_x = data.get("x", 0)
-        node.local_y = data.get("y", 0)
+        node.local_x = payload.get("x", 0)
+        node.local_y = payload.get("y", 0)
     elif RectangleNode and cls is RectangleNode:
-        x, y = data.get("x", 0), data.get("y", 0)
-        w = data.get("width", 32)
-        h = data.get("height", 32)
-        color = data.get("color", [255, 255, 255])
+        x, y = payload.get("x", 0), payload.get("y", 0)
+        w = payload.get("width", 32)
+        h = payload.get("height", 32)
+        color = payload.get("color", [255, 255, 255])
         node = RectangleNode(name, x, y, w, h, tuple(color) if isinstance(color, list) else color)
     elif CircleNode and cls is CircleNode:
-        x, y = data.get("x", 0), data.get("y", 0)
-        radius = data.get("radius", 16)
-        color = data.get("color", [255, 255, 255])
+        x, y = payload.get("x", 0), payload.get("y", 0)
+        radius = payload.get("radius", 16)
+        color = payload.get("color", [255, 255, 255])
         node = CircleNode(name, x, y, radius, tuple(color) if isinstance(color, list) else color)
     elif CollisionWorld and cls is CollisionWorld:
         # CollisionWorld doesn't take x,y, it takes cell_size
-        node = CollisionWorld(name, cell_size=data.get("cell_size", 128))
+        node = CollisionWorld(name, cell_size=payload.get("cell_size", 128))
     elif PhysicsWorld2D and cls is PhysicsWorld2D:
         node = PhysicsWorld2D(
             name,
-            gravity_y=data.get("gravity_y", 800.0),
-            sub_steps=data.get("sub_steps", 1)
+            gravity_y=payload.get("gravity_y", 800.0),
+            sub_steps=payload.get("sub_steps", 1)
         )
     elif DistanceConstraint and cls is DistanceConstraint:
         node = DistanceConstraint(
             name, 
-            data.get("pivot_x", 0), 
-            data.get("pivot_y", 0), 
+            payload.get("pivot_x", 0), 
+            payload.get("pivot_y", 0), 
             None, # Will need body linked in ready() or via custom_types mapping
-            data.get("length", 100)
+            payload.get("length", 100)
         )
-        node._body_name = data.get("body_name", "") # store hint for later reference resolving
+        node._body_name = payload.get("body_name", "") # store hint for later reference resolving
     elif CircleCollider2D and cls is CircleCollider2D:
         node = CircleCollider2D(
             name,
-            data.get("x", 0),
-            data.get("y", 0),
-            data.get("radius", 16)
+            payload.get("x", 0),
+            payload.get("y", 0),
+            payload.get("radius", 16)
         )
     elif PolygonCollider2D and cls is PolygonCollider2D:
-        points = data.get("points", [(0,0), (10,0), (0,10)])
+        points = payload.get("points", [(0,0), (10,0), (0,10)])
         node = PolygonCollider2D(
             name,
-            data.get("x", 0),
-            data.get("y", 0),
+            payload.get("x", 0),
+            payload.get("y", 0),
             [tuple(p) for p in points]
         )
     elif issubclass(cls, Node2D):
-        x = data.get("x", 0)
-        y = data.get("y", 0)
+        x = payload.get("x", 0)
+        y = payload.get("y", 0)
         # Attempt minimal instantiation. If custom class requires arguments (like colliders),
         # we bypass __init__ using __new__ to ensure it always reconstructs from JSON
         # without crashing, then manually apply positioning.
@@ -404,75 +424,80 @@ def _dict_to_node(data: dict, custom_types: dict = None):
     elif cls is Node:
         node = Node(name)
     else:
-        node = Node2D(name, data.get("x", 0), data.get("y", 0))
+        node = Node2D(name, payload.get("x", 0), payload.get("y", 0))
 
     # ── Apply common Node2D properties ──
     if isinstance(node, Node2D):
-        node.scale_x = data.get("scale_x", 1.0)
-        node.scale_y = data.get("scale_y", 1.0)
-        node.rotation = data.get("rotation", 0.0)
-        node.visible = data.get("visible", True)
-        node.z_index = data.get("z_index", 0)
+        node.scale_x = payload.get("scale_x", 1.0)
+        node.scale_y = payload.get("scale_y", 1.0)
+        node.rotation = payload.get("rotation", 0.0)
+        node.visible = payload.get("visible", True)
+        node.z_index = payload.get("z_index", 0)
 
     # ── PhysicsBody2D extras ──
     if PhysicsBody2D and isinstance(node, PhysicsBody2D):
-        node.vx = data.get("vx", getattr(node, "vx", 0.0))
-        node.vy = data.get("vy", getattr(node, "vy", 0.0))
-        node.use_gravity = data.get("use_gravity", getattr(node, "use_gravity", True))
+        node.vx = payload.get("vx", getattr(node, "vx", 0.0))
+        node.vy = payload.get("vy", getattr(node, "vy", 0.0))
+        node.use_gravity = payload.get("use_gravity", getattr(node, "use_gravity", True))
 
     if RigidBody2D and isinstance(node, RigidBody2D):
-        node.vx = data.get("vx", getattr(node, "vx", 0.0))
-        node.vy = data.get("vy", getattr(node, "vy", 0.0))
-        node.use_gravity = data.get("use_gravity", getattr(node, "use_gravity", True))
-        node.gravity_scale = data.get("gravity_scale", getattr(node, "gravity_scale", 1.0))
-        node.mass = data.get("mass", getattr(node, "mass", 1.0))
+        node.vx = payload.get("vx", getattr(node, "vx", 0.0))
+        node.vy = payload.get("vy", getattr(node, "vy", 0.0))
+        node.use_gravity = payload.get("use_gravity", getattr(node, "use_gravity", True))
+        node.gravity_scale = payload.get("gravity_scale", getattr(node, "gravity_scale", 1.0))
+        node.mass = payload.get("mass", getattr(node, "mass", 1.0))
         node.inv_mass = 1.0 / node.mass if node.mass > 0 else 0.0
-        node.is_kinematic = data.get("is_kinematic", getattr(node, "is_kinematic", False))
-        node.friction = data.get("friction", getattr(node, "friction", 0.2))
-        node.restitution = data.get("restitution", getattr(node, "restitution", 0.5))
+        node.is_kinematic = payload.get("is_kinematic", getattr(node, "is_kinematic", False))
+        node.friction = payload.get("friction", getattr(node, "friction", 0.2))
+        node.restitution = payload.get("restitution", getattr(node, "restitution", 0.5))
         
     # ── Ball extras ──
     from src.games.newtons_cradle.main import Ball
     if Ball and isinstance(node, Ball):
-        node.radius = data.get("radius", 20)
+        node.radius = payload.get("radius", 20)
         node.is_dragged = False
 
     # ── Type-specific extras (for Node2D fallbacks) ──
     if Collider2D and isinstance(node, Collider2D):
-        node.width = data.get("width", getattr(node, "width", 32))
-        node.height = data.get("height", getattr(node, "height", 32))
-        node.is_static = data.get("is_static", getattr(node, "is_static", False))
-        node.is_trigger = data.get("is_trigger", getattr(node, "is_trigger", False))
-        node.layer = data.get("layer", getattr(node, "layer", "default"))
-        node.mask = set(data.get("mask", getattr(node, "mask", [])))
+        node.width = payload.get("width", getattr(node, "width", 32))
+        node.height = payload.get("height", getattr(node, "height", 32))
+        node.is_static = payload.get("is_static", getattr(node, "is_static", False))
+        node.is_trigger = payload.get("is_trigger", getattr(node, "is_trigger", False))
+        node.layer = payload.get("layer", getattr(node, "layer", "default"))
+        node.mask = set(payload.get("mask", getattr(node, "mask", [])))
 
     if RectangleNode and isinstance(node, RectangleNode):
-        node.width = data.get("width", node.width)
-        node.height = data.get("height", node.height)
-        color = data.get("color", None)
+        node.width = payload.get("width", node.width)
+        node.height = payload.get("height", node.height)
+        color = payload.get("color", None)
         if color:
             node.color = tuple(color) if isinstance(color, list) else color
 
     if CircleNode and isinstance(node, CircleNode):
-        node.radius = data.get("radius", node.radius)
-        color = data.get("color", None)
+        node.radius = payload.get("radius", node.radius)
+        color = payload.get("color", None)
         if color:
             node.color = tuple(color) if isinstance(color, list) else color
 
     # AnimatedSprite frame dimensions
     if AnimatedSprite and isinstance(node, AnimatedSprite):
-        node.frame_width = data.get("frame_width", getattr(node, "frame_width", 32))
-        node.frame_height = data.get("frame_height", getattr(node, "frame_height", 32))
+        node.frame_width = payload.get("frame_width", getattr(node, "frame_width", 32))
+        node.frame_height = payload.get("frame_height", getattr(node, "frame_height", 32))
 
 
 
     if CircleCollider2D and isinstance(node, CircleCollider2D):
-        node.radius = data.get("radius", getattr(node, "radius", 16))
+        node.radius = payload.get("radius", getattr(node, "radius", 16))
 
     if PolygonCollider2D and isinstance(node, PolygonCollider2D):
-        points = data.get("points", None)
+        points = payload.get("points", None)
         if points:
             node.local_points = [tuple(p) for p in points]
+
+    node._editor_id = node_id or str(uuid.uuid4())
+    script_value = data.get("script", payload.get("script", None))
+    if script_value:
+        node.script = script_value
 
     # Restore _original_type hint
     orig = data.get("_original_type", None)

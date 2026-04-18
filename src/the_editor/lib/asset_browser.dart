@@ -203,26 +203,28 @@ class _AssetBrowserState extends State<AssetBrowser> {
                         final isSelected = item.path == _selectedAsset;
                         final name = item.path.split(Platform.pathSeparator).last;
                         
-                        return ListTile(
-                          dense: true,
-                          selected: isSelected,
-                          selectedTileColor: const Color(0xFF4CAF50).withOpacity(0.2),
-                          leading: Icon(
-                            _getIconForFile(item),
-                            size: 20,
-                            color: _getIconColor(item),
-                          ),
-                          title: Text(
-                            name,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          onTap: () {
-                            setState(() => _selectedAsset = item.path);
-                            widget.onAssetSelected?.call(item.path);
-                          },
+                        return GestureDetector(
                           onDoubleTap: item is Directory
                               ? () => _loadDirectory(item.path)
                               : null,
+                          child: ListTile(
+                            dense: true,
+                            selected: isSelected,
+                            selectedTileColor: const Color(0xFF4CAF50).withOpacity(0.2),
+                            leading: Icon(
+                              _getIconForFile(item),
+                              size: 20,
+                              color: _getIconColor(item),
+                            ),
+                            title: Text(
+                              name,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            onTap: () {
+                              setState(() => _selectedAsset = item.path);
+                              widget.onAssetSelected?.call(item.path);
+                            },
+                          ),
                         );
                       },
                     ),

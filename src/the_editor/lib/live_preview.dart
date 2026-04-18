@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+
 /// Live preview controller that manages communication with the Python game engine
 class LivePreviewController extends ChangeNotifier {
   Process? _engineProcess;
@@ -10,6 +12,8 @@ class LivePreviewController extends ChangeNotifier {
   String? _errorMessage;
   int _fps = 0;
   int _frameCount = 0;
+  Timer? _patchFlushTimer;
+  final Map<String, Map<String, dynamic>> _pendingPatches = {};
   
   final StreamController<String> _outputController = StreamController<String>.broadcast();
   Stream<String> get outputStream => _outputController.stream;
@@ -99,10 +103,52 @@ class LivePreviewController extends ChangeNotifier {
     if (!_isRunning || _engineProcess == null) return;
     
     try {
+      _flushPendingPatches();
       // Send scene data via stdin
       _engineProcess!.stdin.writeln('SCENE:${jsonEncode(sceneJson)}');
     } catch (e) {
       _errorMessage = 'Failed to send scene: $e';
+      notifyListeners();
+    }
+  }
+
+  /// Send incremental node patch to engine runtime
+  Future<void> sendPatch({
+    required String nodeId,
+    required Map<String, dynamic> properties,
+  }) async {
+    if (!_isRunning || _engineProcess == null) return;
+    if (nodeId.isEmpty || properties.isEmpty) return;
+
+    final nodePatch = _pendingPatches[nodeId] ?? <String, dynamic>{};
+    nodePatch.addAll(properties);
+    _pendingPatches[nodeId] = nodePatch;
+
+    _patchFlushTimer ??= Timer(
+      const Duration(milliseconds: 50),
+      _flushPendingPatches,
+    );
+  }
+
+  void _flushPendingPatches() {
+    _patchFlushTimer?.cancel();
+    _patchFlushTimer = null;
+
+    if (!_isRunning || _engineProcess == null || _pendingPatches.isEmpty) return;
+
+    try {
+      final pending = Map<String, Map<String, dynamic>>.from(_pendingPatches);
+      _pendingPatches.clear();
+
+      for (final entry in pending.entries) {
+        final payload = {
+          'id': entry.key,
+          'properties': entry.value,
+        };
+        _engineProcess!.stdin.writeln('PATCH:${jsonEncode(payload)}');
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to flush patches: $e';
       notifyListeners();
     }
   }
@@ -112,6 +158,7 @@ class LivePreviewController extends ChangeNotifier {
     if (!_isRunning || _engineProcess == null) return;
     
     try {
+      _flushPendingPatches();
       _engineProcess!.stdin.writeln(command);
     } catch (e) {
       _errorMessage = 'Failed to send command: $e';
@@ -130,6 +177,7 @@ class LivePreviewController extends ChangeNotifier {
 
   /// Stop the engine
   Future<void> stopEngine() async {
+    _flushPendingPatches();
     if (_engineProcess != null) {
       _engineProcess!.stdin.writeln('QUIT');
       await Future.delayed(const Duration(milliseconds: 500));
@@ -143,6 +191,8 @@ class LivePreviewController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _patchFlushTimer?.cancel();
+    _pendingPatches.clear();
     stopEngine();
     _outputController.close();
     super.dispose();
@@ -286,7 +336,7 @@ class _PreviewConsoleState extends State<PreviewConsole> {
       // Auto-scroll to bottom
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
-          _scrollController.jumpTo(_scrollController.position.maxScrollHeight);
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         }
       });
     });

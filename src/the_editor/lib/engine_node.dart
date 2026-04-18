@@ -4,6 +4,7 @@
 /// display and edit them when the node is selected.
 class EngineNode {
   EngineNode({
+    required this.id,
     required this.name,
     required this.type,
     List<EngineNode>? children,
@@ -47,6 +48,7 @@ class EngineNode {
   final String type;
   final List<EngineNode> children;
   bool isExpanded;
+  String id;
 
   // ── Transform ──
   double x;
@@ -59,41 +61,41 @@ class EngineNode {
   bool visible;
 
   // ── Optional metadata from .scene files ──
-  final String? resource;
-  final String? script;
+  String? resource;
+  String? script;
 
   // ── Visual Properties ──
-  final int? color;
-  final double? width;
-  final double? height;
-  final double? radius;
-  final String? texturePath;
-  final int? frameCount;
-  final double? frameSpeed;
-  final bool? flipX;
-  final bool? flipY;
-  final double? anchorX;
-  final double? anchorY;
-  final double? opacity;
+  int? color;
+  double? width;
+  double? height;
+  double? radius;
+  String? texturePath;
+  int? frameCount;
+  double? frameSpeed;
+  bool? flipX;
+  bool? flipY;
+  double? anchorX;
+  double? anchorY;
+  double? opacity;
 
   // ── Text Properties ──
-  final String? text;
-  final double? fontSize;
-  final int? fontColor;
+  String? text;
+  double? fontSize;
+  int? fontColor;
 
   // ── Particle Properties ──
-  final double? emission;
-  final double? lifetime;
-  final double? rate;
+  double? emission;
+  double? lifetime;
+  double? rate;
 
   // ── Physics Properties ──
-  final String? layer;
-  final String? mask;
-  final double? gravity;
-  final double? velocityX;
-  final double? velocityY;
-  final bool? isStatic;
-  final double? restitution;
+  String? layer;
+  String? mask;
+  double? gravity;
+  double? velocityX;
+  double? velocityY;
+  bool? isStatic;
+  double? restitution;
 
   bool get hasChildren => children.isNotEmpty;
 
@@ -148,7 +150,8 @@ class EngineNode {
   // ───────────────────────────────────────────
 
   factory EngineNode.fromJson(Map<String, dynamic> json) {
-    final props = (json['properties'] as Map<String, dynamic>?) ?? {};
+    final rawProps = json['properties'] as Map<String, dynamic>?;
+    final props = rawProps ?? _legacyFlatProperties(json);
 
     final children = (json['children'] as List<dynamic>?)
             ?.map((c) => EngineNode.fromJson(c as Map<String, dynamic>))
@@ -156,6 +159,7 @@ class EngineNode {
         [];
 
     return EngineNode(
+      id: (json['id'] as String?) ?? _generatedNodeId(),
       name: (json['name'] as String?) ?? 'Unnamed',
       type: (json['type'] as String?) ?? 'Node2D',
       x: _toDouble(props['x']),
@@ -197,6 +201,7 @@ class EngineNode {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> json = {
+      'id': id,
       'name': name,
       'type': type,
       'properties': {
@@ -238,11 +243,71 @@ class EngineNode {
     return fallback;
   }
 
+  static Map<String, dynamic> _legacyFlatProperties(Map<String, dynamic> json) {
+    final result = <String, dynamic>{};
+    for (final entry in json.entries) {
+      final key = entry.key;
+      if (key == 'id' ||
+          key == 'name' ||
+          key == 'type' ||
+          key == 'children' ||
+          key == 'script' ||
+          key == '_original_type') {
+        continue;
+      }
+      result[key] = entry.value;
+    }
+    return result;
+  }
+
+  static String _generatedNodeId() => DateTime.now().microsecondsSinceEpoch.toString();
+
+  Map<String, dynamic> toPatchPropertiesMap() {
+    final props = <String, dynamic>{
+      'x': x,
+      'y': y,
+      'scale_x': scaleX,
+      'scale_y': scaleY,
+      'rotation': rotation,
+      'visible': visible,
+    };
+
+    if (resource != null) props['resource'] = resource;
+    if (color != null) props['color'] = color;
+    if (width != null) props['width'] = width;
+    if (height != null) props['height'] = height;
+    if (radius != null) props['radius'] = radius;
+    if (texturePath != null) props['texture_path'] = texturePath;
+    if (frameCount != null) props['frame_count'] = frameCount;
+    if (frameSpeed != null) props['frame_speed'] = frameSpeed;
+    if (flipX != null) props['flip_x'] = flipX;
+    if (flipY != null) props['flip_y'] = flipY;
+    if (anchorX != null) props['anchor_x'] = anchorX;
+    if (anchorY != null) props['anchor_y'] = anchorY;
+    if (opacity != null) props['opacity'] = opacity;
+    if (text != null) props['text'] = text;
+    if (fontSize != null) props['font_size'] = fontSize;
+    if (fontColor != null) props['font_color'] = fontColor;
+    if (emission != null) props['emission'] = emission;
+    if (lifetime != null) props['lifetime'] = lifetime;
+    if (rate != null) props['rate'] = rate;
+    if (layer != null) props['layer'] = layer;
+    if (mask != null) props['mask'] = mask;
+    if (gravity != null) props['gravity'] = gravity;
+    if (velocityX != null) props['velocity_x'] = velocityX;
+    if (velocityY != null) props['velocity_y'] = velocityY;
+    if (isStatic != null) props['is_static'] = isStatic;
+    if (restitution != null) props['restitution'] = restitution;
+
+    return props;
+  }
+
   // ───────────────────────────────────────────
   // Editing
   // ───────────────────────────────────────────
 
   EngineNode copyWith({
+    String? id,
     String? name,
     double? x,
     double? y,
@@ -252,6 +317,7 @@ class EngineNode {
     bool? visible,
   }) {
     final copy = EngineNode(
+      id: id ?? this.id,
       name: name ?? this.name,
       type: type,
       x: x ?? this.x,
@@ -333,12 +399,14 @@ class NodeTypes {
 
 EngineNode createDummyScene() {
   return EngineNode(
+    id: 'root',
     name: 'Root',
     type: 'Node2D',
     x: 0,
     y: 0,
     children: [
       EngineNode(
+        id: 'camera-main',
         name: 'MainCamera',
         type: 'Camera2D',
         x: 640,
@@ -346,6 +414,7 @@ EngineNode createDummyScene() {
         rotation: 0,
       ),
       EngineNode(
+        id: 'player',
         name: 'Player',
         type: 'PhysicsBody2D',
         x: 120,
@@ -356,6 +425,7 @@ EngineNode createDummyScene() {
         isStatic: false,
         children: [
           EngineNode(
+            id: 'player-sprite',
             name: 'PlayerSprite',
             type: 'SpriteNode',
             x: 0,
@@ -365,6 +435,7 @@ EngineNode createDummyScene() {
             texturePath: 'sprites/player.png',
           ),
           EngineNode(
+            id: 'player-collider',
             name: 'PlayerCollider',
             type: 'Collider2D',
             x: 0,
@@ -377,6 +448,7 @@ EngineNode createDummyScene() {
         ],
       ),
       EngineNode(
+        id: 'ground',
         name: 'Ground',
         type: 'TilemapNode',
         x: 0,
@@ -384,6 +456,7 @@ EngineNode createDummyScene() {
         resource: 'maps/level1.json',
       ),
       EngineNode(
+        id: 'bg',
         name: 'Background',
         type: 'SpriteNode',
         x: 640,
@@ -393,6 +466,7 @@ EngineNode createDummyScene() {
         texturePath: 'backgrounds/forest.png',
       ),
       EngineNode(
+        id: 'score-label',
         name: 'ScoreLabel',
         type: 'LabelNode',
         x: 50,

@@ -41,11 +41,13 @@ class ViewportWidget extends StatefulWidget {
     required this.rootNodeNotifier,
     required this.selectedNodeNotifier,
     required this.repaintNotifier,
+    this.onNodePatched,
   });
 
   final ValueNotifier<EngineNode?> rootNodeNotifier;
   final ValueNotifier<EngineNode?> selectedNodeNotifier;
   final ValueNotifier<int> repaintNotifier;
+  final void Function(EngineNode node, Map<String, dynamic> properties)? onNodePatched;
 
   @override
   State<ViewportWidget> createState() => _ViewportWidgetState();
@@ -161,6 +163,10 @@ class _ViewportWidgetState extends State<ViewportWidget> {
         final zoom = _currentZoom();
         _draggingNode!.x += event.delta.dx / zoom;
         _draggingNode!.y += event.delta.dy / zoom;
+        widget.onNodePatched?.call(_draggingNode!, {
+          'x': _draggingNode!.x,
+          'y': _draggingNode!.y,
+        });
         // Trigger viewport repaint AND Inspector sync.
         widget.repaintNotifier.value++;
         break;
@@ -180,6 +186,12 @@ class _ViewportWidgetState extends State<ViewportWidget> {
   }
 
   void _handlePointerUp(PointerUpEvent event) {
+    if (_draggingNode != null) {
+      widget.onNodePatched?.call(_draggingNode!, {
+        'x': _draggingNode!.x,
+        'y': _draggingNode!.y,
+      });
+    }
     if (_mode != _InteractionMode.none) {
       setState(() {
         _mode = _InteractionMode.none;
@@ -333,6 +345,7 @@ class _ViewportWidgetState extends State<ViewportWidget> {
 
     _spawnCounter++;
     final newNode = EngineNode(
+      id: '${DateTime.now().microsecondsSinceEpoch}-$_spawnCounter',
       name: '$baseName\_$_spawnCounter',
       type: nodeType,
       x: worldX,
